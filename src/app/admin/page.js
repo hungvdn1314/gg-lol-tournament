@@ -1,0 +1,813 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { 
+  Shield, Settings, Users, Calendar, Swords, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info 
+} from "lucide-react";
+import { isMockMode, auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { 
+  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard 
+} from "@/lib/db";
+
+export default function Admin() {
+  // Authentication State
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // Tournament Data State
+  const [config, setConfig] = useState(null);
+  const [teams, setTeams] = useState({});
+  const [matches, setMatches] = useState({});
+  const [activeTab, setActiveTab] = useState("config");
+
+  // Edit State
+  const [editingTeam, setEditingTeam] = useState(null);
+  const [editingMatch, setEditingMatch] = useState(null);
+  const [scoreManagingMatch, setScoreManagingMatch] = useState(null);
+
+  // Form State
+  const [configForm, setConfigForm] = useState({ title: "", date: "", venue: "", description: "" });
+  const [teamForm, setTeamForm] = useState({ id: "", name: "", logo: "", group: "A", players: [
+    { name: "", role: "Top" },
+    { name: "", role: "Jungle" },
+    { name: "", role: "Mid" },
+    { name: "", role: "ADC" },
+    { name: "", role: "Support" }
+  ]});
+  const [matchForm, setMatchForm] = useState({ 
+    id: "", type: "group", stage: "Group Stage", group: "A", 
+    teamAId: "", teamBId: "", scoreA: 0, scoreB: 0, 
+    status: "scheduled", bestOf: 3, scheduledTime: "" 
+  });
+
+  useEffect(() => {
+    // Check local storage session first
+    const checkSession = () => {
+      const loggedIn = localStorage.getItem("lol_tourney_admin_logged_in") === "true";
+      setIsLoggedIn(loggedIn);
+    };
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      const unsubConfig = subscribeToData("config", (data) => {
+        setConfig(data);
+        if (data) setConfigForm(data);
+      });
+      const unsubTeams = subscribeToData("teams", setTeams);
+      const unsubMatches = subscribeToData("matches", setMatches);
+
+      return () => {
+        unsubConfig();
+        unsubTeams();
+        unsubMatches();
+      };
+    }
+  }, [isLoggedIn]);
+
+  // Login handler
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+
+    if (isMockMode) {
+      // Mock Auth check
+      if (email === "admin@vng.com" && password === "admin") {
+        localStorage.setItem("lol_tourney_admin_logged_in", "true");
+        setIsLoggedIn(true);
+        window.dispatchEvent(new Event("admin_auth_changed"));
+      } else {
+        setAuthError("Invalid mock credentials. Use admin@vng.com / admin");
+      }
+      setAuthLoading(false);
+    } else {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        localStorage.setItem("lol_tourney_admin_logged_in", "true");
+        setIsLoggedIn(true);
+        window.dispatchEvent(new Event("admin_auth_changed"));
+      } catch (error) {
+        setAuthError(error.message || "Failed to authenticate with Firebase.");
+      } finally {
+        setAuthLoading(false);
+      }
+    }
+  };
+
+  // Config Update
+  const handleSaveConfig = async (e) => {
+    e.preventDefault();
+    try {
+      await saveConfig(configForm);
+      alert("Tournament settings updated successfully!");
+    } catch (e) {
+      alert("Error updating settings: " + e.message);
+    }
+  };
+
+  // Team Create / Update
+  const handleSaveTeam = async (e) => {
+    e.preventDefault();
+    if (!teamForm.name) return alert("Team name is required.");
+
+    const id = teamForm.id || "team-" + Date.now();
+    const teamData = { ...teamForm, id };
+
+    try {
+      await saveTeam(teamData);
+      setTeamForm({ id: "", name: "", logo: "", group: "A", players: [
+        { name: "", role: "Top" },
+        { name: "", role: "Jungle" },
+        { name: "", role: "Mid" },
+        { name: "", role: "ADC" },
+        { name: "", role: "Support" }
+      ]});
+      setEditingTeam(null);
+      alert("Team saved successfully!");
+    } catch (err) {
+      alert("Error saving team: " + err.message);
+    }
+  };
+
+  const handleEditTeam = (team) => {
+    setEditingTeam(team.id);
+    setTeamForm(JSON.parse(JSON.stringify(team))); // deep clone
+    setActiveTab("teams");
+  };
+
+  const handleDeleteTeam = async (teamId) => {
+    if (confirm("Are you sure you want to delete this team? This might affect standings.")) {
+      try {
+        await deleteTeam(teamId);
+        alert("Team deleted successfully!");
+      } catch (err) {
+        alert("Error deleting team: " + err.message);
+      }
+    }
+  };
+
+  // Match Create / Update
+  const handleSaveMatch = async (e) => {
+    e.preventDefault();
+    if (!matchForm.teamAId || !matchForm.teamBId) return alert("Both teams must be specified.");
+    if (matchForm.teamAId === matchForm.teamBId) return alert("Teams cannot play against themselves.");
+
+    const id = matchForm.id || "match-" + Date.now();
+    const matchData = { ...matchForm, id };
+
+    try {
+      await saveMatch(matchData);
+      setMatchForm({ 
+        id: "", type: "group", stage: "Group Stage", group: "A", 
+        teamAId: "", teamBId: "", scoreA: 0, scoreB: 0, 
+        status: "scheduled", bestOf: 3, scheduledTime: "" 
+      });
+      setEditingMatch(null);
+      alert("Match scheduled successfully!");
+    } catch (err) {
+      alert("Error scheduling match: " + err.message);
+    }
+  };
+
+  const handleEditMatch = (match) => {
+    setEditingMatch(match.id);
+    setMatchForm(JSON.parse(JSON.stringify(match)));
+    setActiveTab("matches");
+  };
+
+  const handleDeleteMatch = async (matchId) => {
+    if (confirm("Are you sure you want to delete this match?")) {
+      try {
+        await deleteMatch(matchId);
+        alert("Match deleted successfully!");
+      } catch (err) {
+        alert("Error deleting match: " + err.message);
+      }
+    }
+  };
+
+  // Live Score Update & Bracket Advancement
+  const handleUpdateMatchScore = async (e) => {
+    e.preventDefault();
+    if (!scoreManagingMatch) return;
+
+    const match = scoreManagingMatch;
+    
+    // Auto-winner setting if completed
+    let winnerId = null;
+    if (match.status === "completed") {
+      if (match.scoreA > match.scoreB) {
+        winnerId = match.teamAId;
+      } else if (match.scoreB > match.scoreA) {
+        winnerId = match.teamBId;
+      } else {
+        return alert("Completed matches must have a clear winner (Bo1/3/5 cannot tie).");
+      }
+    }
+
+    const updatedMatch = {
+      ...match,
+      winnerId
+    };
+
+    try {
+      await saveMatch(updatedMatch);
+
+      // AUTOMATED KNOCKOUT ADVANCEMENT LOGIC
+      if (match.status === "completed" && match.type === "knockout") {
+        const updatedMatches = { ...matches, [match.id]: updatedMatch };
+        
+        if (match.id === "match-semi1") {
+          const finalMatch = matches["match-final"];
+          const thirdMatch = matches["match-third"];
+          
+          if (finalMatch) {
+            finalMatch.teamAId = winnerId;
+            await saveMatch(finalMatch);
+          }
+          if (thirdMatch) {
+            thirdMatch.teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId;
+            await saveMatch(thirdMatch);
+          }
+        } else if (match.id === "match-semi2") {
+          const finalMatch = matches["match-final"];
+          const thirdMatch = matches["match-third"];
+          
+          if (finalMatch) {
+            finalMatch.teamBId = winnerId;
+            await saveMatch(finalMatch);
+          }
+          if (thirdMatch) {
+            thirdMatch.teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId;
+            await saveMatch(thirdMatch);
+          }
+        }
+      }
+
+      setScoreManagingMatch(null);
+      alert("Match score and status updated successfully!");
+    } catch (err) {
+      alert("Error saving scores: " + err.message);
+    }
+  };
+
+  const handleResetDatabase = async () => {
+    if (confirm("WARNING: This will overwrite ALL current teams, matches, and configurations with the default mock tournament data. Proceed?")) {
+      try {
+        await resetToDefaultData();
+        alert("Database successfully reset to defaults!");
+      } catch (err) {
+        alert("Error resetting database: " + err.message);
+      }
+    }
+  };
+
+  // Login Form Gate
+  if (!isLoggedIn) {
+    return (
+      <div className="container" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <div className="card" style={{ width: "100%", maxWidth: "400px", padding: "2.5rem" }}>
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <Shield size={48} style={{ color: "var(--primary-gold)", margin: "0 auto 1rem auto" }} />
+            <h2 style={{ textTransform: "uppercase" }}>Admin Panel Login</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
+              Authenticate to manage teams, schedule matches, and post live score adjustments.
+            </p>
+          </div>
+
+          {isMockMode && (
+            <div style={{ backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "0.75rem 1rem", fontSize: "0.8rem", color: "var(--primary-gold-bright)", marginBottom: "1.5rem", display: "flex", gap: "0.5rem" }}>
+              <Info size={16} style={{ flexShrink: 0 }} />
+              <div>
+                <strong>Mock Mode Active:</strong> Use the login below:<br />
+                Email: <code>admin@vng.com</code><br />
+                Password: <code>admin</code>
+              </div>
+            </div>
+          )}
+
+          {authError && (
+            <div style={{ backgroundColor: "rgba(220,53,69,0.1)", border: "1px solid var(--color-danger)", borderRadius: "4px", padding: "0.75rem 1rem", color: "var(--color-danger)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+              {authError}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin}>
+            <div className="form-group">
+              <label>Email Address</label>
+              <input 
+                type="email" 
+                className="form-control" 
+                placeholder="email@example.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: "2rem" }}>
+              <label>Password</label>
+              <input 
+                type="password" 
+                className="form-control" 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} disabled={authLoading}>
+              {authLoading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "1rem" }}>
+        <div>
+          <span className="hero-badge">Coordinator Access</span>
+          <h1 style={{ fontSize: "2rem", textTransform: "uppercase" }}>Tournament Control Panel</h1>
+        </div>
+        <button onClick={handleResetDatabase} className="btn btn-outline" style={{ display: "flex", gap: "0.5rem", color: "var(--color-danger)", borderColor: "rgba(220,53,69,0.3)" }}>
+          <RotateCcw size={16} /> Reset Default Data
+        </button>
+      </div>
+
+      <div className="admin-grid">
+        {/* Navigation Sidebar */}
+        <aside className="admin-sidebar">
+          <button 
+            onClick={() => { setActiveTab("config"); setScoreManagingMatch(null); }}
+            className={`admin-nav-item ${activeTab === "config" ? "active" : ""}`}
+          >
+            <Settings size={18} /> Config Settings
+          </button>
+          <button 
+            onClick={() => { setActiveTab("teams"); setScoreManagingMatch(null); }}
+            className={`admin-nav-item ${activeTab === "teams" ? "active" : ""}`}
+          >
+            <Users size={18} /> Manage Teams ({Object.keys(teams).length})
+          </button>
+          <button 
+            onClick={() => { setActiveTab("matches"); setScoreManagingMatch(null); }}
+            className={`admin-nav-item ${activeTab === "matches" ? "active" : ""}`}
+          >
+            <Calendar size={18} /> Match Scheduler ({Object.keys(matches).length})
+          </button>
+          <button 
+            onClick={() => { setActiveTab("scores"); setScoreManagingMatch(null); }}
+            className={`admin-nav-item ${activeTab === "scores" ? "active" : ""}`}
+          >
+            <Swords size={18} /> Live Score Center
+          </button>
+        </aside>
+
+        {/* Content Pane */}
+        <section className="admin-content">
+          
+          {/* TAB 1: TOURNAMENT CONFIGURATION */}
+          {activeTab === "config" && config && (
+            <div>
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", marginBottom: "1.5rem" }}>General Settings</h2>
+              <form onSubmit={handleSaveConfig}>
+                <div className="form-group">
+                  <label>Tournament Title</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    value={configForm.title}
+                    onChange={(e) => setConfigForm({ ...configForm, title: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>Tournament Dates</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={configForm.date}
+                      onChange={(e) => setConfigForm({ ...configForm, date: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Venue / Location</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={configForm.venue}
+                      onChange={(e) => setConfigForm({ ...configForm, venue: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="form-group" style={{ marginBottom: "2rem" }}>
+                  <label>Description</label>
+                  <textarea 
+                    rows={4}
+                    className="form-control" 
+                    value={configForm.description}
+                    onChange={(e) => setConfigForm({ ...configForm, description: e.target.value })}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> Save Settings
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* TAB 2: TEAMS MANAGER */}
+          {activeTab === "teams" && (
+            <div>
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", marginBottom: "1.5rem" }}>
+                {editingTeam ? "Edit Team Roster" : "Register New Team"}
+              </h2>
+              
+              <form onSubmit={handleSaveTeam} style={{ marginBottom: "3rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "3rem" }}>
+                <div className="grid-3">
+                  <div className="form-group">
+                    <label>Team Name</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="e.g. IT Department"
+                      value={teamForm.name}
+                      onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Logo Image URL</label>
+                    <input 
+                      type="url" 
+                      className="form-control" 
+                      placeholder="https://example.com/logo.png"
+                      value={teamForm.logo}
+                      onChange={(e) => setTeamForm({ ...teamForm, logo: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Group Stage Pool</label>
+                    <select 
+                      className="form-control"
+                      value={teamForm.group}
+                      onChange={(e) => setTeamForm({ ...teamForm, group: e.target.value })}
+                    >
+                      <option value="A">Group A</option>
+                      <option value="B">Group B</option>
+                    </select>
+                  </div>
+                </div>
+
+                <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", marginTop: "1rem" }}>
+                  Roster Lineup (5 Players)
+                </h3>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {teamForm.players.map((player, idx) => (
+                    <div key={idx} style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                      <span style={{ fontSize: "0.85rem", width: "80px", color: "var(--primary-gold)" }}>{player.role}:</span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Player Name / In-Game Name"
+                        value={player.name}
+                        onChange={(e) => {
+                          const players = [...teamForm.players];
+                          players[idx].name = e.target.value;
+                          setTeamForm({ ...teamForm, players });
+                        }}
+                        required
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: "flex", gap: "1rem", marginTop: "2rem" }}>
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> {editingTeam ? "Update Team" : "Register Team"}
+                  </button>
+                  {editingTeam && (
+                    <button 
+                      type="button" 
+                      className="btn btn-outline"
+                      onClick={() => {
+                        setEditingTeam(null);
+                        setTeamForm({ id: "", name: "", logo: "", group: "A", players: [
+                          { name: "", role: "Top" },
+                          { name: "", role: "Jungle" },
+                          { name: "", role: "Mid" },
+                          { name: "", role: "ADC" },
+                          { name: "", role: "Support" }
+                        ]});
+                      }}
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", marginBottom: "1.5rem" }}>Registered Teams</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {Object.values(teams).map((team) => (
+                  <div key={team.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-tertiary)", padding: "1rem 1.5rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                      <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} />
+                      <div>
+                        <strong style={{ color: "var(--text-primary)" }}>{team.name}</strong>
+                        <span className="hero-badge" style={{ margin: "0 0 0 0.5rem", fontSize: "0.6rem", padding: "0.1rem 0.4rem" }}>Group {team.group}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button onClick={() => handleEditTeam(team)} className="btn btn-outline" style={{ padding: "0.4rem 0.75rem" }}><Edit2 size={14} /></button>
+                      <button onClick={() => handleDeleteTeam(team.id)} className="btn btn-outline" style={{ padding: "0.4rem 0.75rem", color: "var(--color-danger)" }}><Trash2 size={14} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: MATCH SCHEDULER */}
+          {activeTab === "matches" && (
+            <div>
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", marginBottom: "1.5rem" }}>
+                {editingMatch ? "Modify Match Schedule" : "Schedule New Match"}
+              </h2>
+
+              <form onSubmit={handleSaveMatch} style={{ marginBottom: "3rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "3rem" }}>
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>Team A (Home)</label>
+                    <select
+                      className="form-control"
+                      value={matchForm.teamAId}
+                      onChange={(e) => setMatchForm({ ...matchForm, teamAId: e.target.value })}
+                      required
+                    >
+                      <option value="">-- Choose Team A --</option>
+                      {Object.values(teams).map((team) => (
+                        <option key={team.id} value={team.id}>{team.name} (Group {team.group})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Team B (Away)</label>
+                    <select
+                      className="form-control"
+                      value={matchForm.teamBId}
+                      onChange={(e) => setMatchForm({ ...matchForm, teamBId: e.target.value })}
+                      required
+                    >
+                      <option value="">-- Choose Team B --</option>
+                      {Object.values(teams).map((team) => (
+                        <option key={team.id} value={team.id}>{team.name} (Group {team.group})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid-4">
+                  <div className="form-group">
+                    <label>Match Type</label>
+                    <select
+                      className="form-control"
+                      value={matchForm.type}
+                      onChange={(e) => setMatchForm({ ...matchForm, type: e.target.value })}
+                    >
+                      <option value="group">Group Stage</option>
+                      <option value="knockout">Knockout Stage</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Stage Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. Semifinals"
+                      value={matchForm.stage}
+                      onChange={(e) => setMatchForm({ ...matchForm, stage: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Best Of series</label>
+                    <select
+                      className="form-control"
+                      value={matchForm.bestOf}
+                      onChange={(e) => setMatchForm({ ...matchForm, bestOf: parseInt(e.target.value) })}
+                    >
+                      <option value={1}>Bo1</option>
+                      <option value={3}>Bo3</option>
+                      <option value={5}>Bo5</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Group (if applicable)</label>
+                    <select
+                      className="form-control"
+                      value={matchForm.group || ""}
+                      onChange={(e) => setMatchForm({ ...matchForm, group: e.target.value || null })}
+                    >
+                      <option value="">None</option>
+                      <option value="A">Group A</option>
+                      <option value="B">Group B</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: "2rem" }}>
+                  <label>Scheduled Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    className="form-control"
+                    value={matchForm.scheduledTime ? matchForm.scheduledTime.substring(0, 16) : ""}
+                    onChange={(e) => setMatchForm({ ...matchForm, scheduledTime: new Date(e.target.value).toISOString() })}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> {editingMatch ? "Update Match" : "Schedule Match"}
+                  </button>
+                  {editingMatch && (
+                    <button 
+                      type="button" 
+                      className="btn btn-outline"
+                      onClick={() => {
+                        setEditingMatch(null);
+                        setMatchForm({ 
+                          id: "", type: "group", stage: "Group Stage", group: "A", 
+                          teamAId: "", teamBId: "", scoreA: 0, scoreB: 0, 
+                          status: "scheduled", bestOf: 3, scheduledTime: "" 
+                        });
+                      }}
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", marginBottom: "1.5rem" }}>Scheduled Matches</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {Object.values(matches).sort((a,b) => new Date(a.scheduledTime) - new Date(b.scheduledTime)).map((match) => (
+                  <div key={match.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-tertiary)", padding: "1rem 1.5rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}>
+                    <div>
+                      <strong style={{ color: "var(--text-primary)" }}>
+                        {teams[match.teamAId]?.name || "TBD"} vs {teams[match.teamBId]?.name || "TBD"}
+                      </strong>
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                        {match.stage} &bull; {new Date(match.scheduledTime).toLocaleString()} &bull; Bo{match.bestOf}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button onClick={() => handleEditMatch(match)} className="btn btn-outline" style={{ padding: "0.4rem 0.75rem" }}><Edit2 size={14} /></button>
+                      <button onClick={() => handleDeleteMatch(match.id)} className="btn btn-outline" style={{ padding: "0.4rem 0.75rem", color: "var(--color-danger)" }}><Trash2 size={14} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: LIVE SCORE CENTER */}
+          {activeTab === "scores" && (
+            <div>
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", marginBottom: "1.5rem" }}>Match List & Results Control</h2>
+              
+              {!scoreManagingMatch ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {Object.values(matches).sort((a,b) => new Date(b.scheduledTime) - new Date(a.scheduledTime)).map((match) => {
+                    const teamA = teams[match.teamAId];
+                    const teamB = teams[match.teamBId];
+                    return (
+                      <div key={match.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-tertiary)", padding: "1.25rem 1.5rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}>
+                        <div>
+                          <span className={`match-status-badge ${match.status}`} style={{ display: "inline-block", marginBottom: "0.5rem" }}>
+                            {match.status}
+                          </span>
+                          <strong style={{ display: "block", color: "var(--text-primary)", fontSize: "1.1rem" }}>
+                            {teamA?.name || "TBD"} ({match.scoreA}) vs ({match.scoreB}) {teamB?.name || "TBD"}
+                          </strong>
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{match.stage} &bull; Bo{match.bestOf}</span>
+                        </div>
+                        <button 
+                          onClick={() => setScoreManagingMatch(JSON.parse(JSON.stringify(match)))}
+                          className="btn btn-secondary"
+                          style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}
+                        >
+                          Manage Scores
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="card card-gold" style={{ padding: "2rem" }}>
+                  <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+                    Manage Score &bull; {scoreManagingMatch.stage}
+                  </h3>
+                  
+                  <form onSubmit={handleUpdateMatchScore}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+                      {/* Team A */}
+                      <div style={{ width: "40%", textAlign: "right" }}>
+                        <h4 style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>{teams[scoreManagingMatch.teamAId]?.name || "TBD"}</h4>
+                        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.5rem" }}>
+                          <button 
+                            type="button" 
+                            className="btn btn-outline" 
+                            style={{ padding: "0.3rem 0.6rem" }}
+                            onClick={() => setScoreManagingMatch({ ...scoreManagingMatch, scoreA: Math.max(0, scoreManagingMatch.scoreA - 1) })}
+                          >-</button>
+                          <span style={{ fontSize: "2rem", fontWeight: "800", minWidth: "50px", textAlign: "center", color: "var(--text-primary)" }}>{scoreManagingMatch.scoreA}</span>
+                          <button 
+                            type="button" 
+                            className="btn btn-outline" 
+                            style={{ padding: "0.3rem 0.6rem" }}
+                            onClick={() => setScoreManagingMatch({ ...scoreManagingMatch, scoreA: scoreManagingMatch.scoreA + 1 })}
+                          >+</button>
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "var(--text-muted)" }}>VS</div>
+
+                      {/* Team B */}
+                      <div style={{ width: "40%", textAlign: "left" }}>
+                        <h4 style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>{teams[scoreManagingMatch.teamBId]?.name || "TBD"}</h4>
+                        <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "0.5rem" }}>
+                          <button 
+                            type="button" 
+                            className="btn btn-outline" 
+                            style={{ padding: "0.3rem 0.6rem" }}
+                            onClick={() => setScoreManagingMatch({ ...scoreManagingMatch, scoreB: Math.max(0, scoreManagingMatch.scoreB - 1) })}
+                          >-</button>
+                          <span style={{ fontSize: "2rem", fontWeight: "800", minWidth: "50px", textAlign: "center", color: "var(--text-primary)" }}>{scoreManagingMatch.scoreB}</span>
+                          <button 
+                            type="button" 
+                            className="btn btn-outline" 
+                            style={{ padding: "0.3rem 0.6rem" }}
+                            onClick={() => setScoreManagingMatch({ ...scoreManagingMatch, scoreB: scoreManagingMatch.scoreB + 1 })}
+                          >+</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid-2" style={{ marginBottom: "2rem" }}>
+                      <div className="form-group">
+                        <label>Match Status</label>
+                        <select
+                          className="form-control"
+                          value={scoreManagingMatch.status}
+                          onChange={(e) => setScoreManagingMatch({ ...scoreManagingMatch, status: e.target.value })}
+                        >
+                          <option value="scheduled">Scheduled</option>
+                          <option value="live">Live</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ display: "flex", alignItems: "flex-end" }}>
+                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: "1.5" }}>
+                          <AlertTriangle size={14} style={{ display: "inline-block", color: "var(--primary-gold)", marginRight: "0.25rem", verticalAlign: "middle" }} />
+                          Setting status to <strong>Completed</strong> will declare a winner and automatically recalculate group stage leaderboard points or advance playoff brackets.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "1rem" }}>
+                      <button type="submit" className="btn btn-primary">
+                        <Save size={16} /> Save Score Updates
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-outline"
+                        onClick={() => setScoreManagingMatch(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
