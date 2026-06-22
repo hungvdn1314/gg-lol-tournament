@@ -29,8 +29,15 @@ export default function Admin() {
   const [editingMatch, setEditingMatch] = useState(null);
   const [scoreManagingMatch, setScoreManagingMatch] = useState(null);
 
+  // Riot API specific state
+  const [selectedMatchForCode, setSelectedMatchForCode] = useState("");
+  const [codeGenerating, setCodeGenerating] = useState(false);
+  const [simulatingMatchId, setSimulatingMatchId] = useState("");
+  const [simulatedWinnerSide, setSimulatedWinnerSide] = useState(100);
+  const [simulating, setSimulating] = useState(false);
+
   // Form State
-  const [configForm, setConfigForm] = useState({ title: "", date: "", venue: "", description: "" });
+  const [configForm, setConfigForm] = useState({ title: "", date: "", venue: "", description: "", providerId: "", tournamentId: "" });
   const [teamForm, setTeamForm] = useState({ id: "", name: "", logo: "", group: "A", players: [
     { name: "", role: "Top" },
     { name: "", role: "Jungle" },
@@ -57,7 +64,16 @@ export default function Admin() {
     if (isLoggedIn) {
       const unsubConfig = subscribeToData("config", (data) => {
         setConfig(data);
-        if (data) setConfigForm(data);
+        if (data) {
+          setConfigForm({
+            title: data.title || "",
+            date: data.date || "",
+            venue: data.venue || "",
+            description: data.description || "",
+            providerId: data.providerId || "",
+            tournamentId: data.tournamentId || ""
+          });
+        }
       });
       const unsubTeams = subscribeToData("teams", setTeams);
       const unsubMatches = subscribeToData("matches", setMatches);
@@ -108,6 +124,147 @@ export default function Admin() {
       alert("Tournament settings updated successfully!");
     } catch (e) {
       alert("Error updating settings: " + e.message);
+    }
+  };
+
+  const handleGenerateRiotCode = async (matchId) => {
+    if (!matchId) return alert("Please select a match.");
+    setCodeGenerating(true);
+    try {
+      const response = await fetch("/api/tournament-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tournamentId: config.tournamentId || "7899",
+          matchId
+        })
+      });
+      const data = await response.json();
+      if (data.code) {
+        const match = matches[matchId];
+        match.tournamentCode = data.code;
+        await saveMatch(match);
+        alert(`Tournament Code generated successfully: ${data.code}`);
+      } else {
+        alert("Failed to generate code: " + (data.error || "Unknown error"));
+      }
+    } catch (e) {
+      alert("Error generating code: " + e.message);
+    } finally {
+      setCodeGenerating(false);
+    }
+  };
+
+  const handleSimulateWebhook = async (matchId, winnerSide) => {
+    if (!matchId) return alert("Please select a match to simulate.");
+    setSimulating(true);
+
+    try {
+      if (isMockMode) {
+        // CLIENT-SIDE LOCALSTORAGE WEBHOOK PROCESSING FOR MOCK MODE
+        console.log("Mock Mode: Processing simulated webhook client-side.");
+        
+        const match = matches[matchId];
+        if (!match) throw new Error("Match not found");
+
+        let scoreA = match.scoreA || 0;
+        let scoreB = match.scoreB || 0;
+
+        if (winnerSide === 100) {
+          scoreA += 1;
+        } else {
+          scoreB += 1;
+        }
+
+        const targetWins = Math.ceil(match.bestOf / 2);
+        let status = "live";
+        let winnerId = null;
+
+        if (scoreA >= targetWins) {
+          status = "completed";
+          winnerId = match.teamAId;
+        } else if (scoreB >= targetWins) {
+          status = "completed";
+          winnerId = match.teamBId;
+        }
+
+        const updatedMatch = {
+          ...match,
+          scoreA,
+          scoreB,
+          status,
+          winnerId
+        };
+
+        // Generate realistic mock matchDetails
+        const mockDetails = {
+          gameDuration: 1654,
+          teams: {
+            100: { winner: winnerSide === 100, bans: ["Zed", "Yasuo", "Yone"], barons: 1, dragons: 3, firstBlood: true },
+            200: { winner: winnerSide === 200, bans: ["Yuumi", "Teemo", "Briar"], barons: 0, dragons: 1, firstBlood: false }
+          },
+          participants: [
+            // Blue Team (Team A)
+            { playerName: "Zeus", teamId: 100, champion: "Ornn", kills: 2, deaths: 1, assists: 9, gold: 11200, cs: 210, vision: 24, damageDealt: 18400, items: [3068, 3075, 3111, 3001, 0, 0] },
+            { playerName: "Oner", teamId: 100, champion: "Sejuani", kills: 1, deaths: 2, assists: 12, gold: 9800, cs: 165, vision: 32, damageDealt: 12100, items: [3068, 3111, 3109, 0, 0, 0] },
+            { playerName: "Faker", teamId: 100, champion: "Azir", kills: 6, deaths: 1, assists: 7, gold: 13500, cs: 245, vision: 28, damageDealt: 29400, items: [3006, 6655, 3089, 3157, 0, 0] },
+            { playerName: "Gumayusi", teamId: 100, champion: "Aphelios", kills: 5, deaths: 0, assists: 5, gold: 14200, cs: 265, vision: 18, damageDealt: 27500, items: [3006, 6672, 3031, 3046, 0, 0] },
+            { playerName: "Keria", teamId: 100, champion: "Thresh", kills: 1, deaths: 2, assists: 10, gold: 7500, cs: 42, vision: 65, damageDealt: 4500, items: [3158, 3859, 3190, 0, 0, 0] },
+            // Red Team (Team B)
+            { playerName: "Kiin", teamId: 200, champion: "K'Sante", kills: 1, deaths: 3, assists: 2, gold: 9200, cs: 195, vision: 19, damageDealt: 14100, items: [3068, 3111, 3001, 0, 0, 0] },
+            { playerName: "Canyon", teamId: 200, champion: "Maokai", kills: 0, deaths: 4, assists: 4, gold: 8100, cs: 145, vision: 41, damageDealt: 8900, items: [3068, 3111, 3109, 0, 0, 0] },
+            { playerName: "Chovy", teamId: 200, champion: "Yone", kills: 3, deaths: 3, assists: 1, gold: 11500, cs: 232, vision: 21, damageDealt: 19200, items: [3006, 6672, 3031, 0, 0, 0] },
+            { playerName: "Peyz", teamId: 200, champion: "Zeri", kills: 2, deaths: 2, assists: 2, gold: 12100, cs: 250, vision: 15, damageDealt: 21400, items: [3006, 6672, 3046, 0, 0, 0] },
+            { playerName: "Lehends", teamId: 200, champion: "Lulu", kills: 0, deaths: 3, assists: 4, gold: 6800, cs: 35, vision: 54, damageDealt: 3200, items: [3158, 3859, 3190, 0, 0, 0] }
+          ]
+        };
+
+        const { saveMatchDetails } = await import("@/lib/db");
+        await saveMatch(updatedMatch);
+        await saveMatchDetails(matchId, mockDetails);
+
+        // Advance knockout bracket
+        if (status === "completed" && match.type === "knockout") {
+          if (matchId === "match-semi1") {
+            const finalMatch = matches["match-final"];
+            if (finalMatch) { finalMatch.teamAId = winnerId; await saveMatch(finalMatch); }
+            const thirdMatch = matches["match-third"];
+            if (thirdMatch) { thirdMatch.teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
+          } else if (matchId === "match-semi2") {
+            const finalMatch = matches["match-final"];
+            if (finalMatch) { finalMatch.teamBId = winnerId; await saveMatch(finalMatch); }
+            const thirdMatch = matches["match-third"];
+            if (thirdMatch) { thirdMatch.teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
+          }
+        }
+
+        await recalculateLeaderboard();
+        alert("Mock Webhook Sim completed! Match scores updated, stats saved, standings updated.");
+      } else {
+        // SERVER-SIDE HTTP POST IN PRODUCTION WITH FIREBASE
+        const response = await fetch("/api/riot-webhook", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            isSimulation: true,
+            simulatedWinnerSide: winnerSide,
+            matchId: matchId,
+            metaData: JSON.stringify({ match_id: matchId }),
+            tournamentCode: matches[matchId]?.tournamentCode || "SIM-CODE"
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert(`Real Firebase Webhook simulation triggered. Winner: ${data.winner}`);
+        } else {
+          alert("Simulation failed: " + (data.error || "Unknown error"));
+        }
+      }
+    } catch (e) {
+      alert("Error running simulation: " + e.message);
+    } finally {
+      setSimulating(false);
     }
   };
 
@@ -368,6 +525,12 @@ export default function Admin() {
             className={`admin-nav-item ${activeTab === "scores" ? "active" : ""}`}
           >
             <Swords size={18} /> Live Score Center
+          </button>
+          <button 
+            onClick={() => { setActiveTab("riot"); setScoreManagingMatch(null); }}
+            className={`admin-nav-item ${activeTab === "riot" ? "active" : ""}`}
+          >
+            <Shield size={18} /> Riot Tournament API
           </button>
         </aside>
 
@@ -804,6 +967,130 @@ export default function Admin() {
                   </form>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* TAB 5: RIOT TOURNAMENT API CONFIG & WEBHOOK SIMULATION */}
+          {activeTab === "riot" && config && (
+            <div>
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+                Riot Games Tournament API Config
+              </h2>
+
+              <form onSubmit={handleSaveConfig} style={{ marginBottom: "3rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "2rem" }}>
+                <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "1rem", marginBottom: "1.5rem", fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                  <Info size={18} style={{ color: "var(--primary-gold)", flexShrink: 0, marginTop: "0.1rem" }} />
+                  <div>
+                    <strong>Webhook Listener Target:</strong><br />
+                    Configure your Riot Provider URL to point to:<br />
+                    <code>https://your-deployed-domain.vercel.app/api/riot-webhook</code>
+                  </div>
+                </div>
+
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>Riot Provider ID</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="e.g. 456"
+                      value={configForm.providerId}
+                      onChange={(e) => setConfigForm({ ...configForm, providerId: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Riot Tournament ID</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="e.g. 7899"
+                      value={configForm.tournamentId}
+                      onChange={(e) => setConfigForm({ ...configForm, tournamentId: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> Save Riot Credentials
+                </button>
+              </form>
+
+              {/* Tournament Code Generator */}
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+                Lobby Code Generator
+              </h2>
+              <div className="card" style={{ marginBottom: "3rem", border: "1px solid var(--border-dark)" }}>
+                <div className="form-group">
+                  <label>Select Scheduled Match</label>
+                  <select
+                    className="form-control"
+                    value={selectedMatchForCode}
+                    onChange={(e) => setSelectedMatchForCode(e.target.value)}
+                  >
+                    <option value="">-- Select Scheduled Match --</option>
+                    {Object.values(matches)
+                      .filter(m => m.status !== "completed")
+                      .map(m => (
+                        <option key={m.id} value={m.id}>
+                          {teams[m.teamAId]?.name || "TBD"} vs {teams[m.teamBId]?.name || "TBD"} ({m.stage})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <button 
+                  onClick={() => handleGenerateRiotCode(selectedMatchForCode)}
+                  className="btn btn-secondary" 
+                  disabled={codeGenerating || !selectedMatchForCode}
+                  style={{ display: "flex", gap: "0.5rem" }}
+                >
+                  {codeGenerating ? "Requesting..." : "Generate Invite Code"}
+                </button>
+              </div>
+
+              {/* Local Webhook Simulator */}
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+                Riot Webhook Simulator (Local Testing)
+              </h2>
+              <div className="card" style={{ border: "1px solid var(--border-dark)" }}>
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>Select Match to Complete</label>
+                    <select
+                      className="form-control"
+                      value={simulatingMatchId}
+                      onChange={(e) => setSimulatingMatchId(e.target.value)}
+                    >
+                      <option value="">-- Select Target Match --</option>
+                      {Object.values(matches)
+                        .filter(m => m.status !== "completed")
+                        .map(m => (
+                          <option key={m.id} value={m.id}>
+                            {teams[m.teamAId]?.name || "TBD"} vs {teams[m.teamBId]?.name || "TBD"} ({m.stage})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Simulated Winner</label>
+                    <select
+                      className="form-control"
+                      value={simulatedWinnerSide}
+                      onChange={(e) => setSimulatedWinnerSide(parseInt(e.target.value))}
+                      disabled={!simulatingMatchId}
+                    >
+                      <option value={100}>Blue Side (Team A: {teams[matches[simulatingMatchId]?.teamAId]?.name || "TBD"})</option>
+                      <option value={200}>Red Side (Team B: {teams[matches[simulatingMatchId]?.teamBId]?.name || "TBD"})</option>
+                    </select>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleSimulateWebhook(simulatingMatchId, simulatedWinnerSide)}
+                  className="btn btn-primary"
+                  style={{ backgroundColor: "var(--color-danger)", borderColor: "var(--color-danger)", display: "flex", gap: "0.5rem" }}
+                  disabled={simulating || !simulatingMatchId}
+                >
+                  {simulating ? "Processing..." : "Trigger Simulated Webhook"}
+                </button>
+              </div>
             </div>
           )}
         </section>

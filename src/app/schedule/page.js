@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Calendar, Swords, Info } from "lucide-react";
+import { Clock, Calendar, Swords, Info, Copy, Check } from "lucide-react";
 import { subscribeToData } from "@/lib/db";
+import MatchStatsModal from "@/components/MatchStatsModal";
 
 export default function Schedule() {
   const [matches, setMatches] = useState({});
   const [teams, setTeams] = useState({});
   const [statusFilter, setStatusFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
+  const [selectedStatsMatch, setSelectedStatsMatch] = useState(null);
+  const [copiedMatchId, setCopiedMatchId] = useState(null);
 
   useEffect(() => {
     const unsubMatches = subscribeToData("matches", setMatches);
@@ -48,13 +51,19 @@ export default function Schedule() {
     }
   };
 
+  const handleCopyCode = (matchId, code) => {
+    navigator.clipboard.writeText(code);
+    setCopiedMatchId(matchId);
+    setTimeout(() => setCopiedMatchId(null), 2000);
+  };
+
   return (
     <div className="container">
       <div style={{ textAlign: "center", marginBottom: "3rem" }}>
         <span className="hero-badge">Tournament Schedule</span>
         <h1 style={{ fontSize: "2.5rem", textTransform: "uppercase", marginBottom: "1rem" }}>Matches & Results</h1>
         <p style={{ color: "var(--text-secondary)", maxWidth: "600px", margin: "0 auto" }}>
-          Track live match progression, review past results, and view upcoming match dates for the VNG Corporate LoL Cup.
+          Track live match progression, review post-game scoreboard analytics, and view upcoming match draft codes.
         </p>
 
         {/* Filter Toolbar */}
@@ -191,11 +200,60 @@ export default function Schedule() {
                     </span>
                   </div>
                 )}
+
+                {/* Tournament Draft Invite Code */}
+                {match.tournamentCode && !isCompleted && (
+                  <div style={{ marginTop: "1rem", padding: "0.75rem 1rem", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-dark)", borderRadius: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", fontSize: "0.85rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ color: "var(--primary-gold)" }}>🏆</span>
+                      <span style={{ color: "var(--text-secondary)" }}>
+                        Draft Code: <code style={{ color: "var(--primary-gold-bright)", backgroundColor: "rgba(0,0,0,0.2)", padding: "0.15rem 0.4rem", borderRadius: "2px", border: "1px solid var(--border-dark)" }}>{match.tournamentCode}</code>
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => handleCopyCode(match.id, match.tournamentCode)}
+                      className="btn btn-outline"
+                      style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem", height: "28px" }}
+                    >
+                      {copiedMatchId === match.id ? (
+                        <>
+                          <Check size={12} style={{ color: "var(--color-success)" }} /> Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={12} /> Copy Code
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Post-Game Stats Inspector Button */}
+                {isCompleted && (
+                  <div style={{ display: "flex", justifyContent: "center", marginTop: "1.25rem", borderTop: "1px solid var(--border-dark)", paddingTop: "1rem" }}>
+                    <button 
+                      onClick={() => setSelectedStatsMatch(match)}
+                      className="btn btn-secondary"
+                      style={{ fontSize: "0.8rem", padding: "0.4rem 1rem", display: "flex", gap: "0.5rem", alignItems: "center" }}
+                    >
+                      <Swords size={14} /> Inspect Match Stats
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })
         )}
       </div>
+
+      {/* Stats Modal */}
+      {selectedStatsMatch && (
+        <MatchStatsModal 
+          match={selectedStatsMatch}
+          teams={teams}
+          onClose={() => setSelectedStatsMatch(null)}
+        />
+      )}
     </div>
   );
 }

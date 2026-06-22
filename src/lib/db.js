@@ -382,7 +382,8 @@ const subscribers = {
   config: [],
   teams: [],
   matches: [],
-  bracket: []
+  bracket: [],
+  matchDetails: []
 };
 
 function getMockStorage(key, defaultValue) {
@@ -414,6 +415,7 @@ if (typeof window !== "undefined") {
   getMockStorage("teams", DEFAULT_TEAMS);
   getMockStorage("matches", DEFAULT_MATCHES);
   getMockStorage("bracket", DEFAULT_BRACKET);
+  getMockStorage("matchDetails", {});
 }
 
 // ==========================================
@@ -424,7 +426,7 @@ if (typeof window !== "undefined") {
 export function subscribeToData(key, callback) {
   if (isMockMode) {
     // Return initial value
-    const data = getMockStorage(key, key === "config" ? DEFAULT_CONFIG : key === "teams" ? DEFAULT_TEAMS : key === "matches" ? DEFAULT_MATCHES : DEFAULT_BRACKET);
+    const data = getMockStorage(key, key === "config" ? DEFAULT_CONFIG : key === "teams" ? DEFAULT_TEAMS : key === "matches" ? DEFAULT_MATCHES : key === "bracket" ? DEFAULT_BRACKET : {});
     callback(data);
     
     // Register subscription
@@ -448,7 +450,7 @@ export function subscribeToData(key, callback) {
 // Single fetch (Promise-based)
 export async function fetchData(key) {
   if (isMockMode) {
-    return getMockStorage(key, key === "config" ? DEFAULT_CONFIG : key === "teams" ? DEFAULT_TEAMS : key === "matches" ? DEFAULT_MATCHES : DEFAULT_BRACKET);
+    return getMockStorage(key, key === "config" ? DEFAULT_CONFIG : key === "teams" ? DEFAULT_TEAMS : key === "matches" ? DEFAULT_MATCHES : key === "bracket" ? DEFAULT_BRACKET : {});
   } else {
     try {
       const dbRef = ref(database, key);
@@ -456,10 +458,10 @@ export async function fetchData(key) {
       if (snapshot.exists()) {
         return snapshot.val();
       }
-      return key === "config" ? DEFAULT_CONFIG : key === "teams" ? DEFAULT_TEAMS : key === "matches" ? DEFAULT_MATCHES : DEFAULT_BRACKET;
+      return key === "config" ? DEFAULT_CONFIG : key === "teams" ? DEFAULT_TEAMS : key === "matches" ? DEFAULT_MATCHES : key === "bracket" ? DEFAULT_BRACKET : {};
     } catch (e) {
       console.error(`Firebase fetch error for ${key}:`, e);
-      return key === "config" ? DEFAULT_CONFIG : key === "teams" ? DEFAULT_TEAMS : key === "matches" ? DEFAULT_MATCHES : DEFAULT_BRACKET;
+      return key === "config" ? DEFAULT_CONFIG : key === "teams" ? DEFAULT_TEAMS : key === "matches" ? DEFAULT_MATCHES : key === "bracket" ? DEFAULT_BRACKET : {};
     }
   }
 }
@@ -554,12 +556,14 @@ export async function resetToDefaultData() {
     setMockStorage("teams", DEFAULT_TEAMS);
     setMockStorage("matches", DEFAULT_MATCHES);
     setMockStorage("bracket", DEFAULT_BRACKET);
+    setMockStorage("matchDetails", {});
     await recalculateLeaderboard();
   } else {
     await set(ref(database, "config"), DEFAULT_CONFIG);
     await set(ref(database, "teams"), DEFAULT_TEAMS);
     await set(ref(database, "matches"), DEFAULT_MATCHES);
     await set(ref(database, "bracket"), DEFAULT_BRACKET);
+    await set(ref(database, "matchDetails"), {});
     await recalculateLeaderboard();
   }
 }
@@ -621,5 +625,61 @@ export async function recalculateLeaderboard() {
     setMockStorage("teams", teams);
   } else {
     await set(ref(database, "teams"), teams);
+  }
+}
+
+// ==========================================
+// MATCH DETAILS OPERATIONS
+// ==========================================
+
+export async function saveMatchDetails(matchId, details) {
+  if (isMockMode) {
+    const allDetails = getMockStorage("matchDetails", {});
+    allDetails[matchId] = details;
+    setMockStorage("matchDetails", allDetails);
+    return details;
+  } else {
+    const dbRef = ref(database, `matchDetails/${matchId}`);
+    await set(dbRef, details);
+    return details;
+  }
+}
+
+export async function fetchMatchDetails(matchId) {
+  if (isMockMode) {
+    const allDetails = getMockStorage("matchDetails", {});
+    return allDetails[matchId] || null;
+  } else {
+    try {
+      const dbRef = ref(database, `matchDetails/${matchId}`);
+      const snapshot = await get(dbRef);
+      return snapshot.exists() ? snapshot.val() : null;
+    } catch (e) {
+      console.error(`Firebase fetch error for matchDetails/${matchId}:`, e);
+      return null;
+    }
+  }
+}
+
+export function subscribeToMatchDetails(matchId, callback) {
+  if (isMockMode) {
+    const allDetails = getMockStorage("matchDetails", {});
+    callback(allDetails[matchId] || null);
+
+    const handler = (newAllDetails) => {
+      callback(newAllDetails[matchId] || null);
+    };
+
+    subscribers.matchDetails.push(handler);
+    return () => {
+      subscribers.matchDetails = subscribers.matchDetails.filter(cb => cb !== handler);
+    };
+  } else {
+    const dbRef = ref(database, `matchDetails/${matchId}`);
+    return onValue(dbRef, (snapshot) => {
+      callback(snapshot.val() || null);
+    }, (error) => {
+      console.error(`Firebase subscription error for matchDetails/${matchId}:`, error);
+    });
   }
 }
