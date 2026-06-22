@@ -1,46 +1,92 @@
-# Implementation Plan: Riot Match Import Tool
+# Implementation Plan: Comprehensive Scoreboard & Player Leaderboard Stats
 
-This plan describes how we will implement a Riot Match Import feature. Because Riot's Tournament Stub codes (`STUB-...`) are not accepted by the Vietnam (VN2) game client, players must play regular custom games in the client. This tool allows the administrator to fetch and sync the results of those custom games using any participant's Riot ID.
+This plan outlines the expansion of the post-game Match Stats Modal to collect a comprehensive dataset for each participant. By saving all relevant player stats (damage, healing, wards placed, cc duration, multikills, etc.) from the Riot Games API, we establish the database records needed to generate future player leaderboards (e.g. KDA Leaders, Vision Kings, Gold Farmers).
 
 ## Proposed Changes
 
-### 1. Backend Import Route
-#### [NEW] [route.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/api/riot-import/route.js)
-We will create a new API route `POST /api/riot-import` that:
-1. Receives the `matchId` and `playerRiotId` (e.g. `IrrationaL\u8903\u5b50#1337`).
-2. Looks up the player's account details on `asia.api.riotgames.com` to retrieve their `puuid`.
-3. Fetches the player's 5 most recent custom games from `sea.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?count=5`.
-4. Retrieves the latest match details from `sea.api.riotgames.com/lol/match/v5/matches/{matchId}`.
-5. Maps the game's metrics (winner, game duration, champion, kills/deaths/assists, damage dealt, creep score, vision, items, team objectives).
-6. Updates the database (LocalStorage in mock mode, Firebase in production) with the score, match details, bracket advancement, and triggers standings recalculation.
+### 1. Database Schema Updates (`matchDetails/{matchId}`)
+We will expand the participant schema under `matchDetails/{matchId}/participants` to store the following stats:
+* `win`: Boolean (whether the player won the game)
+* `kills`, `deaths`, `assists`: Numbers (core KDA)
+* `gold`: Number (gold earned)
+* `cs`: Number (minions + neutral monsters)
+* `vision`: Number (total vision score)
+* `damageDealt`: Number (damage to champions)
+* `damageTaken`: Number (total damage taken)
+* `healing`: Number (total heal amount)
+* `tripleKills`, `quadraKills`, `pentaKills`: Numbers (multikills)
+* `firstBlood`: Boolean (got First Blood kill or assist)
+* `controlWards`: Number (`visionWardsBoughtInGame`)
+* `wardsPlaced`: Number (wards placed)
+* `wardsKilled`: Number (wards destroyed)
+* `turretsKilled`: Number (turrets destroyed)
+* `inhibitorsKilled`: Number (inhibitors destroyed)
+* `ccDuration`: Number (crowd control time dealt in seconds)
 
 ---
 
-### 2. Admin UI Updates
+### 2. Backend API Updates (Riot Import, Webhook, and Simulator)
+We will modify the participant mapping to extract all these fields from Riot's standard schema and update all simulation payloads so mock games also generate realistic datasets.
+
+#### [MODIFY] [route.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/api/riot-import/route.js)
+Extract all expanded fields from `info.participants`:
+* `win`: `p.win`
+* `healing`: `p.totalHeal`
+* `damageTaken`: `p.totalDamageTaken`
+* `tripleKills`: `p.tripleKills`
+* `quadraKills`: `p.quadraKills`
+* `pentaKills`: `p.pentaKills`
+* `firstBlood`: `p.firstBloodKill || p.firstBloodAssist`
+* `controlWards`: `p.visionWardsBoughtInGame`
+* `wardsPlaced`: `p.wardsPlaced`
+* `wardsKilled`: `p.wardsKilled`
+* `turretsKilled`: `p.turretKills`
+* `inhibitorsKilled`: `p.inhibitorKills`
+* `ccDuration`: `p.totalTimeCCDealt`
+
+#### [MODIFY] [route.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/api/riot-webhook/route.js)
+Update both the real Riot parser and the webhook simulator mock generator to parse and populate the complete dataset.
+
 #### [MODIFY] [page.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/admin/page.js)
-We will add a new sub-tab under "Riot Tournament API" called **Manual Riot Match Sync**:
-* Displays input fields for:
-  - **Select Match:** A dropdown of scheduled/live matches.
-  - **Player Riot ID:** E.g., `IrrationaL\u8903\u5b50#1337`.
-* Displays a **"Fetch & Sync Match Stats"** button.
-* Includes status logs and error handling notifications (e.g., "Match fetched successfully!", "Account not found", etc.).
+Update the client-side simulator dataset to include realistic values for healing, damage taken, CC duration, wards, and multikills.
 
 ---
 
-### 3. Local Environment Configurations
-* Verify the fallback code path handles the case when Firebase is offline (saves match data to LocalStorage client-side).
+### 3. Frontend UI Redesign
+#### [MODIFY] [MatchStatsModal.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/components/MatchStatsModal.js)
+Redesign the modal into a beautiful tabbed view:
+1. **Tab 1: Scoreboard (Default)**
+   * Shows champion icon, player name, roles, KDA, items, gold, CS, and vision score.
+   * Renders badges for Triple, Quadra, or Penta kills.
+2. **Tab 2: Combat Charts (Combat Stats)**
+   * Multi-bar toggle selector to view:
+     - **Damage Dealt to Champions** (Gold/Red bars)
+     - **Damage Taken from Champions** (Purple/Grey bars)
+     - **Healing Done** (Green/White bars)
+3. **Tab 3: Utility & Vision Stats**
+   * Table displaying detailed support and macro stats:
+     - Wards Placed / Wards Destroyed / Control Wards Bought
+     - Crowd Control (CC) Duration (seconds)
+     - Turret / Inhibitor Kills
+4. **Tab 4: Team Comparison**
+   * Side-by-side card comparing:
+     - Total Team Gold (with a comparison lead indicator)
+     - Total Team Kills
+     - Team Objectives (Dragons, Barons, First Blood)
+
+---
 
 ## Verification Plan
 
 ### Automated Verification
-* Run `npm run build` to verify there are no Turbopack build or route errors.
+* Run `npm run build` to verify Next.js compiles the modified files successfully.
 
 ### Manual Verification
-1. Open the Admin Panel (`/admin`) and select the **Riot Tournament API** tab.
-2. In the "Manual Riot Match Sync" section, select a scheduled match (e.g. *T1 Dynasty vs Gen.G Legends*).
-3. Input player Riot ID `IrrationaL\u8903\u5b50#1337`.
-4. Click **Fetch & Sync Match Stats**.
-5. Verify that:
-   - The match status changes to `completed`.
-   - The standings table on the Leaderboard recalculates.
-   - The Schedule page shows **Inspect Match Stats** with the actual game details (duration, champion picks, CS, items, visual damage bars) from your real game!
+1. Log in to the Admin Panel (`/admin`) and go to the **Riot Tournament API** tab.
+2. Trigger a simulated webhook for a scheduled match, or import your VN2 game.
+3. Open the **Schedule** page (`/schedule`) and click **Inspect Match Stats**.
+4. Check the tabs:
+   - **Scoreboard**: Verify KDA, CS, Gold, and multikill badges render.
+   - **Combat Charts**: Click the different metrics (Damage Dealt, Damage Taken, Healing) to see the bar charts update.
+   - **Utility & Vision**: Verify the custom table renders correct counts for CC duration and wards.
+   - **Team Comparison**: Verify the total gold summation and objective comparison are displayed.

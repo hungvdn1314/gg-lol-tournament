@@ -1,14 +1,26 @@
-# Walkthrough: Riot Match Import Tool
+# Walkthrough: Riot Match Import & Advanced Statistics
 
-We have implemented the **Riot Match Import** tool. This tool allows tournament coordinators to import actual game data from custom matches played in the League of Legends client into the tournament portal. This provides a direct, one-click replacement for automatic webhooks (which are not supported in client by the Riot Tournament Stub API on the VN2/Vietnam server).
+We have implemented the **Riot Match Import** tool and expanded the **Match Stats Modal** to display advanced telemetry (damage dealt, damage taken, healing, multikill badges, warding, crowd control duration, objectives, and a team gold comparison chart) in a premium, tabbed interface. This allows you to play regular custom games in the client, import them instantly, and review detailed statistics.
 
 ---
 
 ## 🛠️ Changes Implemented
 
-1. **New Backend Route:** Created [api/riot-import/route.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/api/riot-import/route.js) to resolve Riot IDs, fetch match histories, load match details from `sea.api.riotgames.com`, parse the results, and either save them (production Firebase mode) or return them to the client (mock mode).
-2. **Updated Admin Dashboard UI:** Modified [src/app/admin/page.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/admin/page.js) to add the **Manual Riot Match Sync** card and form inputs for selecting a match and entering a Riot ID.
-3. **Mock Mode Client-Side Persistence:** Programmed a fallback path in the admin page handler that writes the imported match data and updates series scores directly into the browser's `localStorage` when running in Mock Mode, ensuring standings update instantly.
+1. **Database Schema Expansion:** Updated participants mapping to parse:
+   * `win` (match win status)
+   * `damageTaken` (total damage taken)
+   * `healing` (total healing done)
+   * `tripleKills`, `quadraKills`, `pentaKills` (multikills)
+   * `firstBlood` (first blood participation)
+   * `controlWards`, `wardsPlaced`, `wardsKilled` (wards data)
+   * `turretsKilled`, `inhibitorsKilled` (objective metrics)
+   * `ccDuration` (crowd control duration in seconds)
+2. **Backend API Parsing:** Updated [api/riot-import/route.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/api/riot-import/route.js) and [api/riot-webhook/route.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/api/riot-webhook/route.js) (real and simulated paths) to parse and save these new fields.
+3. **Tabbed Stats Modal:** Redesigned [MatchStatsModal.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/components/MatchStatsModal.js) into four main tabs:
+   * **Scoreboard:** Basic scoreboard showing champion icons, roles, items, KDA, CS, Gold, and multikill badges (Triple/Quadra/Penta).
+   * **Combat Charts:** Beautiful interactive bar charts comparing Damage Dealt, Damage Taken, and Healing Done for all players.
+   * **Utility & Vision:** Detailed table comparing warding stats, CC duration, and tower kills for support/macro leaderboards.
+   * **Team Objectives:** Side-by-side card showing total team gold (with a lead indicator bar) and objective control.
 
 ---
 
@@ -20,15 +32,14 @@ We have implemented the **Riot Match Import** tool. This tool allows tournament 
    - **Email:** `admin@vng.com`
    - **Password:** `admin`
 
-### Step 2: Sync Match Stats
-1. Click the **Riot Tournament API** tab.
-2. Under **Manual Riot Match Sync**, configure the form:
-   - **Select Target Match:** Select any upcoming scheduled match (e.g. *T1 Dynasty vs Gen.G Legends*).
-   - **Participant's Riot ID:** Enter your Riot ID: `IrrationaL\u8903\u5b50#1337`.
-3. Click **Sync Match Stats**.
-4. The system will retrieve your real match history from Riot's servers and display a success popup indicating the winner of the game.
+### Step 2: Trigger Webhook Simulation or Import Match
+* **Option A (Riot Import):** Go to the **Manual Riot Match Sync** section under the **Riot Tournament API** tab. Select an upcoming scheduled match, input Riot ID `IrrationaL\u8903\u5b50#1337`, and click **Sync Match Stats**.
+* **Option B (Simulator):** Go to the **Riot Webhook Simulator** section. Select any target match, choose a winner, and click **Trigger Simulated Webhook**.
 
-### Step 3: Verify the Leaderboard & Schedule
-1. Open the **Schedule** page (`/schedule`). You will see the match series score update.
-2. Click **Inspect Match Stats** on the completed match. You will see champion icons, item builds, KDAs, and creep score loaded directly from your real custom game!
-3. Open the **Leaderboard** page (`/leaderboard`) to check that group standings and team points have been automatically updated.
+### Step 3: Inspect Advanced Stats
+1. Go to the **Schedule** page (`/schedule`). Find the completed match and click **Inspect Match Stats**.
+2. Click through the new tabs:
+   * **Scoreboard:** Observe the KDA ratios, CS, and gold counts.
+   * **Combat Charts:** Toggle between **Damage Dealt**, **Damage Taken**, and **Total Healing** to see the custom color-coded bar charts (Gold, Purple, and Green).
+   * **Utility & Vision:** Verify the ward placements, CC duration, and tower kills.
+   * **Team Objectives:** View the team gold comparison bar and objective breakdown!

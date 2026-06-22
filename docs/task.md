@@ -1,7 +1,8 @@
-# Task List: Riot Match Import Feature
+# Task List: Scoreboard & Player Leaderboard Stats Expansion
 
-- [x] Create API route `/api/riot-import` to fetch and parse real custom game data
-- [x] Update Admin Dashboard UI with the "Manual Riot Match Sync" form
-- [x] Connect fallback client-side sync logic for Mock Mode
-- [x] Verify compilation with `npm run build`
-- [ ] Validate stats retrieval using the test Riot ID
+- [x] Update `/api/riot-import` route to parse expanded player stats from Riot API
+- [x] Update `/api/riot-webhook` route (simulator and parser) to extract expanded player stats
+- [x] Update Admin Dashboard client-side simulator payload in `src/app/admin/page.js`
+- [x] Redesign `MatchStatsModal.js` with tabs: Scoreboard, Combat Charts, Utility & Vision, Team Comparison
+- [x] Verify build with `npm run build`
+- [ ] Test importing stats or triggering simulation

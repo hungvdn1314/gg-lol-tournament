@@ -93,6 +93,7 @@ export async function POST(request) {
       playerName: p.riotIdGameName || p.summonerName,
       teamId: p.teamId,
       champion: p.championName,
+      win: p.win,
       kills: p.kills,
       deaths: p.deaths,
       assists: p.assists,
@@ -100,6 +101,18 @@ export async function POST(request) {
       cs: p.totalMinionsKilled + p.neutralMinionsKilled,
       vision: p.visionScore,
       damageDealt: p.totalDamageDealtToChampions,
+      damageTaken: p.totalDamageTaken,
+      healing: p.totalHeal,
+      tripleKills: p.tripleKills || 0,
+      quadraKills: p.quadraKills || 0,
+      pentaKills: p.pentaKills || 0,
+      firstBlood: p.firstBloodKill || p.firstBloodAssist || false,
+      controlWards: p.visionWardsBoughtInGame || 0,
+      wardsPlaced: p.wardsPlaced || 0,
+      wardsKilled: p.wardsKilled || 0,
+      turretsKilled: p.turretKills || 0,
+      inhibitorsKilled: p.inhibitorKills || 0,
+      ccDuration: p.totalTimeCCDealt || 0,
       items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5]
     }));
 
