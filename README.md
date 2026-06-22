@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# VNG Corporate LoL Cup 2026 - Tournament Portal
 
-## Getting Started
+This is a premium, esports-themed web portal for managing a company League of Legends tournament. It includes real-time dashboards, standings, schedule calendars, an interactive knockout bracket, post-game scoreboard statistics, and an admin coordinator panel with automatic Riot lobby code generation and webhook simulators.
 
-First, run the development server:
+Built using **Next.js (App Router)** and styled entirely with **Vanilla CSS**, it is designed to be highly responsive for both mobile and desktop screens. It supports both **Firebase Realtime Database** for production hosting and a fallback **Mock Mode (LocalStorage)** for local development and offline previewing.
 
+---
+
+## 🚀 Getting Started
+
+### 1. Installation
+Clone the repository and install the dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/HungVdn/gg-lol-tournament.git
+cd gg-lol-tournament
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Local Environment Setup
+By default, the application runs in **Mock Mode** using the browser's `localStorage` to simulate database records (no Firebase setup required).
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+If you want to connect a live **Firebase Realtime Database & Authentication** service:
+1. Rename `.env.local.example` to `.env.local`.
+2. Enter your Firebase config credentials.
+3. Add your Riot Developer API Key to `RIOT_API_KEY`.
+   *(A valid Riot API Key is pre-configured in `.env.local` for your convenience).*
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Launch Development Server
+Start the local server:
+```bash
+npm run dev
+```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🛡️ Admin Panel & Authentication
+To manage matches, teams, generate Riot tournament codes, and record scores:
+1. Go to the login gate at **[http://localhost:3000/admin](http://localhost:3000/admin)**.
+2. In Mock Mode, use these preloaded mock coordinator credentials:
+   - **Email:** `admin@vng.com`
+   - **Password:** `admin`
+3. Logging in reveals controls to register teams, adjust rosters, modify schedules, and manage scores.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🏆 Key Features & Verification Steps
 
-## Deploy on Vercel
+* **Leaderboard & Stands:** Features Group A and Group B standings tables with automatic tiebreaker sorting (Points > Game Record > Game Wins > Alphabetical). Standing rows slide up or down dynamically on score changes.
+* **Knockout Bracket:** Interactive visual tournament tree connecting Semifinal matches to the Grand Finals and Bronze Match.
+* **Match Scorecard Stats:** Completed matches display an **"Inspect Match Stats"** button opening an overlay dashboard. It pulls official champion portraits and item assets directly from Riot's public CDN, tracking player K/D/A, vision score, objectives, and damage charts.
+* **Lobby Code Generator (Riot API):** Coordinator dashboard allows requesting tournament draft codes dynamically from Riot's servers.
+* **Webhook Simulator:** Simulate post-game match completion events directly inside the admin panel. Triggering it updates scores, saves detailed player telemetry, and updates standings instantly.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 Project Documentation
+Full documentation is committed in the `/docs` folder:
+- **[docs/implementation_plan.md](file:///Users/ma108/Documents/antigravity/busy-bose/docs/implementation_plan.md)**: Architectural structure and database schemas.
+- **[docs/task.md](file:///Users/ma108/Documents/antigravity/busy-bose/docs/task.md)**: Project checklist and completion history.
+- **[docs/walkthrough.md](file:///Users/ma108/Documents/antigravity/busy-bose/docs/walkthrough.md)**: Walkthrough guide and testing scenarios.
