@@ -103,7 +103,7 @@ export default function Home() {
             <Play size={16} fill="currentColor" /> View Schedule
           </Link>
           <Link href="/leaderboard" className="btn btn-secondary">
-            Standings Stand
+            View Standings
           </Link>
         </div>
       </section>
