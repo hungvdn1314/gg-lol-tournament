@@ -1,90 +1,46 @@
-# Implementation Plan - Riot Tournament API Integration
+# Implementation Plan: Riot Match Import Tool
 
-This document details the architectural and code changes to integrate Riot Games' Tournament-v5 endpoints, enabling automatic lobby codes and post-game webhooks.
-
-## User Review Required
-
-> [!IMPORTANT]
-> **Riot Developer Key Access:**
-> - To make real production requests, you must register a **Personal Project** on the [Riot Developer Portal](https://developer.riotgames.com/) and request access to the `Tournament-v5` endpoints.
-> - Because Riot's webhooks require a public URL, they cannot hit `localhost:3000` directly. 
-> - **Local Testing Strategy:** We will add a **"Simulate Webhook"** dashboard in the Admin Panel. This will simulate a webhook call with full mock game telemetry so you can verify the standings update and detailed stats UI locally without needing a live webhook or tunnel (like ngrok).
-
----
-
-## Technical Architecture & Database Updates
-
-### Database Schema Updates
-We will add two new nodes to represent tournament codes and detailed analytics:
-1. `matches/{matchId}/tournamentCode`: String (holds the generated Riot draft code).
-2. `matchDetails/{matchId}`: Deep statistics object populated by the webhook:
-   ```json
-   {
-     "gameDuration": 1820,
-     "teams": {
-       "100": { "winner": true, "bans": ["Teemo", "Zed"], "barons": 1, "dragons": 2, "firstBlood": true },
-       "200": { "winner": false, "bans": ["Yasuo", "Yuumi"], "barons": 0, "dragons": 1, "firstBlood": false }
-     },
-     "participants": [
-       {
-         "playerName": "Faker",
-         "teamId": 100,
-         "champion": "Azir",
-         "kills": 5, "deaths": 1, "assists": 8,
-         "gold": 12400, "cs": 220, "vision": 35,
-         "damageDealt": 28400,
-         "items": [3006, 6655, 3089, 3157, 0, 0]
-       }
-     ]
-   }
-   ```
-
----
+This plan describes how we will implement a Riot Match Import feature. Because Riot's Tournament Stub codes (`STUB-...`) are not accepted by the Vietnam (VN2) game client, players must play regular custom games in the client. This tool allows the administrator to fetch and sync the results of those custom games using any participant's Riot ID.
 
 ## Proposed Changes
 
-### 1. Backend Server Routes (Next.js API)
-#### [NEW] [route.js](file:///Users/ma108/Documents/antigravity/busy-bose/src/app/api/tournament-code/route.js)
-POST endpoint triggered by the Admin Panel to request a tournament code from Riot's endpoint:
-`POST https://americas.api.riotgames.com/lol/tournament/v5/codes`
-It updates the corresponding match in Firebase with the generated code.
-
-#### [NEW] [route.js](file:///Users/ma108/Documents/antigravity/busy-bose/src/app/api/riot-webhook/route.js)
-POST endpoint representing the webhook listener. When Riot sends the match report:
-1. It validates the request header token.
-2. It fetches full match details from the Riot SEA match API:
-   `GET https://sea.api.riotgames.com/lol/match/v5/matches/{matchId}`
-3. It sets the match score and status to "completed" in Firebase.
-4. It saves the deep analytical data into `matchDetails/{matchId}`.
-5. It runs `recalculateLeaderboard()` to update group standings automatically.
+### 1. Backend Import Route
+#### [NEW] [route.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/api/riot-import/route.js)
+We will create a new API route `POST /api/riot-import` that:
+1. Receives the `matchId` and `playerRiotId` (e.g. `IrrationaL\u8903\u5b50#1337`).
+2. Looks up the player's account details on `asia.api.riotgames.com` to retrieve their `puuid`.
+3. Fetches the player's 5 most recent custom games from `sea.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?count=5`.
+4. Retrieves the latest match details from `sea.api.riotgames.com/lol/match/v5/matches/{matchId}`.
+5. Maps the game's metrics (winner, game duration, champion, kills/deaths/assists, damage dealt, creep score, vision, items, team objectives).
+6. Updates the database (LocalStorage in mock mode, Firebase in production) with the score, match details, bracket advancement, and triggers standings recalculation.
 
 ---
 
-### 2. Frontend Updates & UI
-#### [MODIFY] [page.js](file:///Users/ma108/Documents/antigravity/busy-bose/src/app/schedule/page.js)
-- If a match is scheduled and has a `tournamentCode`, show a **"Copy Invite Code"** button.
-- If a match is completed and has a `matchDetails` record, show an **"Inspect Match Stats"** button. Clicking this will expand to show a detailed esports post-game card (showing champion picks, items purchased, damage-dealt comparison charts, and team objectives).
-
-#### [MODIFY] [page.js](file:///Users/ma108/Documents/antigravity/busy-bose/src/app/admin/page.js)
-- Add a **"Riot Integration"** tab.
-- Allow the admin to register the Provider ID and Tournament ID (Step 3.1) and generate tournament codes.
-- Add a **"Simulate Riot Webhook"** dashboard. Clicking this sends mock game results (featuring typical stats and champion lineups) directly to `/api/riot-webhook` to test the entire processing pipeline locally.
-
-#### [MODIFY] [db.js](file:///Users/ma108/Documents/antigravity/busy-bose/src/lib/db.js)
-Add helper functions to fetch/save `matchDetails`.
+### 2. Admin UI Updates
+#### [MODIFY] [page.js](file:///c:/Users/Admin/Documents/GitHub/gg-lol-tournament/src/app/admin/page.js)
+We will add a new sub-tab under "Riot Tournament API" called **Manual Riot Match Sync**:
+* Displays input fields for:
+  - **Select Match:** A dropdown of scheduled/live matches.
+  - **Player Riot ID:** E.g., `IrrationaL\u8903\u5b50#1337`.
+* Displays a **"Fetch & Sync Match Stats"** button.
+* Includes status logs and error handling notifications (e.g., "Match fetched successfully!", "Account not found", etc.).
 
 ---
+
+### 3. Local Environment Configurations
+* Verify the fallback code path handles the case when Firebase is offline (saves match data to LocalStorage client-side).
 
 ## Verification Plan
 
-### Automated Tests
-- Check that `npm run build` compiles with the new API routes.
+### Automated Verification
+* Run `npm run build` to verify there are no Turbopack build or route errors.
 
 ### Manual Verification
-1. Open the Admin Panel, select the **Riot Integration** tab, and enter a placeholder developer token.
-2. Generate a code for a scheduled match. Verify it is saved and shown as a copyable badge in the schedule page.
-3. Open the **Simulate Webhook** dashboard and click "Simulate Match Complete".
-4. Verify that:
-   - The match updates to "completed" with the correct score.
-   - Standings are recalculated and teams adjust on the Leaderboard.
-   - The Schedule page now displays the **"Inspect Match Stats"** button, showing player metrics, champion icons, and items.
+1. Open the Admin Panel (`/admin`) and select the **Riot Tournament API** tab.
+2. In the "Manual Riot Match Sync" section, select a scheduled match (e.g. *T1 Dynasty vs Gen.G Legends*).
+3. Input player Riot ID `IrrationaL\u8903\u5b50#1337`.
+4. Click **Fetch & Sync Match Stats**.
+5. Verify that:
+   - The match status changes to `completed`.
+   - The standings table on the Leaderboard recalculates.
+   - The Schedule page shows **Inspect Match Stats** with the actual game details (duration, champion picks, CS, items, visual damage bars) from your real game!

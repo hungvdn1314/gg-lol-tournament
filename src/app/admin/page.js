@@ -36,6 +36,11 @@ export default function Admin() {
   const [simulatedWinnerSide, setSimulatedWinnerSide] = useState(100);
   const [simulating, setSimulating] = useState(false);
 
+  // Riot Match Import state
+  const [selectedMatchForImport, setSelectedMatchForImport] = useState("");
+  const [importPlayerRiotId, setImportPlayerRiotId] = useState("");
+  const [importing, setImporting] = useState(false);
+
   // Form State
   const [configForm, setConfigForm] = useState({ title: "", date: "", venue: "", description: "", providerId: "", tournamentId: "" });
   const [teamForm, setTeamForm] = useState({ id: "", name: "", logo: "", group: "A", players: [
@@ -265,6 +270,91 @@ export default function Admin() {
       alert("Error running simulation: " + e.message);
     } finally {
       setSimulating(false);
+    }
+  };
+
+  const handleImportRiotMatch = async (matchId, playerRiotId) => {
+    if (!matchId) return alert("Please select a match to sync.");
+    if (!playerRiotId || !playerRiotId.includes("#")) return alert("Please enter a valid player Riot ID in the format Name#Tag.");
+    
+    setImporting(true);
+    try {
+      const response = await fetch("/api/riot-import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matchId, playerRiotId })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch match details");
+      }
+      
+      if (isMockMode) {
+        console.log("Mock Mode: Writing imported game details to localStorage.");
+        const match = matches[matchId];
+        if (!match) throw new Error("Match not found in local state");
+        
+        let scoreA = match.scoreA || 0;
+        let scoreB = match.scoreB || 0;
+        
+        if (data.winnerSide === 100) {
+          scoreA += 1;
+        } else {
+          scoreB += 1;
+        }
+        
+        const targetWins = Math.ceil(match.bestOf / 2);
+        let status = "live";
+        let winnerId = null;
+        
+        if (scoreA >= targetWins) {
+          status = "completed";
+          winnerId = match.teamAId;
+        } else if (scoreB >= targetWins) {
+          status = "completed";
+          winnerId = match.teamBId;
+        }
+        
+        const updatedMatch = {
+          ...match,
+          scoreA,
+          scoreB,
+          status,
+          winnerId
+        };
+        
+        const { saveMatchDetails } = await import("@/lib/db");
+        await saveMatch(updatedMatch);
+        await saveMatchDetails(matchId, data.matchDetails);
+        
+        if (status === "completed" && match.type === "knockout") {
+          if (matchId === "match-semi1") {
+            const finalMatch = matches["match-final"];
+            if (finalMatch) { finalMatch.teamAId = winnerId; await saveMatch(finalMatch); }
+            const thirdMatch = matches["match-third"];
+            if (thirdMatch) { thirdMatch.teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
+          } else if (matchId === "match-semi2") {
+            const finalMatch = matches["match-final"];
+            if (finalMatch) { finalMatch.teamBId = winnerId; await saveMatch(finalMatch); }
+            const thirdMatch = matches["match-third"];
+            if (thirdMatch) { thirdMatch.teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
+          }
+        }
+        
+        await recalculateLeaderboard();
+        alert(`Successfully imported match! Winner of this game: ${data.winnerSide === 100 ? "Blue Side" : "Red Side"}. Stands and stats updated.`);
+      } else {
+        alert(`Successfully imported match! Winner of this game: ${data.winnerSide === 100 ? "Blue Side" : "Red Side"}. Firebase database updated.`);
+      }
+      
+      setImportPlayerRiotId("");
+      setSelectedMatchForImport("");
+    } catch (e) {
+      alert("Error importing game details: " + e.message);
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -1043,6 +1133,58 @@ export default function Admin() {
                   style={{ display: "flex", gap: "0.5rem" }}
                 >
                   {codeGenerating ? "Requesting..." : "Generate Invite Code"}
+                </button>
+              </div>
+
+              {/* Manual Riot Match Sync */}
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+                Manual Riot Match Sync
+              </h2>
+              <div className="card" style={{ marginBottom: "3rem", border: "1px solid var(--border-dark)" }}>
+                <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "1rem", marginBottom: "1.5rem", fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                  <Info size={18} style={{ color: "var(--primary-gold)", flexShrink: 0, marginTop: "0.1rem" }} />
+                  <div>
+                    <strong>Riot ID Synchronization:</strong><br />
+                    Since custom games played under tournament stub codes might not trigger webhooks on regional servers, you can play standard Custom Games (Tournament Draft mode) in the client, then sync them here. Enter the Riot ID of any player who participated in the match.
+                  </div>
+                </div>
+
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>Select Target Match</label>
+                    <select
+                      className="form-control"
+                      value={selectedMatchForImport}
+                      onChange={(e) => setSelectedMatchForImport(e.target.value)}
+                    >
+                      <option value="">-- Select Scheduled/Live Match --</option>
+                      {Object.values(matches)
+                        .filter(m => m.status !== "completed")
+                        .map(m => (
+                          <option key={m.id} value={m.id}>
+                            {teams[m.teamAId]?.name || "TBD"} vs {teams[m.teamBId]?.name || "TBD"} ({m.stage})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Participant's Riot ID</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="e.g. IrrationaL餃子#1337"
+                      value={importPlayerRiotId}
+                      onChange={(e) => setImportPlayerRiotId(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleImportRiotMatch(selectedMatchForImport, importPlayerRiotId)}
+                  className="btn btn-secondary"
+                  disabled={importing || !selectedMatchForImport || !importPlayerRiotId}
+                  style={{ display: "flex", gap: "0.5rem" }}
+                >
+                  {importing ? "Fetching & Syncing..." : "Sync Match Stats"}
                 </button>
               </div>
 

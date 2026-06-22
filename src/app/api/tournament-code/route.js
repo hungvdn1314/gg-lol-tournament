@@ -15,7 +15,9 @@ export async function POST(request) {
     // Default tournamentId fallback if not registered yet
     const tId = tournamentId || "7899"; // Default fallback
 
-    const url = `https://americas.api.riotgames.com/lol/tournament/v5/codes?tournamentId=${tId}`;
+    const useStub = process.env.RIOT_USE_STUB === "true";
+    const apiPath = useStub ? "tournament-stub" : "tournament";
+    const url = `https://americas.api.riotgames.com/lol/${apiPath}/v5/codes?tournamentId=${tId}`;
 
     const payload = {
       allowedSummonerIds: [],
