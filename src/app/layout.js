@@ -1,11 +1,17 @@
-import { Outfit } from "next/font/google";
+import { Russo_One, Chakra_Petch } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 
-const outfit = Outfit({
+const russoOne = Russo_One({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-outfit",
+  weight: "400",
+  variable: "--font-russo-one",
+});
+
+const chakraPetch = Chakra_Petch({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-chakra-petch",
 });
 
 export const metadata = {
@@ -20,7 +26,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={outfit.variable}>
+    <html lang="en" className={`${russoOne.variable} ${chakraPetch.variable}`}>
       <body>
         <Header />
         

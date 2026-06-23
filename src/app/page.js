@@ -89,11 +89,11 @@ export default function Home() {
         
         <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "2rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.95rem" }}>
-            <Calendar size={18} className="text-primary-gold" style={{ color: "#E4B33C" }} />
+            <Calendar size={18} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
             <span>{config.date}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.95rem" }}>
-            <MapPin size={18} className="text-primary-gold" style={{ color: "#E4B33C" }} />
+            <MapPin size={18} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
             <span>{config.venue}</span>
           </div>
         </div>

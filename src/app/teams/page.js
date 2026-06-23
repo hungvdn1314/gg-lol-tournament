@@ -120,7 +120,7 @@ export default function Teams() {
                 <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
                   <span className="hero-badge" style={{ margin: 0, fontSize: "0.75rem" }}>Group {selectedTeam.group} Standings</span>
                   <span style={{ color: "var(--text-muted)", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                    <Medal size={16} style={{ color: "#E4B33C" }} />
+                    <Medal size={16} style={{ color: "var(--primary-gold)" }} />
                     Points: <strong>{selectedTeam.stats?.points || 0}</strong>
                   </span>
                 </div>

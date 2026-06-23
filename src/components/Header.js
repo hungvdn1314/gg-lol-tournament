@@ -55,7 +55,7 @@ export default function Header() {
     <header className="app-header">
       <div className="header-container">
         <Link href="/" className="logo-section">
-          <Trophy size={28} className="text-primary-gold" style={{ color: "#E4B33C" }} />
+          <Trophy size={28} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
           <h1>GG LoL Cup</h1>
         </Link>
 
