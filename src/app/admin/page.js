@@ -1295,45 +1295,55 @@ export default function Admin() {
                                     <div>
                                       <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", textTransform: "uppercase" }}>Select Telemetry to Sync into Game {i + 1}</label>
                                       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "300px", overflowY: "auto" }}>
-                                        {recentMatches.map((rm) => (
-                                          <div 
-                                            key={rm.matchId} 
-                                            style={{ 
-                                              display: "flex", 
-                                              alignItems: "center", 
-                                              justifyContent: "space-between", 
-                                              padding: "0.75rem", 
-                                              backgroundColor: "var(--bg-secondary)", 
-                                              border: "1px solid var(--border-dark)",
-                                              borderRadius: "4px" 
-                                            }}
-                                          >
-                                            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                                              <img 
-                                                src={`https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${rm.champion.replace(/[^a-zA-Z0-9]/g, "")}.png`} 
-                                                alt={rm.champion} 
-                                                style={{ width: "32px", height: "32px", borderRadius: "4px" }} 
-                                                onError={(e) => { e.target.src = "https://placehold.co/32x32" }}
-                                              />
-                                              <div>
-                                                <div style={{ fontWeight: "bold", color: rm.win ? "var(--primary-gold-bright)" : "var(--text-secondary)" }}>
-                                                  {rm.win ? "VICTORY" : "DEFEAT"} - {rm.champion}
-                                                </div>
-                                                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                                                  {Math.floor(rm.gameDuration / 60)}:{(rm.gameDuration % 60).toString().padStart(2, "0")} &bull; KDA: {rm.kills}/{rm.deaths}/{rm.assists}
+                                        {recentMatches.map((rm) => {
+                                          const getQueueType = (id) => {
+                                            if (id === 450) return "ARAM";
+                                            if (id === 420) return "Ranked Solo";
+                                            if (id === 440) return "Ranked Flex";
+                                            if (id === 400 || id === 430) return "Normal";
+                                            if (id === 700) return "Clash";
+                                            return "Match";
+                                          };
+                                          
+                                          return (
+                                            <div 
+                                              key={rm.matchId} 
+                                              style={{ 
+                                                display: "flex", 
+                                                alignItems: "center", 
+                                                justifyContent: "space-between", 
+                                                padding: "0.75rem", 
+                                                backgroundColor: "var(--bg-secondary)", 
+                                                border: "1px solid var(--border-dark)",
+                                                borderRadius: "4px" 
+                                              }}
+                                            >
+                                              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                                                <img 
+                                                  src={`https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${rm.champion.replace(/[^a-zA-Z0-9]/g, "")}.png`} 
+                                                  alt={rm.champion} 
+                                                  style={{ width: "32px", height: "32px", borderRadius: "4px" }} 
+                                                  onError={(e) => { e.target.src = "https://placehold.co/32x32" }}
+                                                />
+                                                <div>
+                                                  <div style={{ fontWeight: "bold", color: rm.win ? "var(--primary-gold-bright)" : "var(--text-secondary)" }}>
+                                                    {rm.win ? "VICTORY" : "DEFEAT"} - {rm.champion} <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: "0.5rem", fontWeight: "normal" }}>({getQueueType(rm.queueId)})</span>
+                                                  </div>
+                                                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                                    {Math.floor(rm.gameDuration / 60)}:{(rm.gameDuration % 60).toString().padStart(2, "0")} &bull; KDA: {rm.kills}/{rm.deaths}/{rm.assists}
+                                                  </div>
                                                 </div>
                                               </div>
+                                              <button
+                                                onClick={() => handleImportRiotMatch(selectedMatchForImport, rm.matchId, i)}
+                                                className="btn btn-primary"
+                                                disabled={importing}
+                                              >
+                                                {importing ? "..." : "Sync"}
+                                              </button>
                                             </div>
-                                            <button
-                                              onClick={() => handleImportRiotMatch(selectedMatchForImport, rm.matchId, i)}
-                                              className="btn btn-primary"
-                                              disabled={importing}
-                                              style={{ padding: "0.4rem 0.8rem", fontSize: "0.75rem" }}
-                                            >
-                                              {importing ? "Syncing..." : "Sync to Game"}
-                                            </button>
-                                          </div>
-                                        ))}
+                                          )
+                                        })}
                                       </div>
                                     </div>
                                   )}

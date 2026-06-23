@@ -38,8 +38,8 @@ export async function POST(request) {
     const account = await accountRes.json();
     const puuid = account.puuid;
 
-    // 2. Fetch last 5 matches
-    const matchesUrl = `https://sea.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=5`;
+    // 2. Fetch last 15 matches
+    const matchesUrl = `https://sea.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=15`;
     const matchesRes = await fetch(matchesUrl, {
       headers: { "X-Riot-Token": apiKey }
     });
