@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Users, Medal, Swords, Calendar } from "lucide-react";
 import { subscribeToData } from "@/lib/db";
+import { LoLMinion, CrossedSwords, SummonersCup, RoleTop, RoleJungle, RoleMid, RoleADC, RoleSupport } from "@/components/Icons";
 
 export default function Teams() {
   const [teams, setTeams] = useState({});
@@ -32,11 +32,11 @@ export default function Teams() {
   const selectedTeam = selectedTeamId ? teams[selectedTeamId] : null;
 
   const roleIcons = {
-    Top: "🛡️",
-    Jungle: "🌲",
-    Mid: "🔥",
-    ADC: "🏹",
-    Support: "🛡️"
+    Top: <RoleTop size={14} />,
+    Jungle: <RoleJungle size={14} />,
+    Mid: <RoleMid size={14} />,
+    ADC: <RoleADC size={14} />,
+    Support: <RoleSupport size={14} />
   };
 
   const ROLE_ORDER = {
@@ -135,7 +135,7 @@ export default function Teams() {
                 <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
                   <span className="hero-badge" style={{ margin: 0, fontSize: "0.75rem" }}>Group {selectedTeam.group} Standings</span>
                   <span style={{ color: "var(--text-muted)", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                    <Medal size={16} style={{ color: "var(--primary-gold)" }} />
+                    <SummonersCup size={16} style={{ color: "var(--primary-gold)" }} />
                     Points: <strong>{selectedTeam.stats?.points || 0}</strong>
                   </span>
                 </div>
@@ -151,7 +151,7 @@ export default function Teams() {
             {/* Active Roster */}
             <div>
               <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", marginBottom: "1.5rem", color: "var(--primary-gold)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Users size={18} /> Active Roster
+                <LoLMinion size={18} /> Active Roster
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 {selectedTeam.players && selectedTeam.players.length > 0 ? (
@@ -164,7 +164,7 @@ export default function Teams() {
                     >
                       <div style={{ fontWeight: "700", color: "var(--text-primary)" }}>{player.name}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "var(--primary-gold-bright)", fontWeight: "600", backgroundColor: "rgba(228,179,60,0.05)", padding: "0.25rem 0.75rem", borderRadius: "20px", border: "1px solid rgba(228,179,60,0.1)" }}>
-                        <span>{roleIcons[player.role] || "⚔️"}</span>
+                        <span>{roleIcons[player.role] || <CrossedSwords size={14} />}</span>
                         <span>{player.role}</span>
                       </div>
                     </div>
@@ -178,7 +178,7 @@ export default function Teams() {
             {/* Team Statistics */}
             <div>
               <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", marginBottom: "1.5rem", color: "var(--primary-gold)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Swords size={18} /> Team Statistics
+                <CrossedSwords size={18} /> Team Statistics
               </h3>
               <div className="card" style={{ backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-dark)" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>

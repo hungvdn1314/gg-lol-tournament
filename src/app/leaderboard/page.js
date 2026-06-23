@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Award, Trophy, Info } from "lucide-react";
+import { Award, Info } from "lucide-react";
+import { SummonersCup } from "@/components/Icons";
 import { subscribeToData } from "@/lib/db";
 
 export default function Leaderboard() {
@@ -58,7 +59,7 @@ export default function Leaderboard() {
       {teamList.length >= 3 && (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "4rem" }}>
           <h2 style={{ textTransform: "uppercase", fontSize: "1.2rem", letterSpacing: "0.05em", color: "var(--primary-gold)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <Trophy size={20} /> Summoner Ranks
+            <SummonersCup size={20} /> Summoner Ranks
           </h2>
           
           <div className="podium-container">
@@ -82,7 +83,7 @@ export default function Leaderboard() {
             {top1 && (
               <div className="podium-column podium-1">
                 <div style={{ position: "relative" }}>
-                  <Trophy size={36} style={{ color: "var(--primary-gold)", position: "absolute", top: "-30px", left: "50%", transform: "translateX(-50%)" }} />
+                  <SummonersCup size={36} style={{ color: "var(--primary-gold)", position: "absolute", top: "-30px", left: "50%", transform: "translateX(-50%)" }} />
                   <img src={top1.logo || "https://placehold.co/100x100"} alt={top1.name} className="podium-avatar" />
                 </div>
                 <div style={{ textAlign: "center", marginBottom: "0.5rem", fontWeight: "700", width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--primary-gold-bright)" }}>

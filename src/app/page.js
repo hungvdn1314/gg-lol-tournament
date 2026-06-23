@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Calendar, MapPin, Play, Clock, ChevronRight } from "lucide-react";
+import { Calendar, Play, ChevronRight } from "lucide-react";
+import { LoLWard, ZhonyaHourglass } from "@/components/Icons";
 import { subscribeToData } from "@/lib/db";
 
 export default function Home() {
@@ -93,7 +94,7 @@ export default function Home() {
             <span>{config.date}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.95rem" }}>
-            <MapPin size={18} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
+            <LoLWard size={18} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
             <span>{config.venue}</span>
           </div>
         </div>
@@ -159,7 +160,7 @@ export default function Home() {
           {nextMatch && (
             <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "300px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
-                <Clock size={14} /> Next Match Countdown
+                <ZhonyaHourglass size={14} /> Next Match Countdown
               </div>
               <h3 style={{ fontSize: "1.1rem", marginBottom: "1.5rem", textAlign: "center" }}>
                 {teams[nextMatch.teamAId]?.name || "TBD"} vs {teams[nextMatch.teamBId]?.name || "TBD"}

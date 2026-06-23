@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, Medal, Award, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { SummonersCup } from "@/components/Icons";
 import { subscribeToData } from "@/lib/db";
 
 export default function Bracket() {
@@ -143,7 +144,7 @@ export default function Bracket() {
               {/* Grand Final Node */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--primary-gold)", fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase" }}>
-                  <Award size={14} /> Winner Receives Cup
+                  <SummonersCup size={14} /> Winner Receives Cup
                 </div>
                 {renderMatchNode("match-final", "Grand Final")}
               </div>

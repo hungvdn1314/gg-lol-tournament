@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Award, Eye, Swords, Shield, BarChart2, Check, Copy } from "lucide-react";
+import { X, Award, Eye, BarChart2, Check, Copy } from "lucide-react";
+import { HextechCrest, CrossedSwords } from "@/components/Icons";
 import { subscribeToMatchDetails } from "@/lib/db";
 
 export default function MatchStatsModal({ match, teams, onClose }) {
@@ -140,10 +141,10 @@ export default function MatchStatsModal({ match, teams, onClose }) {
             {/* Modal Navigation Tabs */}
             <div style={{ display: "flex", gap: "0.5rem", borderBottom: "1px solid var(--border-dark)", marginBottom: "1.5rem", overflowX: "auto", paddingBottom: "0.5rem" }}>
               {[
-                { id: "scoreboard", label: "Scoreboard", icon: <Swords size={14} /> },
+                { id: "scoreboard", label: "Scoreboard", icon: <CrossedSwords size={14} /> },
                 { id: "charts", label: "Combat Charts", icon: <BarChart2 size={14} /> },
                 { id: "utility", label: "Utility & Vision", icon: <Eye size={14} /> },
-                { id: "team", label: "Team Objectives", icon: <Shield size={14} /> }
+                { id: "team", label: "Team Objectives", icon: <HextechCrest size={14} /> }
               ].map(tab => (
                 <button
                   key={tab.id}

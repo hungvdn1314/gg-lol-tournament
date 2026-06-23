@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, Menu, X, Shield, LogOut } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
+import { SummonersCup, HextechCrest } from "@/components/Icons";
 import { isMockMode } from "@/lib/firebase";
 
 export default function Header() {
@@ -55,7 +56,7 @@ export default function Header() {
     <header className="app-header">
       <div className="header-container">
         <Link href="/" className="logo-section">
-          <Trophy size={28} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
+          <SummonersCup size={28} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
           <h1>GG LoL Cup</h1>
         </Link>
 
@@ -73,7 +74,7 @@ export default function Header() {
           {isAdminLoggedIn ? (
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginLeft: "1rem" }}>
               <Link href="/admin" className="btn btn-secondary" style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem" }}>
-                <Shield size={14} /> Admin
+                <HextechCrest size={14} /> Admin
               </Link>
               <button 
                 onClick={handleLogout} 
@@ -120,7 +121,7 @@ export default function Header() {
                   style={{ width: "100%", justifyContent: "center" }}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Shield size={16} /> Admin Panel
+                  <HextechCrest size={16} /> Admin Panel
                 </Link>
                 <button
                   onClick={() => {

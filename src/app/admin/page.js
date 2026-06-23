@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Shield, Settings, Users, Calendar, Swords, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info 
+  Settings, Calendar, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info 
 } from "lucide-react";
+import { HextechCrest, LoLMinion, CrossedSwords } from "@/components/Icons";
 import { isMockMode, auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { 
@@ -521,7 +522,7 @@ export default function Admin() {
       <div className="container" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <div className="card" style={{ width: "100%", maxWidth: "400px", padding: "2.5rem" }}>
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-            <Shield size={48} style={{ color: "var(--primary-gold)", margin: "0 auto 1rem auto" }} />
+            <HextechCrest size={48} style={{ color: "var(--primary-gold)", margin: "0 auto 1rem auto" }} />
             <h2 style={{ textTransform: "uppercase" }}>Admin Panel Login</h2>
             <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
               Authenticate to manage teams, schedule matches, and post live score adjustments.
@@ -602,7 +603,7 @@ export default function Admin() {
             onClick={() => { setActiveTab("teams"); setScoreManagingMatch(null); }}
             className={`admin-nav-item ${activeTab === "teams" ? "active" : ""}`}
           >
-            <Users size={18} /> Manage Teams ({Object.keys(teams).length})
+            <LoLMinion size={18} /> Manage Teams ({Object.keys(teams).length})
           </button>
           <button 
             onClick={() => { setActiveTab("matches"); setScoreManagingMatch(null); }}
@@ -614,13 +615,13 @@ export default function Admin() {
             onClick={() => { setActiveTab("scores"); setScoreManagingMatch(null); }}
             className={`admin-nav-item ${activeTab === "scores" ? "active" : ""}`}
           >
-            <Swords size={18} /> Live Score Center
+            <CrossedSwords size={18} /> Live Score Center
           </button>
           <button 
             onClick={() => { setActiveTab("riot"); setScoreManagingMatch(null); }}
             className={`admin-nav-item ${activeTab === "riot" ? "active" : ""}`}
           >
-            <Shield size={18} /> Riot Tournament API
+            <HextechCrest size={18} /> Riot Tournament API
           </button>
         </aside>
 

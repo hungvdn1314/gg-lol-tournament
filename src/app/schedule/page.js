@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Calendar, Swords, Info, Copy, Check, Search, X } from "lucide-react";
+import { Calendar, Info, Copy, Check, Search, X } from "lucide-react";
 import { subscribeToData } from "@/lib/db";
+import { ZhonyaHourglass, CrossedSwords } from "@/components/Icons";
 import MatchStatsModal from "@/components/MatchStatsModal";
 
 export default function Schedule() {
@@ -190,7 +191,7 @@ export default function Schedule() {
                   <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.8rem", color: "var(--text-muted)" }}>
                     <Calendar size={14} />
                     <span>{new Date(match.scheduledTime).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                    <Clock size={14} style={{ marginLeft: "0.5rem" }} />
+                    <ZhonyaHourglass size={14} style={{ marginLeft: "0.5rem" }} />
                     <span>{new Date(match.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   
@@ -273,7 +274,7 @@ export default function Schedule() {
                       className="btn btn-secondary"
                       style={{ fontSize: "0.8rem", padding: "0.4rem 1rem", display: "flex", gap: "0.5rem", alignItems: "center" }}
                     >
-                      <Swords size={14} /> Inspect Match Stats
+                      <CrossedSwords size={14} /> Inspect Match Stats
                     </button>
                   </div>
                 )}
