@@ -52,11 +52,11 @@ export default function Admin() {
   // Form State
   const [configForm, setConfigForm] = useState({ title: "", date: "", venue: "", description: "", providerId: "", tournamentId: "" });
   const [teamForm, setTeamForm] = useState({ id: "", name: "", logo: "", group: "A", players: [
-    { name: "", role: "Top" },
-    { name: "", role: "Jungle" },
-    { name: "", role: "Mid" },
-    { name: "", role: "ADC" },
-    { name: "", role: "Support" }
+    { role: "Top", name: "", riotId: "" },
+    { role: "Jungle", name: "", riotId: "" },
+    { role: "Mid", name: "", riotId: "" },
+    { role: "ADC", name: "", riotId: "" },
+    { role: "Support", name: "", riotId: "" }
   ]});
   const [matchForm, setMatchForm] = useState({ 
     id: "", type: "group", stage: "Group Stage", group: "A", 
@@ -265,33 +265,6 @@ export default function Admin() {
         await saveMatch(updatedMatch);
         await saveMatchDetails(matchId, mockDetails);
 
-        // --- News Handlers ---
-  const handleSaveNews = () => {
-    if (!newsForm.title || !newsForm.content) return alert("Title and content are required");
-    const newsItem = {
-      ...newsForm,
-      id: newsForm.id || `news-${Date.now()}`,
-      timestamp: newsForm.id ? news[newsForm.id].timestamp : Date.now()
-    };
-    saveNews(newsItem);
-    setNewsForm({ id: "", title: "", content: "", category: "Announcement" });
-  };
-
-  const handleEditNews = (item) => {
-    setNewsForm(item);
-    window.scrollTo(0, 0);
-  };
-
-  const handleDeleteNews = (id) => {
-    if (confirm("Are you sure you want to delete this announcement?")) {
-      deleteNews(id);
-    }
-  };
-
-  // ==========================================
-  // RENDER UI
-  // ==========================================
-
         // Advance knockout bracket
         if (status === "completed" && match.type === "knockout") {
           if (matchId === "match-semi1") {
@@ -473,11 +446,11 @@ export default function Admin() {
     try {
       await saveTeam(teamData);
       setTeamForm({ id: "", name: "", logo: "", group: "A", players: [
-        { name: "", role: "Top" },
-        { name: "", role: "Jungle" },
-        { name: "", role: "Mid" },
-        { name: "", role: "ADC" },
-        { name: "", role: "Support" }
+        { role: "Top", name: "", riotId: "" },
+        { role: "Jungle", name: "", riotId: "" },
+        { role: "Mid", name: "", riotId: "" },
+        { role: "ADC", name: "", riotId: "" },
+        { role: "Support", name: "", riotId: "" }
       ]});
       setEditingTeam(null);
       alert("Team saved successfully!");
@@ -540,6 +513,29 @@ export default function Admin() {
       } catch (err) {
         alert("Error deleting match: " + err.message);
       }
+    }
+  };
+
+  // News Handlers
+  const handleSaveNews = () => {
+    if (!newsForm.title || !newsForm.content) return alert("Title and content are required");
+    const newsItem = {
+      ...newsForm,
+      id: newsForm.id || `news-${Date.now()}`,
+      timestamp: newsForm.id ? news[newsForm.id].timestamp : Date.now()
+    };
+    saveNews(newsItem);
+    setNewsForm({ id: "", title: "", content: "", category: "Announcement" });
+  };
+
+  const handleEditNews = (item) => {
+    setNewsForm(item);
+    window.scrollTo(0, 0);
+  };
+
+  const handleDeleteNews = (id) => {
+    if (confirm("Are you sure you want to delete this announcement?")) {
+      deleteNews(id);
     }
   };
 
@@ -848,18 +844,31 @@ export default function Admin() {
                   {teamForm.players.map((player, idx) => (
                     <div key={idx} style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
                       <span style={{ fontSize: "0.85rem", width: "80px", color: "var(--primary-gold)" }}>{player.role}:</span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Player Name / In-Game Name"
-                        value={player.name}
-                        onChange={(e) => {
-                          const players = [...teamForm.players];
-                          players[idx].name = e.target.value;
-                          setTeamForm({ ...teamForm, players });
-                        }}
-                        required
-                      />
+                      <div style={{ display: "flex", gap: "1rem", flex: 1 }}>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Player Name"
+                          value={player.name}
+                          onChange={(e) => {
+                            const players = [...teamForm.players];
+                            players[idx].name = e.target.value;
+                            setTeamForm({ ...teamForm, players });
+                          }}
+                          required
+                        />
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Riot ID (e.g. Faker#KR1)"
+                          value={player.riotId || ""}
+                          onChange={(e) => {
+                            const players = [...teamForm.players];
+                            players[idx].riotId = e.target.value;
+                            setTeamForm({ ...teamForm, players });
+                          }}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -875,11 +884,11 @@ export default function Admin() {
                       onClick={() => {
                         setEditingTeam(null);
                         setTeamForm({ id: "", name: "", logo: "", group: "A", players: [
-                          { name: "", role: "Top" },
-                          { name: "", role: "Jungle" },
-                          { name: "", role: "Mid" },
-                          { name: "", role: "ADC" },
-                          { name: "", role: "Support" }
+                          { role: "Top", name: "", riotId: "" },
+                          { role: "Jungle", name: "", riotId: "" },
+                          { role: "Mid", name: "", riotId: "" },
+                          { role: "ADC", name: "", riotId: "" },
+                          { role: "Support", name: "", riotId: "" }
                         ]});
                       }}
                     >
@@ -1251,29 +1260,36 @@ export default function Admin() {
                               {/* Sync UI for Selected Game */}
                               {isSelected && (
                                 <div style={{ padding: "1.5rem", borderTop: "1px solid var(--border-dark)" }}>
-                                  <div className="form-group" style={{ marginBottom: "1.5rem" }}>
-                                    <label>Participant's Riot ID</label>
-                                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                                      <input 
-                                        type="text" 
-                                        className="form-control" 
-                                        placeholder="e.g. Faker#KR1"
-                                        value={importPlayerRiotId}
-                                        onChange={(e) => setImportPlayerRiotId(e.target.value)}
-                                        style={{ flex: 1 }}
-                                      />
-                                      <button 
-                                        onClick={() => handleFetchRecentMatches(importPlayerRiotId)}
-                                        className="btn btn-secondary"
-                                        disabled={fetchingMatches || !importPlayerRiotId}
-                                      >
-                                        {fetchingMatches ? "Searching..." : "Search"}
-                                      </button>
-                                    </div>
-                                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", display: "block" }}>
-                                      Enter the Riot ID of ANY player who participated in Game {i + 1}.
-                                    </span>
-                                  </div>
+                                  {(() => {
+                                    const teamA = teams[matches[selectedMatchForImport].teamAId];
+                                    const autoSyncRiotId = teamA?.players?.find(p => p.riotId)?.riotId;
+                                    
+                                    return (
+                                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", backgroundColor: "var(--bg-tertiary)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--border-dark)", marginBottom: "1.5rem" }}>
+                                        {autoSyncRiotId ? (
+                                          <>
+                                            <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", textAlign: "center" }}>
+                                              Auto-Sync uses <strong>{teamA.name}</strong>'s saved Riot ID (<span style={{ color: "var(--primary-gold)" }}>{autoSyncRiotId}</span>) to fetch recent matches.
+                                            </div>
+                                            <button 
+                                              className="btn btn-primary" 
+                                              onClick={() => handleFetchRecentMatches(autoSyncRiotId)}
+                                              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+                                              disabled={fetchingMatches}
+                                            >
+                                              <Activity size={16} /> 
+                                              {fetchingMatches ? "Fetching..." : `Fetch Recent Matches`}
+                                            </button>
+                                          </>
+                                        ) : (
+                                          <div style={{ color: "var(--color-danger)", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                            <AlertTriangle size={16} />
+                                            No Riot IDs found for {teamA?.name}. Please edit their Team Roster and add a Riot ID to use Auto-Sync.
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
 
                                   {recentMatches.length > 0 && (
                                     <div>
@@ -1505,7 +1521,7 @@ export default function Admin() {
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.5rem" }}>
                           <span style={{ fontSize: "0.7rem", backgroundColor: "var(--bg-lighter)", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>{item.category}</span>
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{new Date(item.timestamp).toLocaleDateString()}</span>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }} suppressHydrationWarning>{new Date(item.timestamp).toLocaleDateString()}</span>
                         </div>
                         <h4 style={{ margin: "0 0 0.5rem 0", color: "var(--primary-gold)" }}>{item.title}</h4>
                       </div>
