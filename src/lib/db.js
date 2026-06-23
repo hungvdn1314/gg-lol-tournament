@@ -6,9 +6,9 @@ import { ref, get, set, update, remove, onValue } from "firebase/database";
 // ==========================================
 
 const DEFAULT_CONFIG = {
-  title: "VNG Corporate LoL Cup 2026",
+  title: "Gear Games Corporate LoL Cup 2026",
   date: "June 25 - July 5, 2026",
-  venue: "VNG Campus Arena & Online",
+  venue: "Gear Games Arena & Online",
   description: "The annual corporate showdown in Summoner's Rift. Eight departments clash for gold, glory, and the corporate trophy.",
   finalized: false
 };

@@ -29,7 +29,7 @@ We have implemented the **Riot Match Import** tool and expanded the **Match Stat
 ### Step 1: Open the Admin Dashboard
 1. Go to [http://localhost:3000/admin](http://localhost:3000/admin) in your browser.
 2. Log in using the mock credentials:
-   - **Email:** `admin@vng.com`
+   - **Email:** `admin@geargames.com`
    - **Password:** `admin`
 
 ### Step 2: Trigger Webhook Simulation or Import Match

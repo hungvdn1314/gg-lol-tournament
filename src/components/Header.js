@@ -56,7 +56,7 @@ export default function Header() {
       <div className="header-container">
         <Link href="/" className="logo-section">
           <Trophy size={28} className="text-primary-gold" style={{ color: "#E4B33C" }} />
-          <h1>VNG LoL Cup</h1>
+          <h1>GG LoL Cup</h1>
         </Link>
 
         {/* Desktop Nav */}

@@ -1,4 +1,4 @@
-# VNG Corporate LoL Cup 2026 - Tournament Portal
+# Gear Games LoL Cup 2026 - Tournament Portal
 
 This is a premium, esports-themed web portal for managing a company League of Legends tournament. It includes real-time dashboards, standings, schedule calendars, an interactive knockout bracket, post-game scoreboard statistics, and an admin coordinator panel with automatic Riot lobby code generation and webhook simulators.
 
@@ -38,7 +38,7 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 To manage matches, teams, generate Riot tournament codes, and record scores:
 1. Go to the login gate at **[http://localhost:3000/admin](http://localhost:3000/admin)**.
 2. In Mock Mode, use these preloaded mock coordinator credentials:
-   - **Email:** `admin@vng.com`
+   - **Email:** `admin@geargames.com`
    - **Password:** `admin`
 3. Logging in reveals controls to register teams, adjust rosters, modify schedules, and manage scores.
 

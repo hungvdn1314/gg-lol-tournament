@@ -9,7 +9,7 @@ const outfit = Outfit({
 });
 
 export const metadata = {
-  title: "VNG Corporate LoL Cup 2026",
+  title: "Gear Games LoL Cup 2026",
   description: "Web portal for the company League of Legends tournament - live brackets, team standings, and match schedules.",
 };
 
@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
         
         <footer className="app-footer">
           <div className="container footer-content">
-            <p>&copy; 2026 VNG Corporation. All rights reserved.</p>
+            <p>&copy; 2026 Gear Games. All rights reserved.</p>
             <p>This tournament is not affiliated with or sponsored by Riot Games, Inc. or League of Legends Esports.</p>
             <div className="footer-links">
               <a href="/">Home</a>

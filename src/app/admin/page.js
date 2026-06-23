@@ -99,12 +99,12 @@ export default function Admin() {
 
     if (isMockMode) {
       // Mock Auth check
-      if (email === "admin@vng.com" && password === "admin") {
+      if (email === "admin@geargames.com" && password === "admin") {
         localStorage.setItem("lol_tourney_admin_logged_in", "true");
         setIsLoggedIn(true);
         window.dispatchEvent(new Event("admin_auth_changed"));
       } else {
-        setAuthError("Invalid mock credentials. Use admin@vng.com / admin");
+        setAuthError("Invalid mock credentials. Use admin@geargames.com / admin");
       }
       setAuthLoading(false);
     } else {
@@ -533,7 +533,7 @@ export default function Admin() {
               <Info size={16} style={{ flexShrink: 0 }} />
               <div>
                 <strong>Mock Mode Active:</strong> Use the login below:<br />
-                Email: <code>admin@vng.com</code><br />
+                Email: <code>admin@geargames.com</code><br />
                 Password: <code>admin</code>
               </div>
             </div>
