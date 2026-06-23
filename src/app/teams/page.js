@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Users, Medal, Swords, Calendar } from "lucide-react";
 import { subscribeToData } from "@/lib/db";
 
@@ -8,11 +8,18 @@ export default function Teams() {
   const [teams, setTeams] = useState({});
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [groupFilter, setGroupFilter] = useState("all");
+  const rosterRef = useRef(null);
 
   useEffect(() => {
     const unsubTeams = subscribeToData("teams", setTeams);
     return unsubTeams;
   }, []);
+
+  useEffect(() => {
+    if (selectedTeamId && rosterRef.current) {
+      rosterRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [selectedTeamId]);
 
   const teamList = Object.values(teams);
   
@@ -107,7 +114,7 @@ export default function Teams() {
 
       {/* Expanded Team Panel */}
       {selectedTeam && (
-        <div className="card card-gold" style={{ marginTop: "3rem", padding: "2.5rem" }}>
+        <div ref={rosterRef} className="card card-gold" style={{ marginTop: "3rem", padding: "2.5rem", scrollMarginTop: "100px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "2rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "1.5rem", marginBottom: "2rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
               <img
