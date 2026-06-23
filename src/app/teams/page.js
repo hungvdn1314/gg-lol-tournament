@@ -39,6 +39,14 @@ export default function Teams() {
     Support: "🛡️"
   };
 
+  const ROLE_ORDER = {
+    Top: 1,
+    Jungle: 2,
+    Mid: 3,
+    ADC: 4,
+    Support: 5
+  };
+
   return (
     <div className="container">
       <div style={{ textAlign: "center", marginBottom: "3rem" }}>
@@ -147,7 +155,9 @@ export default function Teams() {
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 {selectedTeam.players && selectedTeam.players.length > 0 ? (
-                  selectedTeam.players.map((player, idx) => (
+                  [...selectedTeam.players]
+                    .sort((a, b) => (ROLE_ORDER[a.role] || 99) - (ROLE_ORDER[b.role] || 99))
+                    .map((player, idx) => (
                     <div
                       key={idx}
                       style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-tertiary)", padding: "1rem 1.25rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}

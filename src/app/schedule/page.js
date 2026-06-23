@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Calendar, Swords, Info, Copy, Check } from "lucide-react";
+import { Clock, Calendar, Swords, Info, Copy, Check, Search, X } from "lucide-react";
 import { subscribeToData } from "@/lib/db";
 import MatchStatsModal from "@/components/MatchStatsModal";
 
@@ -12,6 +12,7 @@ export default function Schedule() {
   const [stageFilter, setStageFilter] = useState("all");
   const [selectedStatsMatch, setSelectedStatsMatch] = useState(null);
   const [copiedMatchId, setCopiedMatchId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const unsubMatches = subscribeToData("matches", setMatches);
@@ -37,7 +38,16 @@ export default function Schedule() {
   const filteredMatches = matchList.filter((match) => {
     const statusMatch = statusFilter === "all" || match.status === statusFilter;
     const stageMatch = stageFilter === "all" || match.type === stageFilter;
-    return statusMatch && stageMatch;
+    
+    const teamA = teams[match.teamAId];
+    const teamB = teams[match.teamBId];
+    const query = searchQuery.toLowerCase().trim();
+    
+    const matchesSearch = !query || 
+      (teamA?.name || "").toLowerCase().includes(query) || 
+      (teamB?.name || "").toLowerCase().includes(query);
+      
+    return statusMatch && stageMatch && matchesSearch;
   });
 
   const getStatusBadge = (status) => {
@@ -65,6 +75,33 @@ export default function Schedule() {
         <p style={{ color: "var(--text-secondary)", maxWidth: "600px", margin: "0 auto" }}>
           Track live match progression, review post-game scoreboard analytics, and view upcoming match draft codes.
         </p>
+
+        {/* Search Bar */}
+        <div style={{ maxWidth: "400px", margin: "1.5rem auto 0 auto", position: "relative" }}>
+          <input
+            type="text"
+            placeholder="Search by team name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="form-control"
+            style={{
+              paddingLeft: "2.5rem",
+              paddingRight: "2.5rem",
+              borderColor: "var(--border-dark)",
+              borderRadius: "20px",
+              fontSize: "0.9rem"
+            }}
+          />
+          <Search size={16} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
 
         {/* Filter Toolbar */}
         <div style={{ display: "flex", justifyContent: "center", gap: "1rem", flexWrap: "wrap", marginTop: "2rem" }}>

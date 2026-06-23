@@ -497,6 +497,12 @@ a {
 }
 
 /* Leaderboard Page */
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -504,7 +510,7 @@ a {
 }
 
 .leaderboard-table th, .leaderboard-table td {
-  padding: 1rem;
+  padding: 0.75rem 0.5rem;
   text-align: left;
 }
 
