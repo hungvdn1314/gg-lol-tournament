@@ -168,118 +168,74 @@ export function LoLMinion({ size = 24, className = "", style = {}, ...props }) {
 // 7. Role: Top Lane
 export function RoleTop({ size = 18, className = "", style = {}, ...props }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      style={style}
-      {...props}
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5" />
-      {/* Top lane bar indicator */}
-      <path d="M3 3h7v2H5v5H3V3z" fill="currentColor" stroke="none" />
-      <path d="M3 21L21 3" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" />
-    </svg>
+    <img 
+      src="/roles/Top_icon.svg" 
+      alt="Top Lane" 
+      width={size} 
+      height={size} 
+      className={className} 
+      style={{ filter: "brightness(0) invert(1)", ...style }} 
+      {...props} 
+    />
   );
 }
 
 // 8. Role: Jungle
 export function RoleJungle({ size = 18, className = "", style = {}, ...props }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      style={style}
-      {...props}
-    >
-      <circle cx="12" cy="12" r="9" strokeWidth="1.5" />
-      {/* Foliage/monster claw shape */}
-      <path d="M12 6c0 0-4 3-4 6s2.5 4 4 6c1.5-2 4-3 4-6s-4-6-4-6z" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12" r="1.5" fill="var(--bg-primary)" stroke="none" />
-    </svg>
+    <img 
+      src="/roles/Jungle_icon.svg" 
+      alt="Jungle" 
+      width={size} 
+      height={size} 
+      className={className} 
+      style={{ filter: "brightness(0) invert(1)", ...style }} 
+      {...props} 
+    />
   );
 }
 
 // 9. Role: Mid Lane
 export function RoleMid({ size = 18, className = "", style = {}, ...props }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      style={style}
-      {...props}
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5" />
-      <path d="M3 21L21 3" strokeWidth="1.5" />
-      {/* Highlighted middle diamond */}
-      <path d="M10 12l2-2 2 2-2 2-2-2z" fill="currentColor" stroke="none" />
-    </svg>
+    <img 
+      src="/roles/Middle_icon.svg" 
+      alt="Mid Lane" 
+      width={size} 
+      height={size} 
+      className={className} 
+      style={{ filter: "brightness(0) invert(1)", ...style }} 
+      {...props} 
+    />
   );
 }
 
 // 10. Role: ADC (Bot Lane / Marksman)
 export function RoleADC({ size = 18, className = "", style = {}, ...props }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      style={style}
-      {...props}
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5" />
-      {/* Bottom lane indicator */}
-      <path d="M14 21h7v-7h-2v5h-5v2z" fill="currentColor" stroke="none" />
-      <path d="M3 21L21 3" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" />
-    </svg>
+    <img 
+      src="/roles/Bottom_icon.svg" 
+      alt="Bot Lane" 
+      width={size} 
+      height={size} 
+      className={className} 
+      style={{ filter: "brightness(0) invert(1)", ...style }} 
+      {...props} 
+    />
   );
 }
 
 // 11. Role: Support
 export function RoleSupport({ size = 18, className = "", style = {}, ...props }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      style={style}
-      {...props}
-    >
-      {/* Crest of protection / ward shape */}
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor" stroke="none" />
-      <path d="M12 7v6M9 10h6" stroke="var(--bg-primary)" strokeWidth="1.5" />
-    </svg>
+    <img 
+      src="/roles/Support_icon.svg" 
+      alt="Support" 
+      width={size} 
+      height={size} 
+      className={className} 
+      style={{ filter: "brightness(0) invert(1)", ...style }} 
+      {...props} 
+    />
   );
 }

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Calendar, Play, ChevronRight } from "lucide-react";
-import { LoLWard, ZhonyaHourglass } from "@/components/Icons";
+import { Calendar, ChevronRight } from "lucide-react";
+import { LoLWard, ZhonyaHourglass, CrossedSwords } from "@/components/Icons";
 import { subscribeToData } from "@/lib/db";
 
 export default function Home() {
@@ -90,7 +90,7 @@ export default function Home() {
         
         <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "2rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.95rem" }}>
-            <Calendar size={18} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
+            <ZhonyaHourglass size={18} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
             <span>{config.date}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.95rem" }}>
@@ -101,7 +101,7 @@ export default function Home() {
 
         <div style={{ display: "flex", gap: "1rem" }}>
           <Link href="/schedule" className="btn btn-primary">
-            <Play size={16} fill="currentColor" /> View Schedule
+            <CrossedSwords size={18} fill="currentColor" /> View Schedule
           </Link>
           <Link href="/leaderboard" className="btn btn-secondary">
             View Standings

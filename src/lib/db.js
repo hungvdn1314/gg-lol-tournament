@@ -683,3 +683,38 @@ export function subscribeToMatchDetails(matchId, callback) {
     });
   }
 }
+
+export async function fetchAllMatchDetails() {
+  if (isMockMode) {
+    return getMockStorage("matchDetails", {});
+  } else {
+    try {
+      const dbRef = ref(database, `matchDetails`);
+      const snapshot = await get(dbRef);
+      return snapshot.exists() ? snapshot.val() : {};
+    } catch (e) {
+      console.error(`Firebase fetch error for all matchDetails:`, e);
+      return {};
+    }
+  }
+}
+
+export function subscribeToAllMatchDetails(callback) {
+  if (isMockMode) {
+    callback(getMockStorage("matchDetails", {}));
+    
+    const handler = (newAllDetails) => {
+      callback(newAllDetails || {});
+    };
+    
+    subscribers.matchDetails.push(handler);
+    return () => {
+      subscribers.matchDetails = subscribers.matchDetails.filter(cb => cb !== handler);
+    };
+  } else {
+    const dbRef = ref(database, `matchDetails`);
+    return onValue(dbRef, (snapshot) => {
+      callback(snapshot.exists() ? snapshot.val() : {});
+    });
+  }
+}

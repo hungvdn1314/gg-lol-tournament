@@ -14,59 +14,16 @@ function getRegionalRouting(matchId) {
 
 export async function POST(request) {
   try {
-    const { matchId, playerRiotId } = await request.json();
+    const { riotMatchId } = await request.json();
     const apiKey = process.env.RIOT_API_KEY;
 
-    if (!playerRiotId || !playerRiotId.includes("#")) {
-      return NextResponse.json({ error: "Invalid Riot ID. Format must be Name#Tag." }, { status: 400 });
+    if (!riotMatchId) {
+      return NextResponse.json({ error: "Missing riotMatchId." }, { status: 400 });
     }
 
     if (!apiKey || apiKey === "placeholder") {
       return NextResponse.json({ error: "Riot API Key is not configured." }, { status: 400 });
     }
-
-    const [gameName, tagLine] = playerRiotId.split("#");
-
-    console.log(`Riot Import: Resolving Riot ID ${gameName}#${tagLine}`);
-
-    // 1. Get PUUID from Riot Account API
-    // Account API can be queried on asia.api.riotgames.com or americas.api.riotgames.com
-    const accountUrl = `https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName.trim())}/${tagLine.trim()}`;
-    const accountRes = await fetch(accountUrl, {
-      headers: { "X-Riot-Token": apiKey }
-    });
-
-    if (!accountRes.ok) {
-      const errText = await accountRes.text();
-      console.error(`Account API failed: ${accountRes.status} - ${errText}`);
-      return NextResponse.json({ error: `Riot Account not found: ${accountRes.status}` }, { status: accountRes.status });
-    }
-
-    const account = await accountRes.json();
-    const puuid = account.puuid;
-    console.log(`Riot Import: Found PUUID: ${puuid}`);
-
-    // 2. Fetch custom games list for the PUUID on sea.api.riotgames.com
-    const matchesUrl = `https://sea.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=5`;
-    const matchesRes = await fetch(matchesUrl, {
-      headers: { "X-Riot-Token": apiKey }
-    });
-
-    if (!matchesRes.ok) {
-      const errText = await matchesRes.text();
-      console.error(`Matches API failed: ${matchesRes.status} - ${errText}`);
-      return NextResponse.json({ error: `Could not retrieve match history: ${matchesRes.status}` }, { status: matchesRes.status });
-    }
-
-    const matchIds = await matchesRes.json();
-    console.log(`Riot Import: Found matches:`, matchIds);
-
-    if (!matchIds || matchIds.length === 0) {
-      return NextResponse.json({ error: "No matches found in the player's recent history." }, { status: 404 });
-    }
-
-    // Use the latest match ID
-    const riotMatchId = matchIds[0];
     const regionalRouting = getRegionalRouting(riotMatchId);
     const matchDetailsUrl = `https://${regionalRouting}.api.riotgames.com/lol/match/v5/matches/${riotMatchId}`;
     
@@ -137,75 +94,7 @@ export async function POST(request) {
       participants
     };
 
-    // If NOT in mock mode, save directly to Firebase
-    if (!isMockMode) {
-      const { database: db } = await import("@/lib/firebase");
-      const { ref, get, set } = await import("firebase/database");
-      const { recalculateLeaderboard } = await import("@/lib/db");
-
-      const matchRef = ref(db, `matches/${matchId}`);
-      const matchSnapshot = await get(matchRef);
-
-      if (!matchSnapshot.exists()) {
-        return NextResponse.json({ error: `Match ID ${matchId} not found in database.` }, { status: 404 });
-      }
-
-      const match = matchSnapshot.val();
-      
-      let scoreA = match.scoreA || 0;
-      let scoreB = match.scoreB || 0;
-
-      if (winningTeamSide === 100) {
-        scoreA += 1;
-      } else {
-        scoreB += 1;
-      }
-
-      const targetWins = Math.ceil(match.bestOf / 2);
-      let status = "live";
-      let winnerId = null;
-
-      if (scoreA >= targetWins) {
-        status = "completed";
-        winnerId = match.teamAId;
-      } else if (scoreB >= targetWins) {
-        status = "completed";
-        winnerId = match.teamBId;
-      }
-
-      const updatedMatch = {
-        ...match,
-        scoreA,
-        scoreB,
-        status,
-        winnerId
-      };
-
-      await set(matchRef, updatedMatch);
-      await set(ref(db, `matchDetails/${matchId}`), matchDetailsData);
-
-      // Handle brackets
-      if (status === "completed" && match.type === "knockout") {
-        if (matchId === "match-semi1") {
-          await set(ref(db, "matches/match-final/teamAId"), winnerId);
-          await set(ref(db, "matches/match-third/teamAId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
-        } else if (matchId === "match-semi2") {
-          await set(ref(db, "matches/match-final/teamBId"), winnerId);
-          await set(ref(db, "matches/match-third/teamBId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
-        }
-      }
-
-      await recalculateLeaderboard();
-
-      return NextResponse.json({
-        success: true,
-        savedInDb: true,
-        matchDetails: matchDetailsData,
-        winnerSide: winningTeamSide
-      });
-    }
-
-    // In Mock Mode, return details to be saved on client-side
+    // Return details to be saved on client-side (where user is authenticated)
     return NextResponse.json({
       success: true,
       savedInDb: false,

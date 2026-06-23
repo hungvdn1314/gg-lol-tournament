@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Settings, Calendar, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info 
+  Settings, Calendar, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info, Activity 
 } from "lucide-react";
 import { HextechCrest, LoLMinion, CrossedSwords } from "@/components/Icons";
 import { isMockMode, auth } from "@/lib/firebase";
@@ -39,8 +39,13 @@ export default function Admin() {
 
   // Riot Match Import state
   const [selectedMatchForImport, setSelectedMatchForImport] = useState("");
+  const [selectedGameToSync, setSelectedGameToSync] = useState(null);
   const [importPlayerRiotId, setImportPlayerRiotId] = useState("");
   const [importing, setImporting] = useState(false);
+  const [recentMatches, setRecentMatches] = useState([]);
+  const [fetchingMatches, setFetchingMatches] = useState(false);
+  const [currentSyncDetails, setCurrentSyncDetails] = useState([]);
+  const [fetchingSyncDetails, setFetchingSyncDetails] = useState(false);
 
   // Form State
   const [configForm, setConfigForm] = useState({ title: "", date: "", venue: "", description: "", providerId: "", tournamentId: "" });
@@ -65,6 +70,32 @@ export default function Admin() {
     };
     checkSession();
   }, []);
+
+  useEffect(() => {
+    const unsubMatches = subscribeToData("matches", (data) => setMatches(data || {}));
+    const unsubTeams = subscribeToData("teams", (data) => setTeams(data || {}));
+    return () => {
+      unsubMatches();
+      unsubTeams();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "sync" && selectedMatchForImport) {
+      setFetchingSyncDetails(true);
+      import("@/lib/db").then(({ fetchMatchDetails }) => {
+        fetchMatchDetails(selectedMatchForImport).then(details => {
+          if (!details) setCurrentSyncDetails([]);
+          else if (!Array.isArray(details)) setCurrentSyncDetails([details]);
+          else setCurrentSyncDetails(details);
+        }).finally(() => {
+          setFetchingSyncDetails(false);
+        });
+      });
+    } else {
+      setCurrentSyncDetails([]);
+    }
+  }, [activeTab, selectedMatchForImport]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -274,16 +305,44 @@ export default function Admin() {
     }
   };
 
-  const handleImportRiotMatch = async (matchId, playerRiotId) => {
+  const handleFetchRecentMatches = async (playerRiotId) => {
+    if (!playerRiotId || !playerRiotId.includes("#")) {
+      return alert("Please enter a valid player Riot ID in the format Name#Tag.");
+    }
+    
+    setFetchingMatches(true);
+    setRecentMatches([]);
+    try {
+      const response = await fetch("/api/riot-matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerRiotId })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch matches");
+      }
+      
+      setRecentMatches(data.matches);
+    } catch (e) {
+      alert("Error fetching recent matches: " + e.message);
+    } finally {
+      setFetchingMatches(false);
+    }
+  };
+
+  const handleImportRiotMatch = async (matchId, riotMatchId, gameIndex) => {
     if (!matchId) return alert("Please select a match to sync.");
-    if (!playerRiotId || !playerRiotId.includes("#")) return alert("Please enter a valid player Riot ID in the format Name#Tag.");
+    if (!riotMatchId) return alert("Please select a Riot game to sync.");
+    if (gameIndex === undefined || gameIndex === null) return alert("Please select which Game (1, 2, 3...) to sync to.");
     
     setImporting(true);
     try {
       const response = await fetch("/api/riot-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matchId, playerRiotId })
+        body: JSON.stringify({ riotMatchId })
       });
       
       const data = await response.json();
@@ -292,66 +351,78 @@ export default function Admin() {
         throw new Error(data.error || "Failed to fetch match details");
       }
       
-      if (isMockMode) {
-        console.log("Mock Mode: Writing imported game details to localStorage.");
-        const match = matches[matchId];
-        if (!match) throw new Error("Match not found in local state");
-        
-        let scoreA = match.scoreA || 0;
-        let scoreB = match.scoreB || 0;
-        
-        if (data.winnerSide === 100) {
-          scoreA += 1;
-        } else {
-          scoreB += 1;
-        }
-        
-        const targetWins = Math.ceil(match.bestOf / 2);
-        let status = "live";
-        let winnerId = null;
-        
-        if (scoreA >= targetWins) {
-          status = "completed";
-          winnerId = match.teamAId;
-        } else if (scoreB >= targetWins) {
-          status = "completed";
-          winnerId = match.teamBId;
-        }
-        
-        const updatedMatch = {
-          ...match,
-          scoreA,
-          scoreB,
-          status,
-          winnerId
-        };
-        
-        const { saveMatchDetails } = await import("@/lib/db");
-        await saveMatch(updatedMatch);
-        await saveMatchDetails(matchId, data.matchDetails);
-        
-        if (status === "completed" && match.type === "knockout") {
-          if (matchId === "match-semi1") {
-            const finalMatch = matches["match-final"];
-            if (finalMatch) { finalMatch.teamAId = winnerId; await saveMatch(finalMatch); }
-            const thirdMatch = matches["match-third"];
-            if (thirdMatch) { thirdMatch.teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
-          } else if (matchId === "match-semi2") {
-            const finalMatch = matches["match-final"];
-            if (finalMatch) { finalMatch.teamBId = winnerId; await saveMatch(finalMatch); }
-            const thirdMatch = matches["match-third"];
-            if (thirdMatch) { thirdMatch.teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
-          }
-        }
-        
-        await recalculateLeaderboard();
-        alert(`Successfully imported match! Winner of this game: ${data.winnerSide === 100 ? "Blue Side" : "Red Side"}. Stands and stats updated.`);
+      console.log("Writing imported game details to database.");
+      const match = matches[matchId];
+      if (!match) throw new Error("Match not found in local state");
+      
+      let scoreA = match.scoreA || 0;
+      let scoreB = match.scoreB || 0;
+      
+      if (data.winnerSide === 100) {
+        scoreA += 1;
       } else {
-        alert(`Successfully imported match! Winner of this game: ${data.winnerSide === 100 ? "Blue Side" : "Red Side"}. Firebase database updated.`);
+        scoreB += 1;
       }
       
+      const targetWins = Math.ceil(match.bestOf / 2);
+      let status = "live";
+      let winnerId = null;
+      
+      if (scoreA >= targetWins) {
+        status = "completed";
+        winnerId = match.teamAId;
+      } else if (scoreB >= targetWins) {
+        status = "completed";
+        winnerId = match.teamBId;
+      }
+      
+      const updatedMatch = {
+        ...match,
+        scoreA,
+        scoreB,
+        status,
+        winnerId
+      };
+      
+      const { fetchMatchDetails, saveMatchDetails } = await import("@/lib/db");
+      await saveMatch(updatedMatch);
+      
+      let existingDetails = await fetchMatchDetails(matchId);
+      if (!existingDetails) {
+        existingDetails = [];
+      } else if (!Array.isArray(existingDetails)) {
+        existingDetails = [existingDetails];
+      }
+      // Fill array if it's smaller than gameIndex
+      while (existingDetails.length <= gameIndex) {
+        existingDetails.push(null);
+      }
+      existingDetails[gameIndex] = data.matchDetails;
+      
+      await saveMatchDetails(matchId, existingDetails);
+      setCurrentSyncDetails(existingDetails);
+      
+      if (status === "completed" && match.type === "knockout") {
+        if (matchId === "match-semi1") {
+          const finalMatch = matches["match-final"];
+          if (finalMatch) { finalMatch.teamAId = winnerId; await saveMatch(finalMatch); }
+          const thirdMatch = matches["match-third"];
+          if (thirdMatch) { thirdMatch.teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
+        } else if (matchId === "match-semi2") {
+          const finalMatch = matches["match-final"];
+          if (finalMatch) { finalMatch.teamBId = winnerId; await saveMatch(finalMatch); }
+          const thirdMatch = matches["match-third"];
+          if (thirdMatch) { thirdMatch.teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
+        }
+      }
+      
+      const { recalculateLeaderboard } = await import("@/lib/db");
+      await recalculateLeaderboard();
+      alert(`Successfully imported match! Winner of this game: ${data.winnerSide === 100 ? "Blue Side" : "Red Side"}. Database and stats updated.`);
+      
       setImportPlayerRiotId("");
-      setSelectedMatchForImport("");
+      setSelectedGameToSync(null);
+      setRecentMatches([]);
     } catch (e) {
       alert("Error importing game details: " + e.message);
     } finally {
@@ -616,6 +687,12 @@ export default function Admin() {
             className={`admin-nav-item ${activeTab === "scores" ? "active" : ""}`}
           >
             <CrossedSwords size={18} /> Live Score Center
+          </button>
+          <button 
+            onClick={() => { setActiveTab("sync"); setScoreManagingMatch(null); }}
+            className={`admin-nav-item ${activeTab === "sync" ? "active" : ""}`}
+          >
+            <Activity size={18} /> Score Center
           </button>
           <button 
             onClick={() => { setActiveTab("riot"); setScoreManagingMatch(null); }}
@@ -1061,7 +1138,165 @@ export default function Admin() {
             </div>
           )}
 
-          {/* TAB 5: RIOT TOURNAMENT API CONFIG & WEBHOOK SIMULATION */}
+          {/* TAB 5: SCORE CENTER (MATCH SYNC) */}
+          {activeTab === "sync" && (
+            <div>
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+                Score Center
+              </h2>
+              <div className="card" style={{ marginBottom: "3rem", border: "1px solid var(--border-dark)" }}>
+                <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "1rem", marginBottom: "1.5rem", fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                  <Info size={18} style={{ color: "var(--primary-gold)", flexShrink: 0, marginTop: "0.1rem" }} />
+                  <div>
+                    <strong>Match Telemetry Synchronization:</strong><br />
+                    Select a match series below to view its games based on the format (BO3/BO5). You can sync telemetry for each individual game using a player's Riot ID.
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Select Target Match</label>
+                  <select
+                    className="form-control"
+                    value={selectedMatchForImport}
+                    onChange={(e) => {
+                      setSelectedMatchForImport(e.target.value);
+                      setSelectedGameToSync(null);
+                      setRecentMatches([]);
+                    }}
+                  >
+                    <option value="">-- Select Scheduled/Live Match --</option>
+                    {Object.values(matches)
+                      .filter(m => m.status !== "completed")
+                      .map(m => (
+                        <option key={m.id} value={m.id}>
+                          {teams[m.teamAId]?.name || "TBD"} vs {teams[m.teamBId]?.name || "TBD"} ({m.stage})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                {selectedMatchForImport && matches[selectedMatchForImport] && (
+                  <div style={{ marginTop: "2rem" }}>
+                    <h3 style={{ fontSize: "1rem", marginBottom: "1rem", textTransform: "uppercase", color: "var(--primary-gold)" }}>
+                      Game Sync Status (Best of {matches[selectedMatchForImport].bestOf || 3})
+                    </h3>
+                    
+                    {fetchingSyncDetails ? (
+                      <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Loading existing match telemetry...</p>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        {Array.from({ length: matches[selectedMatchForImport].bestOf || 3 }).map((_, i) => {
+                          const isSynced = currentSyncDetails[i] !== null && currentSyncDetails[i] !== undefined;
+                          const isSelected = selectedGameToSync === i;
+                          
+                          return (
+                            <div key={i} style={{ border: `1px solid ${isSelected ? "var(--primary-gold)" : "var(--border-dark)"}`, borderRadius: "4px", backgroundColor: isSelected ? "rgba(228,179,60,0.05)" : "var(--bg-tertiary)", overflow: "hidden" }}>
+                              {/* Game Header */}
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                                  <strong style={{ fontSize: "1.1rem" }}>Game {i + 1}</strong>
+                                  {isSynced ? (
+                                    <span style={{ backgroundColor: "rgba(32, 201, 151, 0.1)", color: "#20C997", padding: "0.2rem 0.5rem", borderRadius: "2px", fontSize: "0.7rem", fontWeight: "bold" }}>SYNCED</span>
+                                  ) : (
+                                    <span style={{ backgroundColor: "rgba(255, 77, 79, 0.1)", color: "#ff4d4f", padding: "0.2rem 0.5rem", borderRadius: "2px", fontSize: "0.7rem", fontWeight: "bold" }}>NOT SYNCED</span>
+                                  )}
+                                </div>
+                                <button 
+                                  onClick={() => setSelectedGameToSync(isSelected ? null : i)}
+                                  className={`btn ${isSelected ? "btn-outline" : "btn-primary"}`}
+                                  style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}
+                                >
+                                  {isSelected ? "Cancel" : (isSynced ? "Resync Data" : "Sync Data")}
+                                </button>
+                              </div>
+                              
+                              {/* Sync UI for Selected Game */}
+                              {isSelected && (
+                                <div style={{ padding: "1.5rem", borderTop: "1px solid var(--border-dark)" }}>
+                                  <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+                                    <label>Participant's Riot ID</label>
+                                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                                      <input 
+                                        type="text" 
+                                        className="form-control" 
+                                        placeholder="e.g. Faker#KR1"
+                                        value={importPlayerRiotId}
+                                        onChange={(e) => setImportPlayerRiotId(e.target.value)}
+                                        style={{ flex: 1 }}
+                                      />
+                                      <button 
+                                        onClick={() => handleFetchRecentMatches(importPlayerRiotId)}
+                                        className="btn btn-secondary"
+                                        disabled={fetchingMatches || !importPlayerRiotId}
+                                      >
+                                        {fetchingMatches ? "Searching..." : "Search"}
+                                      </button>
+                                    </div>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", display: "block" }}>
+                                      Enter the Riot ID of ANY player who participated in Game {i + 1}.
+                                    </span>
+                                  </div>
+
+                                  {recentMatches.length > 0 && (
+                                    <div>
+                                      <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", textTransform: "uppercase" }}>Select Telemetry to Sync into Game {i + 1}</label>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "300px", overflowY: "auto" }}>
+                                        {recentMatches.map((rm) => (
+                                          <div 
+                                            key={rm.matchId} 
+                                            style={{ 
+                                              display: "flex", 
+                                              alignItems: "center", 
+                                              justifyContent: "space-between", 
+                                              padding: "0.75rem", 
+                                              backgroundColor: "var(--bg-secondary)", 
+                                              border: "1px solid var(--border-dark)",
+                                              borderRadius: "4px" 
+                                            }}
+                                          >
+                                            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                                              <img 
+                                                src={`https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${rm.champion.replace(/[^a-zA-Z0-9]/g, "")}.png`} 
+                                                alt={rm.champion} 
+                                                style={{ width: "32px", height: "32px", borderRadius: "4px" }} 
+                                                onError={(e) => { e.target.src = "https://placehold.co/32x32" }}
+                                              />
+                                              <div>
+                                                <div style={{ fontWeight: "bold", color: rm.win ? "var(--primary-gold-bright)" : "var(--text-secondary)" }}>
+                                                  {rm.win ? "VICTORY" : "DEFEAT"} - {rm.champion}
+                                                </div>
+                                                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                                  {Math.floor(rm.gameDuration / 60)}:{(rm.gameDuration % 60).toString().padStart(2, "0")} &bull; KDA: {rm.kills}/{rm.deaths}/{rm.assists}
+                                                </div>
+                                              </div>
+                                            </div>
+                                            <button
+                                              onClick={() => handleImportRiotMatch(selectedMatchForImport, rm.matchId, i)}
+                                              className="btn btn-primary"
+                                              disabled={importing}
+                                              style={{ padding: "0.4rem 0.8rem", fontSize: "0.75rem" }}
+                                            >
+                                              {importing ? "Syncing..." : "Sync to Game"}
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: RIOT TOURNAMENT API CONFIG & WEBHOOK SIMULATION */}
           {activeTab === "riot" && config && (
             <div>
               <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
@@ -1134,58 +1369,6 @@ export default function Admin() {
                   style={{ display: "flex", gap: "0.5rem" }}
                 >
                   {codeGenerating ? "Requesting..." : "Generate Invite Code"}
-                </button>
-              </div>
-
-              {/* Manual Riot Match Sync */}
-              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-                Manual Riot Match Sync
-              </h2>
-              <div className="card" style={{ marginBottom: "3rem", border: "1px solid var(--border-dark)" }}>
-                <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "1rem", marginBottom: "1.5rem", fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                  <Info size={18} style={{ color: "var(--primary-gold)", flexShrink: 0, marginTop: "0.1rem" }} />
-                  <div>
-                    <strong>Riot ID Synchronization:</strong><br />
-                    Since custom games played under tournament stub codes might not trigger webhooks on regional servers, you can play standard Custom Games (Tournament Draft mode) in the client, then sync them here. Enter the Riot ID of any player who participated in the match.
-                  </div>
-                </div>
-
-                <div className="grid-2">
-                  <div className="form-group">
-                    <label>Select Target Match</label>
-                    <select
-                      className="form-control"
-                      value={selectedMatchForImport}
-                      onChange={(e) => setSelectedMatchForImport(e.target.value)}
-                    >
-                      <option value="">-- Select Scheduled/Live Match --</option>
-                      {Object.values(matches)
-                        .filter(m => m.status !== "completed")
-                        .map(m => (
-                          <option key={m.id} value={m.id}>
-                            {teams[m.teamAId]?.name || "TBD"} vs {teams[m.teamBId]?.name || "TBD"} ({m.stage})
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Participant's Riot ID</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      placeholder="e.g. IrrationaL餃子#1337"
-                      value={importPlayerRiotId}
-                      onChange={(e) => setImportPlayerRiotId(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleImportRiotMatch(selectedMatchForImport, importPlayerRiotId)}
-                  className="btn btn-secondary"
-                  disabled={importing || !selectedMatchForImport || !importPlayerRiotId}
-                  style={{ display: "flex", gap: "0.5rem" }}
-                >
-                  {importing ? "Fetching & Syncing..." : "Sync Match Stats"}
                 </button>
               </div>
 

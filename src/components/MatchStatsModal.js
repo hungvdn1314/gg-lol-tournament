@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Award, Eye, BarChart2, Check, Copy } from "lucide-react";
+import { X, Award, Eye, BarChart2, Check, Copy, Activity, Info } from "lucide-react";
 import { HextechCrest, CrossedSwords } from "@/components/Icons";
 import { subscribeToMatchDetails } from "@/lib/db";
 
@@ -10,6 +10,8 @@ export default function MatchStatsModal({ match, teams, onClose }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("scoreboard"); // scoreboard, charts, utility, team
   const [chartMetric, setChartMetric] = useState("damageDealt"); // damageDealt, damageTaken, healing
+  const [selectedGameIndex, setSelectedGameIndex] = useState(0);
+  const [mvpViewMode, setMvpViewMode] = useState("game"); // game, series
 
   useEffect(() => {
     if (!match?.id) return;
@@ -37,13 +39,13 @@ export default function MatchStatsModal({ match, teams, onClose }) {
   const getChampionIcon = (championName) => {
     if (!championName) return "https://placehold.co/40x40";
     const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
-    return `https://ddragon.leagueoflegends.com/cdn/14.12.1/img/champion/${cleanName}.png`;
+    return `https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${cleanName}.png`;
   };
 
   // Helper to get item icon URL from Data Dragon CDN
   const getItemIcon = (itemId) => {
     if (!itemId || itemId === 0) return null;
-    return `https://ddragon.leagueoflegends.com/cdn/14.12.1/img/item/${itemId}.png`;
+    return `https://ddragon.leagueoflegends.com/cdn/16.12.1/img/item/${itemId}.png`;
   };
 
   const getKdaRatio = (k, d, a) => {
@@ -51,22 +53,102 @@ export default function MatchStatsModal({ match, teams, onClose }) {
     return `${((k + a) / d).toFixed(1)} KDA`;
   };
 
+  const games = details ? (Array.isArray(details) ? details : [details]) : [];
+  const currentGameDetails = games[selectedGameIndex] || null;
+
   // Sort participants by team
-  const blueParticipants = details?.participants?.filter(p => p.teamId === 100) || [];
-  const redParticipants = details?.participants?.filter(p => p.teamId === 200) || [];
+  const blueParticipants = currentGameDetails?.participants?.filter(p => p.teamId === 100) || [];
+  const redParticipants = currentGameDetails?.participants?.filter(p => p.teamId === 200) || [];
 
   // Team totals
   const blueTotalGold = blueParticipants.reduce((sum, p) => sum + (p.gold || 0), 0);
   const redTotalGold = redParticipants.reduce((sum, p) => sum + (p.gold || 0), 0);
   const blueTotalKills = blueParticipants.reduce((sum, p) => sum + (p.kills || 0), 0);
   const redTotalKills = redParticipants.reduce((sum, p) => sum + (p.kills || 0), 0);
+  const blueTotalDmg = blueParticipants.reduce((sum, p) => sum + (p.damageDealt || 0), 0);
+  const redTotalDmg = redParticipants.reduce((sum, p) => sum + (p.damageDealt || 0), 0);
+
+  const calculateMVP = (participants, bKills, rKills, bDmg, rDmg, bGold, rGold, gameDuration) => {
+    if (!participants || participants.length === 0) return [];
+    const durationMins = gameDuration / 60;
+
+    const scored = participants.map(p => {
+      const teamKills = p.teamId === 100 ? bKills : rKills;
+      const teamDmg = p.teamId === 100 ? bDmg : rDmg;
+      const teamGold = p.teamId === 100 ? bGold : rGold;
+
+      const kda = p.deaths === 0 ? (p.kills + p.assists) * 1.5 : (p.kills + p.assists) / p.deaths;
+      const kp = teamKills > 0 ? (p.kills + p.assists) / teamKills : 0;
+      const damageShare = teamDmg > 0 ? (p.damageDealt || 0) / teamDmg : 0;
+      const goldShare = teamGold > 0 ? (p.gold || 0) / teamGold : 0;
+      const visionPerMin = (p.vision || 0) / durationMins;
+
+      const kdaScore = Math.min(kda * 0.5, 3.0);
+      const kpScore = kp * 2.5;
+      const dmgScore = damageShare * 2.0;
+      const goldScore = goldShare * 1.5;
+      const visionScore = Math.min(visionPerMin, 1.0);
+      const winBonus = p.win ? 1.0 : 0;
+
+      const totalScore = kdaScore + kpScore + dmgScore + goldScore + visionScore + winBonus;
+
+      return {
+        ...p,
+        mvpBreakdown: { kdaScore, kpScore, dmgScore, goldScore, visionScore, winBonus, totalScore }
+      };
+    });
+    
+    return scored.sort((a, b) => b.mvpBreakdown.totalScore - a.mvpBreakdown.totalScore);
+  };
+
+  const scoredParticipants = currentGameDetails ? calculateMVP(currentGameDetails.participants, blueTotalKills, redTotalKills, blueTotalDmg, redTotalDmg, blueTotalGold, redTotalGold, currentGameDetails.gameDuration) : [];
+  const mvpPlayerName = scoredParticipants.length > 0 ? scoredParticipants[0].playerName : null;
+
+  const validGames = games.filter(g => g !== null && g !== undefined);
+  const getSeriesMVPData = () => {
+    const aggregates = {};
+    validGames.forEach(g => {
+      const bP = g.participants.filter(p => p.teamId === 100);
+      const rP = g.participants.filter(p => p.teamId === 200);
+      const bK = bP.reduce((s, p) => s + (p.kills || 0), 0);
+      const rK = rP.reduce((s, p) => s + (p.kills || 0), 0);
+      const bD = bP.reduce((s, p) => s + (p.damageDealt || 0), 0);
+      const rD = rP.reduce((s, p) => s + (p.damageDealt || 0), 0);
+      const bG = bP.reduce((s, p) => s + (p.gold || 0), 0);
+      const rG = rP.reduce((s, p) => s + (p.gold || 0), 0);
+      
+      const scored = calculateMVP(g.participants, bK, rK, bD, rD, bG, rG, g.gameDuration);
+      scored.forEach(p => {
+        if (!aggregates[p.playerName]) {
+          aggregates[p.playerName] = {
+            ...p,
+            gamesPlayed: 0,
+            mvpBreakdown: { kdaScore: 0, kpScore: 0, dmgScore: 0, goldScore: 0, visionScore: 0, winBonus: 0, totalScore: 0 }
+          };
+        }
+        aggregates[p.playerName].gamesPlayed += 1;
+        aggregates[p.playerName].champion = p.champion; // keep the latest champion
+        const b = aggregates[p.playerName].mvpBreakdown;
+        const s = p.mvpBreakdown;
+        b.kdaScore += s.kdaScore;
+        b.kpScore += s.kpScore;
+        b.dmgScore += s.dmgScore;
+        b.goldScore += s.goldScore;
+        b.visionScore += s.visionScore;
+        b.winBonus += s.winBonus;
+        b.totalScore += s.totalScore;
+      });
+    });
+    return Object.values(aggregates).sort((a, b) => b.mvpBreakdown.totalScore - a.mvpBreakdown.totalScore);
+  };
+  const seriesScoredParticipants = getSeriesMVPData();
 
   const goldDiff = Math.abs(blueTotalGold - redTotalGold);
   const goldLeadTeam = blueTotalGold > redTotalGold ? teamA?.name?.split(" (")[0] : teamB?.name?.split(" (")[0];
 
   // Calculate highest metric value in the game for charts
-  const maxMetricVal = details?.participants 
-    ? Math.max(...details.participants.map(p => p[chartMetric] || 0)) 
+  const maxMetricVal = currentGameDetails?.participants 
+    ? Math.max(...currentGameDetails.participants.map(p => p[chartMetric] || 0)) 
     : 1;
 
   return (
@@ -99,7 +181,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
           <div style={{ textAlign: "center", padding: "4rem 0", color: "var(--text-muted)" }}>
             Loading game telemetry...
           </div>
-        ) : !details ? (
+        ) : games.length === 0 ? (
           <div style={{ textAlign: "center", padding: "4rem 0" }}>
             <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
               Detailed statistics are not available for this match yet.
@@ -110,18 +192,46 @@ export default function MatchStatsModal({ match, teams, onClose }) {
           </div>
         ) : (
           <div>
+            {/* Game Selector Tabs */}
+            {games.length > 1 && (
+              <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+                {games.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedGameIndex(idx)}
+                    className="btn btn-outline"
+                    style={{
+                      padding: "0.4rem 1rem",
+                      backgroundColor: selectedGameIndex === idx ? "var(--primary-gold)" : "transparent",
+                      color: selectedGameIndex === idx ? "#000" : "var(--primary-gold)",
+                      borderColor: "var(--primary-gold)",
+                      borderRadius: "4px"
+                    }}
+                  >
+                    Game {idx + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Quick Game Summary Strip */}
-            <div className="card" style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1.5rem", marginBottom: "1.5rem", border: "1px solid var(--border-dark)" }}>
+            {!currentGameDetails ? (
+              <div style={{ textAlign: "center", padding: "4rem 0", color: "var(--text-muted)", fontStyle: "italic" }}>
+                Detailed statistics for Game {selectedGameIndex + 1} have not been synced yet.
+              </div>
+            ) : (
+              <>
+                <div className="card" style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1.5rem", marginBottom: "1.5rem", border: "1px solid var(--border-dark)" }}>
               <div>
                 <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>Winner</span>
                 <div style={{ color: "var(--primary-gold-bright)", fontWeight: "bold", fontSize: "1.1rem", textTransform: "uppercase", marginTop: "0.25rem" }}>
-                  {details.teams[100]?.winner ? teamA?.name.split(" (")[0] : teamB?.name.split(" (")[0]}
+                  {currentGameDetails.teams[100]?.winner ? teamA?.name.split(" (")[0] : teamB?.name.split(" (")[0]}
                 </div>
               </div>
               <div style={{ textAlign: "center" }}>
                 <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>Game Duration</span>
                 <div style={{ color: "var(--text-primary)", fontWeight: "bold", fontSize: "1.1rem", marginTop: "0.25rem" }}>
-                  {formatDuration(details.gameDuration)}
+                  {formatDuration(currentGameDetails.gameDuration)}
                 </div>
               </div>
               <div>
@@ -144,7 +254,8 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                 { id: "scoreboard", label: "Scoreboard", icon: <CrossedSwords size={14} /> },
                 { id: "charts", label: "Combat Charts", icon: <BarChart2 size={14} /> },
                 { id: "utility", label: "Utility & Vision", icon: <Eye size={14} /> },
-                { id: "team", label: "Team Objectives", icon: <HextechCrest size={14} /> }
+                { id: "team", label: "Team Objectives", icon: <HextechCrest size={14} /> },
+                { id: "mvp", label: "MVP Calculation", icon: <Activity size={14} /> }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -181,7 +292,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                 <div>
                   <h3 style={{ fontSize: "0.9rem", color: "var(--text-primary)", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "2px solid #005A82", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between" }}>
                     <span>{teamA?.name} (Blue Side)</span>
-                    {details.teams[100]?.winner && <span style={{ color: "var(--primary-gold-bright)", fontSize: "0.75rem" }}>🏆 VICTORY</span>}
+                    {currentGameDetails.teams[100]?.winner && <span style={{ color: "var(--primary-gold-bright)", fontSize: "0.75rem" }}>🏆 VICTORY</span>}
                   </h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     {blueParticipants.map((p, idx) => (
@@ -191,6 +302,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <div>
                             <div style={{ fontWeight: "700", color: "var(--text-primary)", fontSize: "0.85rem", display: "flex", alignItems: "center" }}>
                               {p.playerName}
+                              {p.playerName === mvpPlayerName && <span style={{ backgroundColor: "#20C997", color: "#000", fontSize: "0.55rem", padding: "0.05rem 0.2rem", borderRadius: "2px", fontWeight: "bold", marginLeft: "0.3rem" }}>MVP</span>}
                               {p.pentaKills > 0 && <span style={{ backgroundColor: "#D4AF37", color: "#000", fontSize: "0.55rem", padding: "0.05rem 0.2rem", borderRadius: "2px", fontWeight: "bold", marginLeft: "0.3rem" }}>PENTA</span>}
                               {p.quadraKills > 0 && p.pentaKills === 0 && <span style={{ backgroundColor: "#E5A93B", color: "#000", fontSize: "0.55rem", padding: "0.05rem 0.2rem", borderRadius: "2px", fontWeight: "bold", marginLeft: "0.3rem" }}>QUADRA</span>}
                               {p.tripleKills > 0 && p.quadraKills === 0 && p.pentaKills === 0 && <span style={{ backgroundColor: "purple", color: "#fff", fontSize: "0.55rem", padding: "0.05rem 0.2rem", borderRadius: "2px", fontWeight: "bold", marginLeft: "0.3rem" }}>TRIPLE</span>}
@@ -250,7 +362,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                 <div>
                   <h3 style={{ fontSize: "0.9rem", color: "var(--text-primary)", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "2px solid #C8AA6E", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between" }}>
                     <span>{teamB?.name} (Red Side)</span>
-                    {details.teams[200]?.winner && <span style={{ color: "var(--primary-gold-bright)", fontSize: "0.75rem" }}>🏆 VICTORY</span>}
+                    {currentGameDetails.teams[200]?.winner && <span style={{ color: "var(--primary-gold-bright)", fontSize: "0.75rem" }}>🏆 VICTORY</span>}
                   </h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     {redParticipants.map((p, idx) => (
@@ -260,6 +372,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <div>
                             <div style={{ fontWeight: "700", color: "var(--text-primary)", fontSize: "0.85rem", display: "flex", alignItems: "center" }}>
                               {p.playerName}
+                              {p.playerName === mvpPlayerName && <span style={{ backgroundColor: "#20C997", color: "#000", fontSize: "0.55rem", padding: "0.05rem 0.2rem", borderRadius: "2px", fontWeight: "bold", marginLeft: "0.3rem" }}>MVP</span>}
                               {p.pentaKills > 0 && <span style={{ backgroundColor: "#D4AF37", color: "#000", fontSize: "0.55rem", padding: "0.05rem 0.2rem", borderRadius: "2px", fontWeight: "bold", marginLeft: "0.3rem" }}>PENTA</span>}
                               {p.quadraKills > 0 && p.pentaKills === 0 && <span style={{ backgroundColor: "#E5A93B", color: "#000", fontSize: "0.55rem", padding: "0.05rem 0.2rem", borderRadius: "2px", fontWeight: "bold", marginLeft: "0.3rem" }}>QUADRA</span>}
                               {p.tripleKills > 0 && p.quadraKills === 0 && p.pentaKills === 0 && <span style={{ backgroundColor: "purple", color: "#fff", fontSize: "0.55rem", padding: "0.05rem 0.2rem", borderRadius: "2px", fontWeight: "bold", marginLeft: "0.3rem" }}>TRIPLE</span>}
@@ -461,9 +574,9 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                     <h4 style={{ fontSize: "0.9rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.4rem", textTransform: "uppercase" }}>Objectives Breakdown</h4>
                     {[
                       { label: "Total Kills", blue: blueTotalKills, red: redTotalKills },
-                      { label: "Dragons Slain", blue: details.teams[100]?.dragons || 0, red: details.teams[200]?.dragons || 0 },
-                      { label: "Barons Slain", blue: details.teams[100]?.barons || 0, red: details.teams[200]?.barons || 0 },
-                      { label: "First Blood", blue: details.teams[100]?.firstBlood ? "🩸 Yes" : "No", red: details.teams[200]?.firstBlood ? "🩸 Yes" : "No" }
+                      { label: "Dragons Slain", blue: currentGameDetails.teams[100]?.dragons || 0, red: currentGameDetails.teams[200]?.dragons || 0 },
+                      { label: "Barons Slain", blue: currentGameDetails.teams[100]?.barons || 0, red: currentGameDetails.teams[200]?.barons || 0 },
+                      { label: "First Blood", blue: currentGameDetails.teams[100]?.firstBlood ? "🩸 Yes" : "No", red: currentGameDetails.teams[200]?.firstBlood ? "🩸 Yes" : "No" }
                     ].map((row, idx) => (
                       <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "0.5rem" }}>
                         <span style={{ color: "#4fa8ff", fontWeight: "bold", width: "30%", textAlign: "left" }}>{row.blue}</span>
@@ -480,7 +593,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                       <div>
                         <span style={{ fontSize: "0.75rem", color: "#4fa8ff", display: "block", marginBottom: "0.5rem" }}>Blue Side Bans</span>
                         <div style={{ display: "flex", gap: "0.4rem" }}>
-                          {(details.teams[100]?.bans || []).map((ban, i) => (
+                          {(currentGameDetails.teams[100]?.bans || []).map((ban, i) => (
                             <div key={i} style={{ width: "32px", height: "32px", border: "1px solid var(--border-dark)", borderRadius: "2px", overflow: "hidden", backgroundColor: "rgba(0,0,0,0.3)" }}>
                               {/* check if ban is name or ID */}
                               {typeof ban === "string" ? (
@@ -495,7 +608,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                       <div>
                         <span style={{ fontSize: "0.75rem", color: "#ffd47f", display: "block", marginBottom: "0.5rem" }}>Red Side Bans</span>
                         <div style={{ display: "flex", gap: "0.4rem" }}>
-                          {(details.teams[200]?.bans || []).map((ban, i) => (
+                          {(currentGameDetails.teams[200]?.bans || []).map((ban, i) => (
                             <div key={i} style={{ width: "32px", height: "32px", border: "1px solid var(--border-dark)", borderRadius: "2px", overflow: "hidden", backgroundColor: "rgba(0,0,0,0.3)" }}>
                               {typeof ban === "string" ? (
                                 <img src={getChampionIcon(ban)} alt="ban" style={{ width: "100%", height: "100%", filter: "grayscale(100%)" }} />
@@ -511,8 +624,86 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                 </div>
               </div>
             )}
-          </div>
-        )}
+
+            {/* TAB 5: MVP BREAKDOWN */}
+            {activeTab === "mvp" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <button onClick={() => setMvpViewMode("game")} className={`btn ${mvpViewMode === "game" ? "btn-primary" : "btn-outline"}`} style={{ flex: 1 }}>Game {selectedGameIndex + 1} MVP</button>
+                  <button onClick={() => setMvpViewMode("series")} className={`btn ${mvpViewMode === "series" ? "btn-primary" : "btn-outline"}`} style={{ flex: 1 }}>Series Overall MVP</button>
+                </div>
+
+                <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "1rem", marginBottom: "0.5rem", fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                  <Info size={18} style={{ color: "var(--primary-gold)", flexShrink: 0, marginTop: "0.1rem" }} />
+                  <div>
+                    <strong>MVP Algorithm:</strong> Players are scored dynamically out of 11 possible points {mvpViewMode === "series" ? `per game (Max: ${11 * validGames.length} points for a BO${match.bestOf || 3})` : `(Max: 11 points)`}.<br />
+                    Breakdown: KDA (max 3), Kill Participation (max 2.5), Damage Share (max 2), Gold Share (max 1.5), Vision per Minute (max 1), Win Bonus (+1).
+                  </div>
+                </div>
+
+                {(() => {
+                  const dataToRender = mvpViewMode === "game" ? scoredParticipants : seriesScoredParticipants;
+                  const maxPoints = mvpViewMode === "game" ? 11 : 11 * validGames.length;
+                  if (dataToRender.length === 0) return <div style={{textAlign: "center", color: "var(--text-muted)"}}>No data available.</div>;
+
+                  return (
+                    <div className="card" style={{ border: "1px solid var(--border-dark)", padding: "1rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        {dataToRender.map((p, idx) => (
+                          <div key={idx} style={{ 
+                            display: "flex", 
+                            alignItems: "center", 
+                            gap: "1.5rem", 
+                            padding: "1rem", 
+                            backgroundColor: idx === 0 ? "rgba(228,179,60,0.08)" : "var(--bg-tertiary)", 
+                            border: idx === 0 ? "1px solid var(--border-gold)" : "1px solid var(--border-dark)", 
+                            borderRadius: "4px" 
+                          }}>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "50px", flexShrink: 0 }}>
+                              <span style={{ fontSize: "1.5rem", fontWeight: "bold", color: idx === 0 ? "var(--primary-gold-bright)" : "var(--text-muted)" }}>
+                                #{idx + 1}
+                              </span>
+                            </div>
+                            <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "40px", height: "40px", borderRadius: "4px" }} />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                                <div style={{ fontWeight: "bold", color: p.teamId === 100 ? "#4fa8ff" : "#ffd47f", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                  {p.playerName}
+                                  {idx === 0 && <span style={{ backgroundColor: "var(--primary-gold)", color: "black", fontSize: "0.6rem", padding: "0.1rem 0.4rem", borderRadius: "2px", fontWeight: "bold", textTransform: "uppercase" }}>MVP</span>}
+                                </div>
+                                <div style={{ fontWeight: "bold", color: "var(--text-primary)" }}>
+                                  {p.mvpBreakdown.totalScore.toFixed(2)} pts
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", height: "12px", borderRadius: "2px", overflow: "hidden", backgroundColor: "rgba(0,0,0,0.2)" }}>
+                                <div title={`KDA: ${p.mvpBreakdown.kdaScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.kdaScore / maxPoints) * 100}%`, backgroundColor: "#4caf50" }}></div>
+                                <div title={`Kill Part: ${p.mvpBreakdown.kpScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.kpScore / maxPoints) * 100}%`, backgroundColor: "#2196f3" }}></div>
+                                <div title={`Dmg Share: ${p.mvpBreakdown.dmgScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.dmgScore / maxPoints) * 100}%`, backgroundColor: "#f44336" }}></div>
+                                <div title={`Gold Share: ${p.mvpBreakdown.goldScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.goldScore / maxPoints) * 100}%`, backgroundColor: "#ff9800" }}></div>
+                                <div title={`Vision/Min: ${p.mvpBreakdown.visionScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.visionScore / maxPoints) * 100}%`, backgroundColor: "#9c27b0" }}></div>
+                                <div title={`Win Bonus: ${p.mvpBreakdown.winBonus.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.winBonus / maxPoints) * 100}%`, backgroundColor: "var(--primary-gold)" }}></div>
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6rem", color: "var(--text-muted)", marginTop: "0.4rem", textTransform: "uppercase" }}>
+                                <span>KDA ({p.mvpBreakdown.kdaScore.toFixed(1)})</span>
+                                <span>KP ({p.mvpBreakdown.kpScore.toFixed(1)})</span>
+                                <span>DMG ({p.mvpBreakdown.dmgScore.toFixed(1)})</span>
+                                <span>GOLD ({p.mvpBreakdown.goldScore.toFixed(1)})</span>
+                                <span>VS ({p.mvpBreakdown.visionScore.toFixed(1)})</span>
+                                {p.mvpBreakdown.winBonus > 0 && <span>WIN (+{p.mvpBreakdown.winBonus})</span>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+            </>
+          )}
+        </div>
+      )}
       </div>
     </div>
   );
