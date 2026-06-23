@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { subscribeToAllMatchDetails } from "@/lib/db";
 import { SummonersCup, HextechCrest } from "@/components/Icons";
 import { Award, Eye, Crosshair, Shield, Coins, Target } from "lucide-react";
@@ -224,7 +225,7 @@ export default function PlayerRankings() {
               {top2 && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "140px" }}>
                   <img src={getChampionIcon(top2.topChamp)} alt={top2.topChamp} style={{ width: "60px", height: "60px", borderRadius: "50%", border: "2px solid #C0C0C0", marginBottom: "0.5rem" }} />
-                  <div style={{ fontWeight: "bold", fontSize: "0.9rem", textAlign: "center", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%" }}>{top2.playerName}</div>
+                  <Link href={`/players/${encodeURIComponent(top2.playerName)}`} style={{ fontWeight: "bold", fontSize: "0.9rem", textAlign: "center", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%", textDecoration: "none", color: "var(--text-primary)" }}>{top2.playerName}</Link>
                   <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top2.gamesPlayed} Games</div>
                   <div style={{ width: "100%", height: "120px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid #C0C0C0", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "1rem" }}>
                     <div style={{ fontSize: "2rem", fontWeight: "900", color: "#C0C0C0" }}>2</div>
@@ -242,7 +243,7 @@ export default function PlayerRankings() {
                     <SummonersCup size={30} style={{ color: "var(--primary-gold)", position: "absolute", top: "-25px", left: "50%", transform: "translateX(-50%)" }} />
                     <img src={getChampionIcon(top1.topChamp)} alt={top1.topChamp} style={{ width: "80px", height: "80px", borderRadius: "50%", border: "3px solid var(--primary-gold)", marginBottom: "0.5rem" }} />
                   </div>
-                  <div style={{ fontWeight: "bold", fontSize: "1.1rem", textAlign: "center", color: "var(--primary-gold-bright)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%" }}>{top1.playerName}</div>
+                  <Link href={`/players/${encodeURIComponent(top1.playerName)}`} style={{ fontWeight: "bold", fontSize: "1.1rem", textAlign: "center", color: "var(--primary-gold-bright)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%", textDecoration: "none" }}>{top1.playerName}</Link>
                   <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top1.gamesPlayed} Games</div>
                   <div style={{ width: "100%", height: "160px", backgroundColor: "rgba(228,179,60,0.1)", border: "1px solid var(--border-gold)", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "1rem", boxShadow: "0 -10px 30px rgba(228,179,60,0.15)" }}>
                     <div style={{ fontSize: "3rem", fontWeight: "900", color: "var(--primary-gold)", lineHeight: "1" }}>1</div>
@@ -257,7 +258,7 @@ export default function PlayerRankings() {
               {top3 && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "140px" }}>
                   <img src={getChampionIcon(top3.topChamp)} alt={top3.topChamp} style={{ width: "60px", height: "60px", borderRadius: "50%", border: "2px solid #CD7F32", marginBottom: "0.5rem" }} />
-                  <div style={{ fontWeight: "bold", fontSize: "0.9rem", textAlign: "center", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%" }}>{top3.playerName}</div>
+                  <Link href={`/players/${encodeURIComponent(top3.playerName)}`} style={{ fontWeight: "bold", fontSize: "0.9rem", textAlign: "center", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%", textDecoration: "none", color: "var(--text-primary)" }}>{top3.playerName}</Link>
                   <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top3.gamesPlayed} Games</div>
                   <div style={{ width: "100%", height: "100px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid #CD7F32", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "1rem" }}>
                     <div style={{ fontSize: "1.5rem", fontWeight: "900", color: "#CD7F32" }}>3</div>
@@ -293,7 +294,7 @@ export default function PlayerRankings() {
                     </td>
                     <td style={{ padding: "1rem", display: "flex", alignItems: "center", gap: "1rem" }}>
                       <img src={getChampionIcon(p.topChamp)} alt={p.topChamp} style={{ width: "32px", height: "32px", borderRadius: "4px" }} />
-                      <span style={{ fontWeight: "bold" }}>{p.playerName}</span>
+                      <Link href={`/players/${encodeURIComponent(p.playerName)}`} style={{ fontWeight: "bold", textDecoration: "none", color: "var(--text-primary)" }}>{p.playerName}</Link>
                     </td>
                     <td style={{ padding: "1rem", textAlign: "center", color: "var(--text-muted)" }}>
                       {p.gamesPlayed}

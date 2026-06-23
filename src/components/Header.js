@@ -46,6 +46,7 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
+    { href: "/news", label: "News" },
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/rankings", label: "Rankings" },
     { href: "/bracket", label: "Bracket" },

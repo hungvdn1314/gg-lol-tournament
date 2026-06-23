@@ -40,6 +40,7 @@ export default function RootLayout({ children }) {
             <p>This tournament is not affiliated with or sponsored by Riot Games, Inc. or League of Legends Esports.</p>
             <div className="footer-links">
               <a href="/">Home</a>
+              <a href="/news">News</a>
               <a href="/leaderboard">Leaderboard</a>
               <a href="/rankings">Rankings</a>
               <a href="/bracket">Bracket</a>

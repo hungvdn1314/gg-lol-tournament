@@ -383,7 +383,8 @@ const subscribers = {
   teams: [],
   matches: [],
   bracket: [],
-  matchDetails: []
+  matchDetails: [],
+  news: []
 };
 
 function getMockStorage(key, defaultValue) {
@@ -512,12 +513,32 @@ export async function saveMatch(match) {
   if (isMockMode) {
     const matches = getMockStorage("matches", DEFAULT_MATCHES);
     matches[match.id] = match;
+    
+    // Bracket Automation
+    if (match.status === "completed" && match.winnerId) {
+      if (match.id === "match-semi1" && matches["match-final"]) {
+        matches["match-final"].teamAId = match.winnerId;
+      } else if (match.id === "match-semi2" && matches["match-final"]) {
+        matches["match-final"].teamBId = match.winnerId;
+      }
+    }
+
     setMockStorage("matches", matches);
     await recalculateLeaderboard();
     return match;
   } else {
     const dbRef = ref(database, `matches/${match.id}`);
     await set(dbRef, match);
+    
+    // Bracket Automation
+    if (match.status === "completed" && match.winnerId) {
+      if (match.id === "match-semi1") {
+        await set(ref(database, `matches/match-final/teamAId`), match.winnerId);
+      } else if (match.id === "match-semi2") {
+        await set(ref(database, `matches/match-final/teamBId`), match.winnerId);
+      }
+    }
+
     await recalculateLeaderboard();
     return match;
   }
@@ -557,6 +578,7 @@ export async function resetToDefaultData() {
     setMockStorage("matches", DEFAULT_MATCHES);
     setMockStorage("bracket", DEFAULT_BRACKET);
     setMockStorage("matchDetails", {});
+    setMockStorage("news", {});
     await recalculateLeaderboard();
   } else {
     await set(ref(database, "config"), DEFAULT_CONFIG);
@@ -564,6 +586,7 @@ export async function resetToDefaultData() {
     await set(ref(database, "matches"), DEFAULT_MATCHES);
     await set(ref(database, "bracket"), DEFAULT_BRACKET);
     await set(ref(database, "matchDetails"), {});
+    await set(ref(database, "news"), {});
     await recalculateLeaderboard();
   }
 }
@@ -713,6 +736,55 @@ export function subscribeToAllMatchDetails(callback) {
     };
   } else {
     const dbRef = ref(database, `matchDetails`);
+    return onValue(dbRef, (snapshot) => {
+      callback(snapshot.exists() ? snapshot.val() : {});
+    });
+  }
+}
+
+// ==========================================
+// NEWS & ANNOUNCEMENTS
+// ==========================================
+
+export async function saveNews(newsItem) {
+  if (isMockMode) {
+    const newsList = getMockStorage("news", {});
+    newsList[newsItem.id] = newsItem;
+    setMockStorage("news", newsList);
+    return newsItem;
+  } else {
+    const dbRef = ref(database, `news/${newsItem.id}`);
+    await set(dbRef, newsItem);
+    return newsItem;
+  }
+}
+
+export async function deleteNews(newsId) {
+  if (isMockMode) {
+    const newsList = getMockStorage("news", {});
+    delete newsList[newsId];
+    setMockStorage("news", newsList);
+    return newsId;
+  } else {
+    const dbRef = ref(database, `news/${newsId}`);
+    await remove(dbRef);
+    return newsId;
+  }
+}
+
+export function subscribeToNews(callback) {
+  if (isMockMode) {
+    callback(getMockStorage("news", {}));
+    const handler = (newNews) => {
+      callback(newNews || {});
+    };
+    if (!subscribers.news) subscribers.news = [];
+    subscribers.news.push(handler);
+    return () => {
+      subscribers.news = subscribers.news.filter(cb => cb !== handler);
+    };
+  } else {
+    const dbRef = ref(database, "news");
     return onValue(dbRef, (snapshot) => {
       callback(snapshot.exists() ? snapshot.val() : {});
     });

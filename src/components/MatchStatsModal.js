@@ -12,6 +12,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
   const [chartMetric, setChartMetric] = useState("damageDealt"); // damageDealt, damageTaken, healing
   const [selectedGameIndex, setSelectedGameIndex] = useState(0);
   const [mvpViewMode, setMvpViewMode] = useState("game"); // game, series
+  const [championMap, setChampionMap] = useState({});
 
   useEffect(() => {
     if (!match?.id) return;
@@ -20,6 +21,19 @@ export default function MatchStatsModal({ match, teams, onClose }) {
       setDetails(data);
       setLoading(false);
     });
+
+    // Fetch champion data to map IDs to names for bans
+    fetch("https://ddragon.leagueoflegends.com/cdn/16.12.1/data/en_US/champion.json")
+      .then(res => res.json())
+      .then(data => {
+        const champMap = {};
+        Object.values(data.data).forEach(champ => {
+          champMap[champ.key] = champ.id; // key is the numeric ID (string format), id is the name
+        });
+        setChampionMap(champMap);
+      })
+      .catch(err => console.error("Failed to load champion data", err));
+
     return unsub;
   }, [match]);
 
@@ -40,6 +54,12 @@ export default function MatchStatsModal({ match, teams, onClose }) {
     if (!championName) return "https://placehold.co/40x40";
     const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
     return `https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${cleanName}.png`;
+  };
+
+  const getChampionIconById = (championId) => {
+    const name = championMap[championId];
+    if (!name) return "https://placehold.co/40x40";
+    return getChampionIcon(name);
   };
 
   // Helper to get item icon URL from Data Dragon CDN
@@ -290,8 +310,23 @@ export default function MatchStatsModal({ match, teams, onClose }) {
               <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
                 {/* Blue Team */}
                 <div>
-                  <h3 style={{ fontSize: "0.9rem", color: "var(--text-primary)", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "2px solid #005A82", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between" }}>
-                    <span>{teamA?.name} (Blue Side)</span>
+                  <h3 style={{ fontSize: "0.9rem", color: "var(--text-primary)", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "2px solid #005A82", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                      <span>{teamA?.name} (Blue Side)</span>
+                      {currentGameDetails?.teams?.[100]?.bans && currentGameDetails.teams[100].bans.length > 0 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}>
+                          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginRight: "0.2rem" }}>BANS:</span>
+                          {currentGameDetails.teams[100].bans.map((banId, idx) => (
+                            banId > 0 && (
+                              <div key={idx} style={{ position: "relative" }}>
+                                <img src={getChampionIconById(banId)} alt={`Ban ${banId}`} style={{ width: "20px", height: "20px", borderRadius: "50%", filter: "grayscale(100%)", border: "1px solid var(--color-danger)" }} />
+                                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "100%", height: "1px", backgroundColor: "var(--color-danger)" }}></div>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     {currentGameDetails.teams[100]?.winner && <span style={{ color: "var(--primary-gold-bright)", fontSize: "0.75rem" }}>🏆 VICTORY</span>}
                   </h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
@@ -360,8 +395,23 @@ export default function MatchStatsModal({ match, teams, onClose }) {
 
                 {/* Red Team */}
                 <div>
-                  <h3 style={{ fontSize: "0.9rem", color: "var(--text-primary)", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "2px solid #C8AA6E", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between" }}>
-                    <span>{teamB?.name} (Red Side)</span>
+                  <h3 style={{ fontSize: "0.9rem", color: "var(--text-primary)", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "2px solid #820000", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                      <span>{teamB?.name} (Red Side)</span>
+                      {currentGameDetails?.teams?.[200]?.bans && currentGameDetails.teams[200].bans.length > 0 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}>
+                          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginRight: "0.2rem" }}>BANS:</span>
+                          {currentGameDetails.teams[200].bans.map((banId, idx) => (
+                            banId > 0 && (
+                              <div key={idx} style={{ position: "relative" }}>
+                                <img src={getChampionIconById(banId)} alt={`Ban ${banId}`} style={{ width: "20px", height: "20px", borderRadius: "50%", filter: "grayscale(100%)", border: "1px solid var(--color-danger)" }} />
+                                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "100%", height: "1px", backgroundColor: "var(--color-danger)" }}></div>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     {currentGameDetails.teams[200]?.winner && <span style={{ color: "var(--primary-gold-bright)", fontSize: "0.75rem" }}>🏆 VICTORY</span>}
                   </h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
