@@ -204,15 +204,15 @@ export default function Schedule() {
                 </div>
 
                 {/* Scoreboard layout */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "1rem 0" }}>
+                <div className="schedule-scoreboard" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "1rem 0" }}>
                   {/* Team A */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", width: "40%", justifyContent: "flex-end", textAlign: "right", opacity: isCompleted && match.winnerId !== match.teamAId ? 0.5 : 1 }}>
-                    <h3 className="match-team-name" style={{ fontSize: "1.1rem", fontWeight: isCompleted && match.winnerId === match.teamAId ? "800" : "500" }}>{teamA?.name || "TBD"}</h3>
-                    <img src={teamA?.logo || "https://placehold.co/100x100"} alt={teamA?.name} className="match-team-logo" />
+                  <div className="schedule-team" style={{ display: "flex", alignItems: "center", gap: "1rem", width: "40%", justifyContent: "flex-end", textAlign: "right", opacity: isCompleted && match.winnerId !== match.teamAId ? 0.5 : 1 }}>
+                    <h3 className="match-team-name schedule-team-name" style={{ fontSize: "1.1rem", fontWeight: isCompleted && match.winnerId === match.teamAId ? "800" : "500", margin: 0, flex: 1 }}>{teamA?.name || "TBD"}</h3>
+                    <img src={teamA?.logo || "https://placehold.co/40x40"} alt={teamA?.name} className="match-team-logo" style={{ flexShrink: 0 }} />
                   </div>
 
                   {/* Score center */}
-                  <div className="match-scores" style={{ padding: "0.4rem 1rem", backgroundColor: isLive ? "rgba(var(--primary-gold-rgb), 0.05)" : "var(--bg-tertiary)" }}>
+                  <div className="match-scores" style={{ padding: "0.4rem 1rem", backgroundColor: isLive ? "rgba(var(--primary-gold-rgb), 0.05)" : "var(--bg-tertiary)", flexShrink: 0 }}>
                     <span className="score-digit" style={{ color: isCompleted && match.winnerId === match.teamAId ? "var(--primary-gold-bright)" : "var(--text-primary)" }}>
                       {match.scoreA}
                     </span>
@@ -223,9 +223,9 @@ export default function Schedule() {
                   </div>
 
                   {/* Team B */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", width: "40%", justifyContent: "flex-start", textAlign: "left", opacity: isCompleted && match.winnerId !== match.teamBId ? 0.5 : 1 }}>
-                    <img src={teamB?.logo || "https://placehold.co/100x100"} alt={teamB?.name} className="match-team-logo" />
-                    <h3 className="match-team-name" style={{ fontSize: "1.1rem", fontWeight: isCompleted && match.winnerId === match.teamBId ? "800" : "500" }}>{teamB?.name || "TBD"}</h3>
+                  <div className="schedule-team" style={{ display: "flex", alignItems: "center", gap: "1rem", width: "40%", justifyContent: "flex-start", textAlign: "left", opacity: isCompleted && match.winnerId !== match.teamBId ? 0.5 : 1 }}>
+                    <img src={teamB?.logo || "https://placehold.co/40x40"} alt={teamB?.name} className="match-team-logo" style={{ flexShrink: 0 }} />
+                    <h3 className="match-team-name schedule-team-name" style={{ fontSize: "1.1rem", fontWeight: isCompleted && match.winnerId === match.teamBId ? "800" : "500", margin: 0, flex: 1 }}>{teamB?.name || "TBD"}</h3>
                   </div>
                 </div>
 
