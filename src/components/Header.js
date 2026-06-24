@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, LogOut } from "lucide-react";
 import { SummonersCup, HextechCrest } from "@/components/Icons";
@@ -57,8 +58,14 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="header-container">
-        <Link href="/" className="logo-section">
-          <SummonersCup size={28} className="text-primary-gold" style={{ color: "var(--primary-gold)" }} />
+        <Link href="/" className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Image 
+            src="/company_logo.png" 
+            alt="Company Logo" 
+            width={32} 
+            height={32} 
+            style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }} 
+          />
           <h1>GG LoL Cup</h1>
         </Link>
 

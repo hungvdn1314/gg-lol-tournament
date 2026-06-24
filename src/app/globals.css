@@ -2,32 +2,36 @@
 
 :root {
   /* Colors */
-  --bg-primary: #040507;
-  --bg-secondary: #0A0D11;
-  --bg-tertiary: #11151B;
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-tertiary: #141414;
   
-  --primary-gold: #C29D38;
-  --primary-gold-bright: #FCE185;
-  --primary-gold-dim: #8F6F13;
-  --primary-gold-rgb: 194, 157, 56;
+  --primary-gold: #FFC107;
+  --primary-gold-bright: #FFD700;
+  --primary-gold-dim: #997300;
+  --primary-gold-rgb: 255, 193, 7;
   
   --text-primary: #FFFFFF;
-  --text-secondary: #C4CCD3;
-  --text-muted: #6C7A87;
+  --text-secondary: #E0E0E0;
+  --text-muted: #888888;
   
   --color-success: #28A745;
   --color-danger: #DC3545;
   --color-warning: #FFC107;
   --color-info: #17A2B8;
   
-  --border-gold: rgba(194, 157, 56, 0.18);
-  --border-gold-hover: rgba(194, 157, 56, 0.45);
-  --border-dark: #161A22;
+  --border-gold: rgba(255, 193, 7, 0.2);
+  --border-gold-hover: rgba(255, 193, 7, 0.5);
+  --border-dark: #222222;
   
+  /* Glassmorphism */
+  --glass-bg: rgba(20, 20, 20, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
   /* Layout & Transitions */
   --font-family: var(--font-chakra-petch), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-header: var(--font-russo-one), 'Russo One', sans-serif;
-  --transition-speed: 0.2s;
+  --font-header: var(--font-chakra-petch), sans-serif;
+  --transition-speed: 0.2s; /* Fast, snappy transitions */
   --max-width: 1200px;
 }
 
@@ -86,6 +90,16 @@ a {
   flex: 1;
 }
 
+/* Glassmorphism Utilities */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
 /* Layout Parts */
 .app-header {
   background-color: rgba(15, 18, 22, 0.85);
@@ -98,6 +112,7 @@ a {
 }
 
 .header-container {
+  width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 1rem 1.5rem;
@@ -125,7 +140,7 @@ a {
 
 .nav-links {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: center;
 }
 
@@ -146,7 +161,7 @@ a {
 .nav-link::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  bottom: -4px;
   left: 0.75rem;
   right: 0.75rem;
   height: 2px;

@@ -145,7 +145,9 @@ export default function Leaderboard() {
                     <motion.tr
                       key={team.id}
                       layout
-                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
                       className={`rank-${index + 1}`}
                     >
                       <td className="leaderboard-rank">#{index + 1}</td>
@@ -198,7 +200,9 @@ export default function Leaderboard() {
                     <motion.tr
                       key={team.id}
                       layout
-                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
                       className={`rank-${index + 1}`}
                     >
                       <td className="leaderboard-rank">#{index + 1}</td>

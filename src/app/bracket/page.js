@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { SummonersCup } from "@/components/Icons";
 import { subscribeToData } from "@/lib/db";
@@ -53,7 +54,13 @@ export default function Bracket() {
     const winnerId = match.winnerId;
 
     return (
-      <div className="bracket-match-node">
+      <motion.div 
+        className="bracket-match-node"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        whileHover={{ scale: 1.02, transition: { duration: 0.1 } }}
+      >
         {/* Match Header Info */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(255,255,255,0.01)", padding: "0.3rem 0.75rem", fontSize: "0.7rem", borderBottom: "1px solid var(--border-dark)", color: "var(--text-muted)" }}>
           <span>Bo{match.bestOf}</span>
@@ -99,7 +106,7 @@ export default function Bracket() {
             {match.status !== "scheduled" ? match.scoreB : "-"}
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   };
 

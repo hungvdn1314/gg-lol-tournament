@@ -9,7 +9,7 @@ const russoOne = Russo_One({
 });
 
 const chakraPetch = Chakra_Petch({
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-chakra-petch",
 });
@@ -17,6 +17,12 @@ const chakraPetch = Chakra_Petch({
 export const metadata = {
   title: "Gear Games LoL Cup 2026",
   description: "Web portal for the company League of Legends tournament - live brackets, team standings, and match schedules.",
+  openGraph: {
+    title: "Gear Games LoL Cup 2026",
+    description: "Web portal for the company League of Legends tournament - live brackets, team standings, and match schedules.",
+    type: "website",
+    images: [{ url: "/company_logo.png" }],
+  },
 };
 
 export const viewport = {

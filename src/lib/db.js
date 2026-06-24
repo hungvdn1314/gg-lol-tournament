@@ -20,11 +20,11 @@ const DEFAULT_TEAMS = {
     logo: "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?w=150&auto=format&fit=crop&q=80",
     group: "A",
     players: [
-      { name: "Faker", role: "Mid" },
-      { name: "Zeus", role: "Top" },
-      { name: "Oner", role: "Jungle" },
-      { name: "Gumayusi", role: "ADC" },
-      { name: "Keria", role: "Support" }
+      { name: "antifragile", role: "Top", riotId: "antifragile#102" },
+      { name: "MinhHuy", role: "Jungle", riotId: "MinhHuy#01997" },
+      { name: "BumbleBee", role: "Mid", riotId: "BumbleBee#LTT" },
+      { name: "Hay Quá Ta", role: "ADC", riotId: "Hay Quá Ta#1998" },
+      { name: "Hay Quá Nè", role: "Support", riotId: "Hay Quá Nè#8386" }
     ],
     stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
   },
@@ -34,11 +34,11 @@ const DEFAULT_TEAMS = {
     logo: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150&auto=format&fit=crop&q=80",
     group: "A",
     players: [
-      { name: "Chovy", role: "Mid" },
-      { name: "Kiin", role: "Top" },
-      { name: "Canyon", role: "Jungle" },
-      { name: "Peyz", role: "ADC" },
-      { name: "Lehends", role: "Support" }
+      { name: "Super Drama", role: "Top", riotId: "Super Drama#6969" },
+      { name: "Mỗi ngày Tốt lên", role: "Jungle", riotId: "Mỗi ngày Tốt lên#1545" },
+      { name: "Hơi Thở Của Cồn", role: "Mid", riotId: "Hơi Thở Của Cồn#21202" },
+      { name: "IrrationaL餃子", role: "ADC", riotId: "IrrationaL餃子#1337" },
+      { name: "Domjunis", role: "Support", riotId: "Domjunis#2306" }
     ],
     stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
   },
