@@ -128,12 +128,9 @@ export default function Bracket() {
             <div style={{ display: "flex", flexDirection: "column", gap: "6rem", justifyContent: "center", height: "100%" }}>
               <div style={{ position: "relative" }}>
                 {renderMatchNode("match-semi1", "Semifinal #1")}
-                {/* SVG connection lines for PC */}
-                <div style={{ display: "none", position: "absolute", right: "-65px", top: "50%", width: "65px", height: "85px", borderRight: "2px solid var(--border-dark)", borderTop: "2px solid var(--border-dark)", pointerEvents: "none" }} className="bracket-line-pc"></div>
               </div>
               <div style={{ position: "relative" }}>
                 {renderMatchNode("match-semi2", "Semifinal #2")}
-                <div style={{ display: "none", position: "absolute", right: "-65px", bottom: "50%", width: "65px", height: "85px", borderRight: "2px solid var(--border-dark)", borderBottom: "2px solid var(--border-dark)", pointerEvents: "none" }} className="bracket-line-pc"></div>
               </div>
             </div>
           </div>
@@ -169,11 +166,6 @@ export default function Bracket() {
       </div>
 
       <style jsx global>{`
-        @media (min-width: 769px) {
-          .bracket-line-pc {
-            display: block !important;
-          }
-        }
         @media (max-width: 768px) {
           .bracket-arrow-column {
             display: none !important;

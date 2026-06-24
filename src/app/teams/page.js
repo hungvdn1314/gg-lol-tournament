@@ -9,18 +9,17 @@ export default function Teams() {
   const [teams, setTeams] = useState({});
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [groupFilter, setGroupFilter] = useState("all");
-  const rosterRef = useRef(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubTeams = subscribeToData("teams", setTeams);
+    const unsubTeams = subscribeToData("teams", (data) => {
+      setTeams(data || {});
+      setLoading(false);
+    });
     return unsubTeams;
   }, []);
 
-  useEffect(() => {
-    if (selectedTeamId && rosterRef.current) {
-      rosterRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [selectedTeamId]);
+
 
   const teamList = Object.values(teams);
   
@@ -84,7 +83,13 @@ export default function Teams() {
       </div>
 
       <div className="grid-3" style={{ marginBottom: "3rem" }}>
-        {filteredTeams.map((team) => (
+        {loading ? (
+          <>
+            <div className="skeleton" style={{ height: "280px" }}></div>
+            <div className="skeleton" style={{ height: "280px" }}></div>
+            <div className="skeleton" style={{ height: "280px" }}></div>
+          </>
+        ) : filteredTeams.map((team) => (
           <div
             key={team.id}
             onClick={() => setSelectedTeamId(team.id)}
@@ -121,9 +126,10 @@ export default function Teams() {
         ))}
       </div>
 
-      {/* Expanded Team Panel */}
+      {/* Expanded Team Modal */}
       {selectedTeam && (
-        <div ref={rosterRef} className="card card-gold" style={{ marginTop: "3rem", padding: "2.5rem", scrollMarginTop: "100px" }}>
+        <div className="modal-overlay" onClick={() => setSelectedTeamId(null)} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.8)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "center", padding: "1rem", backdropFilter: "blur(4px)" }}>
+          <div className="card card-gold" onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: "900px", maxHeight: "90vh", overflowY: "auto", padding: "2.5rem", position: "relative" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "2rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "1.5rem", marginBottom: "2rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
               <img
@@ -215,9 +221,9 @@ export default function Teams() {
                     </span>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
+        </div>
         </div>
       )}
     </div>

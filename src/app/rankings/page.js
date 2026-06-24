@@ -275,44 +275,46 @@ export default function PlayerRankings() {
 
           {/* Ranking Table */}
           <div className="card" style={{ padding: "0", overflow: "hidden" }}>
-            <table className="teams-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead style={{ backgroundColor: "rgba(0,0,0,0.5)", borderBottom: "1px solid var(--border-dark)" }}>
-                <tr>
-                  <th style={{ padding: "1rem", textAlign: "center", width: "60px" }}>Rank</th>
-                  <th style={{ padding: "1rem", textAlign: "left" }}>Player</th>
-                  <th style={{ padding: "1rem", textAlign: "center" }}>Games</th>
-                  <th style={{ padding: "1rem", textAlign: "right", color: "var(--primary-gold-bright)" }}>
-                    {metrics.find(m => m.id === sortBy)?.label}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rankedPlayers.slice(3).map((p, idx) => (
-                  <tr key={idx} style={{ borderBottom: "1px solid var(--border-dark)", transition: "background 0.2s" }}>
-                    <td style={{ padding: "1rem", textAlign: "center", fontWeight: "bold", color: "var(--text-muted)" }}>
-                      {idx + 4}
-                    </td>
-                    <td style={{ padding: "1rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-                      <img src={getChampionIcon(p.topChamp)} alt={p.topChamp} style={{ width: "32px", height: "32px", borderRadius: "4px" }} />
-                      <Link href={`/players/${encodeURIComponent(p.playerName)}`} style={{ fontWeight: "bold", textDecoration: "none", color: "var(--text-primary)" }}>{p.playerName}</Link>
-                    </td>
-                    <td style={{ padding: "1rem", textAlign: "center", color: "var(--text-muted)" }}>
-                      {p.gamesPlayed}
-                    </td>
-                    <td style={{ padding: "1rem", textAlign: "right", fontWeight: "bold", color: "var(--text-primary)" }}>
-                      {formatStat(p[sortBy], sortBy)}
-                    </td>
-                  </tr>
-                ))}
-                {rankedPlayers.length <= 3 && (
+            <div className="table-responsive">
+              <table className="teams-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead style={{ backgroundColor: "rgba(0,0,0,0.5)", borderBottom: "1px solid var(--border-dark)" }}>
                   <tr>
-                    <td colSpan="4" style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>
-                      No other players to display.
-                    </td>
+                    <th style={{ padding: "1rem", textAlign: "center", width: "60px" }}>Rank</th>
+                    <th style={{ padding: "1rem", textAlign: "left" }}>Player</th>
+                    <th style={{ padding: "1rem", textAlign: "center" }}>Games</th>
+                    <th style={{ padding: "1rem", textAlign: "right", color: "var(--primary-gold-bright)" }}>
+                      {metrics.find(m => m.id === sortBy)?.label}
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rankedPlayers.slice(3).map((p, idx) => (
+                    <tr key={idx} style={{ borderBottom: "1px solid var(--border-dark)", transition: "background 0.2s" }}>
+                      <td style={{ padding: "1rem", textAlign: "center", fontWeight: "bold", color: "var(--text-muted)" }}>
+                        {idx + 4}
+                      </td>
+                      <td style={{ padding: "1rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+                        <img src={getChampionIcon(p.topChamp)} alt={p.topChamp} style={{ width: "32px", height: "32px", borderRadius: "4px" }} />
+                        <Link href={`/players/${encodeURIComponent(p.playerName)}`} style={{ fontWeight: "bold", textDecoration: "none", color: "var(--text-primary)" }}>{p.playerName}</Link>
+                      </td>
+                      <td style={{ padding: "1rem", textAlign: "center", color: "var(--text-muted)" }}>
+                        {p.gamesPlayed}
+                      </td>
+                      <td style={{ padding: "1rem", textAlign: "right", fontWeight: "bold", color: "var(--text-primary)" }}>
+                        {formatStat(p[sortBy], sortBy)}
+                      </td>
+                    </tr>
+                  ))}
+                  {rankedPlayers.length <= 3 && (
+                    <tr>
+                      <td colSpan="4" style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>
+                        No other players to display.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}

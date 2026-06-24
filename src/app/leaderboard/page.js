@@ -8,9 +8,13 @@ import { subscribeToData } from "@/lib/db";
 
 export default function Leaderboard() {
   const [teams, setTeams] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubTeams = subscribeToData("teams", setTeams);
+    const unsubTeams = subscribeToData("teams", (data) => {
+      setTeams(data || {});
+      setLoading(false);
+    });
     return unsubTeams;
   }, []);
 
@@ -55,72 +59,19 @@ export default function Leaderboard() {
         </p>
       </div>
 
-      {/* Top 3 Podium (Overall ranking show) */}
-      {teamList.length >= 3 && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "4rem" }}>
-          <h2 style={{ textTransform: "uppercase", fontSize: "1.2rem", letterSpacing: "0.05em", color: "var(--primary-gold)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <SummonersCup size={20} /> Summoner Ranks
-          </h2>
-          
-          <div className="podium-container">
-            {/* 2nd Place */}
-            {top2 && (
-              <div className="podium-column podium-2">
-                <img src={top2.logo || "https://placehold.co/100x100"} alt={top2.name} className="podium-avatar" />
-                <div style={{ textAlign: "center", marginBottom: "0.5rem", fontWeight: "700", width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {top2.name.split(" (")[0]}
-                </div>
-                <div className="podium-step">
-                  <div style={{ fontSize: "2rem", fontWeight: "900", color: "#C0C0C0" }}>2</div>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", marginTop: "0.25rem" }}>
-                    {top2.stats?.points || 0} PTS
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {/* 1st Place */}
-            {top1 && (
-              <div className="podium-column podium-1">
-                <div style={{ position: "relative" }}>
-                  <SummonersCup size={36} style={{ color: "var(--primary-gold)", position: "absolute", top: "-30px", left: "50%", transform: "translateX(-50%)" }} />
-                  <img src={top1.logo || "https://placehold.co/100x100"} alt={top1.name} className="podium-avatar" />
-                </div>
-                <div style={{ textAlign: "center", marginBottom: "0.5rem", fontWeight: "700", width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--primary-gold-bright)" }}>
-                  {top1.name.split(" (")[0]}
-                </div>
-                <div className="podium-step">
-                  <div style={{ fontSize: "2.5rem", fontWeight: "900", color: "var(--primary-gold)" }}>1</div>
-                  <div style={{ fontSize: "0.85rem", color: "var(--primary-gold-bright)", fontWeight: "600", textTransform: "uppercase", marginTop: "0.25rem" }}>
-                    {top1.stats?.points || 0} PTS
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 3rd Place */}
-            {top3 && (
-              <div className="podium-column podium-3">
-                <img src={top3.logo || "https://placehold.co/100x100"} alt={top3.name} className="podium-avatar" />
-                <div style={{ textAlign: "center", marginBottom: "0.5rem", fontWeight: "700", width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {top3.name.split(" (")[0]}
-                </div>
-                <div className="podium-step">
-                  <div style={{ fontSize: "1.75rem", fontWeight: "900", color: "#CD7F32" }}>3</div>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", marginTop: "0.25rem" }}>
-                    {top3.stats?.points || 0} PTS
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Group Tables */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", marginBottom: "4rem" }}>
-        {/* Group A Standings */}
-        <div className="card">
+      <div className="grid-2" style={{ gap: "2.5rem", marginBottom: "4rem", alignItems: "flex-start" }}>
+        {loading ? (
+          <>
+            <div className="skeleton" style={{ height: "400px" }}></div>
+            <div className="skeleton" style={{ height: "400px" }}></div>
+          </>
+        ) : (
+          <>
+            {/* Group A Standings */}
+            <div className="card">
           <h2 style={{ fontSize: "1.3rem", textTransform: "uppercase", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>Group A Standings</span>
             <span className="hero-badge" style={{ margin: 0, fontSize: "0.7rem", padding: "0.15rem 0.5rem" }}>Group Stage</span>
@@ -228,6 +179,8 @@ export default function Leaderboard() {
             </table>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Rules Notice */}

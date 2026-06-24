@@ -186,7 +186,7 @@ export default function PlayerProfile() {
           <img src={playerTeam?.logo || "https://placehold.co/150x150"} alt="Team" style={{ width: "120px", height: "120px", borderRadius: "8px", objectFit: "cover", border: "2px solid var(--primary-gold)" }} />
         </div>
         <div>
-          <h1 style={{ fontSize: "3rem", margin: 0, color: "var(--primary-gold)", textTransform: "uppercase" }}>{playerName}</h1>
+          <h1 style={{ fontSize: "clamp(1.5rem, 6vw, 3rem)", margin: 0, color: "var(--primary-gold)", textTransform: "uppercase", wordBreak: "break-word", lineHeight: 1.1 }}>{playerName}</h1>
           <div style={{ fontSize: "1.2rem", color: "var(--text-secondary)", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             {playerTeam ? playerTeam.name : "Free Agent"} 
             <span style={{ fontSize: "0.8rem", backgroundColor: "var(--bg-lighter)", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>

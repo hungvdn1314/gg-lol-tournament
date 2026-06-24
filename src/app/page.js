@@ -74,8 +74,12 @@ export default function Home() {
 
   if (!config) {
     return (
-      <div className="container" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
-        <div className="countdown-lbl" style={{ fontSize: "1.5rem" }}>Loading tournament portal...</div>
+      <div className="container" style={{ display: "flex", flexDirection: "column", gap: "2rem", paddingTop: "2rem" }}>
+        <div className="skeleton" style={{ width: "100%", height: "400px", borderRadius: "8px" }}></div>
+        <div className="grid-2">
+          <div className="skeleton" style={{ width: "100%", height: "200px", borderRadius: "8px" }}></div>
+          <div className="skeleton" style={{ width: "100%", height: "200px", borderRadius: "8px" }}></div>
+        </div>
       </div>
     );
   }

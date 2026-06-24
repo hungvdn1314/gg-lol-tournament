@@ -69,13 +69,14 @@ export default function Header() {
           <h1>GG LoL Cup</h1>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="nav-links">
+        {/* Navigation */}
+        <nav className={`nav-links ${mobileMenuOpen ? "mobile-open" : ""}`}>
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={`nav-link ${pathname === link.href ? "active" : ""}`}
+              onClick={() => setMobileMenuOpen(false)}
             >
               {link.label}
             </Link>
