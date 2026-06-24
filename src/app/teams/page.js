@@ -82,45 +82,35 @@ export default function Teams() {
         </div>
       </div>
 
-      <div className="grid-3" style={{ marginBottom: "3rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem", marginBottom: "3rem" }}>
         {loading ? (
           <>
-            <div className="skeleton" style={{ height: "280px" }}></div>
-            <div className="skeleton" style={{ height: "280px" }}></div>
-            <div className="skeleton" style={{ height: "280px" }}></div>
+            <div className="skeleton" style={{ height: "80px" }}></div>
+            <div className="skeleton" style={{ height: "80px" }}></div>
+            <div className="skeleton" style={{ height: "80px" }}></div>
+            <div className="skeleton" style={{ height: "80px" }}></div>
+            <div className="skeleton" style={{ height: "80px" }}></div>
+            <div className="skeleton" style={{ height: "80px" }}></div>
           </>
         ) : filteredTeams.map((team) => (
           <div
             key={team.id}
             onClick={() => setSelectedTeamId(team.id)}
             className={`card ${selectedTeamId === team.id ? "card-gold" : ""}`}
-            style={{ cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "2rem 1.5rem" }}
+            style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "1rem", padding: "1rem", transition: "all 0.2s" }}
           >
             <img
-              src={team.logo || "https://placehold.co/150x150"}
+              src={team.logo || "https://placehold.co/48x48"}
               alt={team.name}
-              style={{ width: "90px", height: "90px", borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border-dark)", marginBottom: "1.25rem", backgroundColor: "var(--bg-tertiary)" }}
+              style={{ width: "48px", height: "48px", borderRadius: "8px", objectFit: "cover", border: "1px solid var(--border-dark)", backgroundColor: "var(--bg-tertiary)" }}
             />
-            <span className="hero-badge" style={{ fontSize: "0.7rem", padding: "0.15rem 0.6rem", marginBottom: "0.75rem", backgroundColor: "rgba(228,179,60,0.05)", borderColor: "var(--border-dark)", color: "var(--text-muted)" }}>
-              Group {team.group}
-            </span>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: "700", marginBottom: "1rem" }}>{team.name}</h3>
-            
-            <div style={{ display: "flex", gap: "1.5rem", width: "100%", justifyContent: "center", borderTop: "1px solid var(--border-dark)", paddingTop: "1rem", fontSize: "0.85rem" }}>
-              <div>
-                <div style={{ color: "var(--primary-gold-bright)", fontWeight: "800" }}>{team.stats?.wins || 0}</div>
-                <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase" }}>Wins</div>
-              </div>
-              <div style={{ borderRight: "1px solid var(--border-dark)" }}></div>
-              <div>
-                <div style={{ color: "var(--text-secondary)", fontWeight: "800" }}>{team.stats?.losses || 0}</div>
-                <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase" }}>Losses</div>
-              </div>
-              <div style={{ borderRight: "1px solid var(--border-dark)" }}></div>
-              <div>
-                <div style={{ color: "var(--primary-gold)", fontWeight: "800" }}>{team.stats?.points || 0}</div>
-                <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase" }}>Pts</div>
-              </div>
+            <div style={{ flex: 1, textAlign: "left", overflow: "hidden" }}>
+              <div style={{ fontWeight: "700", fontSize: "1.05rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{team.name}</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem", textTransform: "uppercase" }}>Group {team.group}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontWeight: "800", color: "var(--primary-gold)", fontSize: "1.1rem" }}>{team.stats?.points || 0} PTS</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{team.stats?.wins || 0}W - {team.stats?.losses || 0}L</div>
             </div>
           </div>
         ))}
