@@ -173,11 +173,11 @@ export default function PlayerRankings() {
   const top3 = rankedPlayers[2];
 
   const formatStat = (val, metricId) => {
-    if (["seriesMvpCount", "matchMvpCount"].includes(metricId)) return val;
-    if (metricId === "kda") return val.toFixed(2);
+    if (["seriesMvpCount", "matchMvpCount"].includes(metricId)) return `${val} MVP${val !== 1 ? 's' : ''}`;
+    if (metricId === "kda") return `${val.toFixed(2)} KDA`;
     if (["dmgShare", "kp", "dmgTakenShare"].includes(metricId)) return val.toFixed(1) + "%";
-    if (["dpm", "gpm"].includes(metricId)) return Math.round(val).toLocaleString();
-    return val.toFixed(2);
+    if (["dpm", "gpm", "vspm", "cspm"].includes(metricId)) return `${Math.round(val).toLocaleString()}/m`;
+    return `${val.toFixed(2)} pts`;
   };
 
   return (

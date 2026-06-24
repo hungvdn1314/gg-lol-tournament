@@ -679,7 +679,7 @@ export default function Admin() {
 
   return (
     <div className="container">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "1rem" }}>
+      <div className="admin-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "1rem" }}>
         <div>
           <span className="hero-badge">Coordinator Access</span>
           <h1 style={{ fontSize: "2rem", textTransform: "uppercase" }}>Tournament Control Panel</h1>

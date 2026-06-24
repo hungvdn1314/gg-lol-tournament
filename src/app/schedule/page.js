@@ -107,7 +107,7 @@ export default function Schedule() {
         {/* Filter Toolbar */}
         <div style={{ display: "flex", justifyContent: "center", gap: "1rem", flexWrap: "wrap", marginTop: "2rem" }}>
           {/* Status Filters */}
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div className="scrollable-tabs" style={{ maxWidth: "100%" }}>
             <button
               onClick={() => setStatusFilter("all")}
               className={`btn ${statusFilter === "all" ? "btn-primary" : "btn-outline"}`}
@@ -141,7 +141,7 @@ export default function Schedule() {
           <div style={{ width: "1px", height: "30px", backgroundColor: "var(--border-dark)", alignSelf: "center" }}></div>
 
           {/* Stage Filters */}
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div className="scrollable-tabs" style={{ maxWidth: "100%" }}>
             <button
               onClick={() => setStageFilter("all")}
               className={`btn ${stageFilter === "all" ? "btn-primary" : "btn-outline"}`}

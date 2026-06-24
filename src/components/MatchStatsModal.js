@@ -172,8 +172,8 @@ export default function MatchStatsModal({ match, teams, onClose }) {
     : 1;
 
   return (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0, 0, 0, 0.85)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "1.5rem", backdropFilter: "blur(5px)" }}>
-      <div className="card card-gold" style={{ width: "100%", maxWidth: "1000px", maxHeight: "90vh", overflowY: "auto", padding: "2rem", display: "flex", flexDirection: "column", position: "relative" }}>
+    <div className="modal-overlay">
+      <div className="card card-gold modal-content">
         
         {/* Close Button */}
         <button 
@@ -269,7 +269,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
             </div>
 
             {/* Modal Navigation Tabs */}
-            <div style={{ display: "flex", gap: "0.5rem", borderBottom: "1px solid var(--border-dark)", marginBottom: "1.5rem", overflowX: "auto", paddingBottom: "0.5rem" }}>
+            <div className="scrollable-tabs" style={{ borderBottom: "1px solid var(--border-dark)", marginBottom: "1.5rem", paddingBottom: "0.5rem" }}>
               {[
                 { id: "scoreboard", label: "Scoreboard", icon: <CrossedSwords size={14} /> },
                 { id: "charts", label: "Combat Charts", icon: <BarChart2 size={14} /> },
@@ -605,12 +605,12 @@ export default function MatchStatsModal({ match, teams, onClose }) {
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 {/* Gold Lead Visualizer */}
                 <div className="card" style={{ backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-dark)", padding: "1.5rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: "bold" }}>
-                    <span style={{ color: "#4fa8ff" }}>{teamA?.name} ({(blueTotalGold / 1000).toFixed(1)}k)</span>
-                    <span style={{ color: "var(--primary-gold)" }}>
+                  <div className="gold-lead-bar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: "bold" }}>
+                    <span className="mvp-player-name" style={{ color: "#4fa8ff", textAlign: "left", flex: 1 }}>{teamA?.name}</span>
+                    <span style={{ color: "var(--primary-gold)", whiteSpace: "nowrap", margin: "0 0.5rem" }}>
                       {goldDiff === 0 ? "Even Gold" : `${goldLeadTeam} +${(goldDiff / 1000).toFixed(1)}k Lead`}
                     </span>
-                    <span style={{ color: "#ffd47f" }}>{teamB?.name} ({(redTotalGold / 1000).toFixed(1)}k)</span>
+                    <span className="mvp-player-name" style={{ color: "#ffd47f", textAlign: "right", flex: 1 }}>{teamB?.name}</span>
                   </div>
                   <div style={{ width: "100%", height: "12px", backgroundColor: "rgba(0,0,0,0.5)", borderRadius: "6px", display: "flex", overflow: "hidden" }}>
                     <div style={{ width: `${(blueTotalGold / (blueTotalGold + redTotalGold)) * 100}%`, height: "100%", backgroundColor: "#005A82" }}></div>
@@ -700,26 +700,25 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                     <div className="card" style={{ border: "1px solid var(--border-dark)", padding: "1rem" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                         {dataToRender.map((p, idx) => (
-                          <div key={idx} style={{ 
-                            display: "flex", 
-                            alignItems: "center", 
-                            gap: "1.5rem", 
+                          <div key={idx} className="mvp-stats-row" style={{ 
                             padding: "1rem", 
                             backgroundColor: idx === 0 ? "rgba(228,179,60,0.08)" : "var(--bg-tertiary)", 
                             border: idx === 0 ? "1px solid var(--border-gold)" : "1px solid var(--border-dark)", 
                             borderRadius: "4px" 
                           }}>
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "50px", flexShrink: 0 }}>
-                              <span style={{ fontSize: "1.5rem", fontWeight: "bold", color: idx === 0 ? "var(--primary-gold-bright)" : "var(--text-muted)" }}>
-                                #{idx + 1}
-                              </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "40px", flexShrink: 0 }}>
+                                <span style={{ fontSize: "1.2rem", fontWeight: "bold", color: idx === 0 ? "var(--primary-gold-bright)" : "var(--text-muted)" }}>
+                                  #{idx + 1}
+                                </span>
+                              </div>
+                              <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "40px", height: "40px", borderRadius: "4px" }} />
                             </div>
-                            <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "40px", height: "40px", borderRadius: "4px" }} />
-                            <div style={{ flex: 1 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                                <div style={{ fontWeight: "bold", color: p.teamId === 100 ? "#4fa8ff" : "#ffd47f", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                  {p.playerName}
-                                  {idx === 0 && <span style={{ backgroundColor: "var(--primary-gold)", color: "black", fontSize: "0.6rem", padding: "0.1rem 0.4rem", borderRadius: "2px", fontWeight: "bold", textTransform: "uppercase" }}>MVP</span>}
+                            <div style={{ flex: 1, width: "100%" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", width: "100%" }}>
+                                <div style={{ fontWeight: "bold", color: p.teamId === 100 ? "#4fa8ff" : "#ffd47f", display: "flex", alignItems: "center", gap: "0.5rem", maxWidth: "70%" }}>
+                                  <span className="mvp-player-name">{p.playerName}</span>
+                                  {idx === 0 && <span style={{ backgroundColor: "var(--primary-gold)", color: "black", fontSize: "0.6rem", padding: "0.1rem 0.4rem", borderRadius: "2px", fontWeight: "bold", textTransform: "uppercase", flexShrink: 0 }}>MVP</span>}
                                 </div>
                                 <div style={{ fontWeight: "bold", color: "var(--text-primary)" }}>
                                   {p.mvpBreakdown.totalScore.toFixed(2)} pts
@@ -733,7 +732,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                                 <div title={`Vision/Min: ${p.mvpBreakdown.visionScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.visionScore / maxPoints) * 100}%`, backgroundColor: "#9c27b0" }}></div>
                                 <div title={`Win Bonus: ${p.mvpBreakdown.winBonus.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.winBonus / maxPoints) * 100}%`, backgroundColor: "var(--primary-gold)" }}></div>
                               </div>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6rem", color: "var(--text-muted)", marginTop: "0.4rem", textTransform: "uppercase" }}>
+                              <div className="mvp-kda-stats" style={{ justifyContent: "space-between", fontSize: "0.6rem", color: "var(--text-muted)", marginTop: "0.4rem", textTransform: "uppercase", overflowX: "auto", whiteSpace: "nowrap", paddingBottom: "0.2rem", scrollbarWidth: "none" }}>
                                 <span>KDA ({p.mvpBreakdown.kdaScore.toFixed(1)})</span>
                                 <span>KP ({p.mvpBreakdown.kpScore.toFixed(1)})</span>
                                 <span>DMG ({p.mvpBreakdown.dmgScore.toFixed(1)})</span>
