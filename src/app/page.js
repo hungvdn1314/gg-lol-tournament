@@ -103,7 +103,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
           <Link href="/schedule" className="btn btn-primary">
             <CrossedSwords size={18} fill="currentColor" /> View Schedule
           </Link>

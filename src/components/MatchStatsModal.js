@@ -332,7 +332,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     {blueParticipants.map((p, idx) => (
                       <div key={idx} style={{ display: "flex", alignItems: "center", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-dark)", borderRadius: "4px", padding: "0.6rem 0.8rem", flexWrap: "wrap", gap: "1rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "20%" }}>
+                        <div className="sb-col-player" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                           <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "32px", height: "32px", borderRadius: "4px", border: "1px solid var(--border-dark)" }} />
                           <div>
                             <div style={{ fontWeight: "700", color: "var(--text-primary)", fontSize: "0.85rem", display: "flex", alignItems: "center" }}>
@@ -346,29 +346,29 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           </div>
                         </div>
                         
-                        <div style={{ width: "15%", textAlign: "center" }}>
+                        <div className="sb-col-kda">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>KDA</span>
                           <strong style={{ fontSize: "0.85rem" }}>{p.kills}/{p.deaths}/{p.assists}</strong>
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>{getKdaRatio(p.kills, p.deaths, p.assists)}</span>
                         </div>
 
-                        <div style={{ width: "10%", textAlign: "center" }}>
+                        <div className="sb-col-gold">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Gold</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.gold.toLocaleString()}</span>
                         </div>
 
-                        <div style={{ width: "8%", textAlign: "center" }}>
+                        <div className="sb-col-cs">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>CS</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.cs}</span>
                         </div>
 
-                        <div style={{ width: "8%", textAlign: "center" }}>
+                        <div className="sb-col-vision">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Vision</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.vision || 0}</span>
                         </div>
 
                         {/* Items */}
-                        <div style={{ display: "flex", gap: "3px", width: "20%" }}>
+                        <div className="sb-col-player" style={{ display: "flex", gap: "3px" }}>
                           {p.items.map((itemId, i) => {
                             const iconUrl = getItemIcon(itemId);
                             return (
@@ -382,7 +382,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                         </div>
 
                         {/* Damage Bar Chart */}
-                        <div style={{ flex: 1 }}>
+                        <div className="sb-col-items">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block", marginBottom: "0.15rem" }}>Dmg: {p.damageDealt.toLocaleString()}</span>
                           <div style={{ width: "100%", height: "6px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "3px", overflow: "hidden" }}>
                             <div style={{ width: `${(p.damageDealt / Math.max(1, maxMetricVal)) * 100}%`, height: "100%", backgroundColor: "var(--primary-gold)", borderRadius: "3px" }}></div>
@@ -417,7 +417,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     {redParticipants.map((p, idx) => (
                       <div key={idx} style={{ display: "flex", alignItems: "center", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-dark)", borderRadius: "4px", padding: "0.6rem 0.8rem", flexWrap: "wrap", gap: "1rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "20%" }}>
+                        <div className="sb-col-player" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                           <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "32px", height: "32px", borderRadius: "4px", border: "1px solid var(--border-dark)" }} />
                           <div>
                             <div style={{ fontWeight: "700", color: "var(--text-primary)", fontSize: "0.85rem", display: "flex", alignItems: "center" }}>
@@ -431,29 +431,29 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           </div>
                         </div>
                         
-                        <div style={{ width: "15%", textAlign: "center" }}>
+                        <div className="sb-col-kda">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>KDA</span>
                           <strong style={{ fontSize: "0.85rem" }}>{p.kills}/{p.deaths}/{p.assists}</strong>
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>{getKdaRatio(p.kills, p.deaths, p.assists)}</span>
                         </div>
 
-                        <div style={{ width: "10%", textAlign: "center" }}>
+                        <div className="sb-col-gold">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Gold</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.gold.toLocaleString()}</span>
                         </div>
 
-                        <div style={{ width: "8%", textAlign: "center" }}>
+                        <div className="sb-col-cs">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>CS</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.cs}</span>
                         </div>
 
-                        <div style={{ width: "8%", textAlign: "center" }}>
+                        <div className="sb-col-vision">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Vision</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.vision || 0}</span>
                         </div>
 
                         {/* Items */}
-                        <div style={{ display: "flex", gap: "3px", width: "20%" }}>
+                        <div className="sb-col-player" style={{ display: "flex", gap: "3px" }}>
                           {p.items.map((itemId, i) => {
                             const iconUrl = getItemIcon(itemId);
                             return (
@@ -467,7 +467,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                         </div>
 
                         {/* Damage Bar Chart */}
-                        <div style={{ flex: 1 }}>
+                        <div className="sb-col-items">
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block", marginBottom: "0.15rem" }}>Dmg: {p.damageDealt.toLocaleString()}</span>
                           <div style={{ width: "100%", height: "6px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "3px", overflow: "hidden" }}>
                             <div style={{ width: `${(p.damageDealt / Math.max(1, maxMetricVal)) * 100}%`, height: "100%", backgroundColor: "#DC3545", borderRadius: "3px" }}></div>
@@ -679,8 +679,8 @@ export default function MatchStatsModal({ match, teams, onClose }) {
             {activeTab === "mvp" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <div style={{ display: "flex", gap: "1rem" }}>
-                  <button onClick={() => setMvpViewMode("game")} className={`btn ${mvpViewMode === "game" ? "btn-primary" : "btn-outline"}`} style={{ flex: 1 }}>Game {selectedGameIndex + 1} MVP</button>
-                  <button onClick={() => setMvpViewMode("series")} className={`btn ${mvpViewMode === "series" ? "btn-primary" : "btn-outline"}`} style={{ flex: 1 }}>Series Overall MVP</button>
+                  <button onClick={() => setMvpViewMode("game")} className={`btn ${mvpViewMode === "game" ? "btn-primary" : "btn-outline"} sb-col-items`}>Game {selectedGameIndex + 1} MVP</button>
+                  <button onClick={() => setMvpViewMode("series")} className={`btn ${mvpViewMode === "series" ? "btn-primary" : "btn-outline"} sb-col-items`}>Series Overall MVP</button>
                 </div>
 
                 <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "1rem", marginBottom: "0.5rem", fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
