@@ -169,7 +169,7 @@ export default function PlayerProfile() {
   // Find player's team
   let playerTeam = null;
   Object.values(teams).forEach(t => {
-    if (t.players && t.players.some(tp => tp.name === playerName)) {
+    if (t.players && t.players.some(tp => tp.name.trim() === playerName.trim())) {
       playerTeam = t;
     }
   });

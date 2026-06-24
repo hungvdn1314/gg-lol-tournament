@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { subscribeToData } from "@/lib/db";
 import { LoLMinion, CrossedSwords, SummonersCup, RoleTop, RoleJungle, RoleMid, RoleADC, RoleSupport } from "@/components/Icons";
 
@@ -162,7 +163,14 @@ export default function Teams() {
                       key={idx}
                       style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-tertiary)", padding: "1rem 1.25rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}
                     >
-                      <div style={{ fontWeight: "700", color: "var(--text-primary)" }}>{player.name}</div>
+                      <Link 
+                        href={`/players/${encodeURIComponent(player.name)}`} 
+                        style={{ fontWeight: "700", color: "var(--text-primary)", textDecoration: "none", borderBottom: "1px dashed var(--border-dark)" }}
+                        onMouseEnter={(e) => { e.target.style.color = 'var(--primary-gold)'; e.target.style.borderBottom = '1px solid var(--primary-gold)'; }}
+                        onMouseLeave={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.borderBottom = '1px dashed var(--border-dark)'; }}
+                      >
+                        {player.name}
+                      </Link>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "var(--primary-gold-bright)", fontWeight: "600", backgroundColor: "rgba(228,179,60,0.05)", padding: "0.25rem 0.75rem", borderRadius: "20px", border: "1px solid rgba(228,179,60,0.1)" }}>
                         <span>{roleIcons[player.role] || <CrossedSwords size={14} />}</span>
                         <span>{player.role}</span>
