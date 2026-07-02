@@ -41,9 +41,11 @@ export default function RootLayout({ children }) {
         </main>
         
         <footer className="app-footer">
-          <div className="container footer-content">
+          <div className="container footer-content" style={{ textAlign: "center" }}>
             <p>&copy; 2026 Gear Games. All rights reserved.</p>
-            <p>This tournament is not affiliated with or sponsored by Riot Games, Inc. or League of Legends Esports.</p>
+            <p style={{ fontSize: "0.75rem", opacity: 0.7, maxWidth: "700px", margin: "0.5rem auto 1rem auto", lineHeight: "1.4" }}>
+              Gear Games LoL Cup Portal is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+            </p>
             <div className="footer-links">
               <a href="/">Home</a>
               <a href="/news">News</a>

@@ -70,7 +70,12 @@ export async function POST(request) {
       turretsKilled: p.turretKills || 0,
       inhibitorsKilled: p.inhibitorKills || 0,
       ccDuration: p.totalTimeCCDealt || 0,
-      items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5]
+      items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5],
+      summonerSpells: [p.summoner1Id, p.summoner2Id],
+      runes: {
+        keystoneId: p.perks?.styles?.[0]?.selections?.[0]?.perk || null,
+        primaryStyleId: p.perks?.styles?.[0]?.style || null
+      }
     }));
 
     const matchDetailsData = {

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "import-lcu": "node scripts/import-lcu.mjs"
   },
   "dependencies": {
     "firebase": "^12.15.0",

@@ -4,15 +4,25 @@ import { useState, useEffect } from "react";
 import { X, Award, Eye, BarChart2, Check, Copy, Activity, Info } from "lucide-react";
 import { HextechCrest, CrossedSwords } from "@/components/Icons";
 import { subscribeToMatchDetails } from "@/lib/db";
+import { useDDragon } from "@/lib/riot";
 
 export default function MatchStatsModal({ match, teams, onClose }) {
+  const {
+    version,
+    getChampionIcon,
+    getChampionIconById,
+    getItemIcon,
+    getSummonerSpellIcon,
+    getRuneIcon,
+    loading: ddragonLoading
+  } = useDDragon();
+
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("scoreboard"); // scoreboard, charts, utility, team
   const [chartMetric, setChartMetric] = useState("damageDealt"); // damageDealt, damageTaken, healing
   const [selectedGameIndex, setSelectedGameIndex] = useState(0);
   const [mvpViewMode, setMvpViewMode] = useState("game"); // game, series
-  const [championMap, setChampionMap] = useState({});
 
   useEffect(() => {
     if (!match?.id) return;
@@ -21,18 +31,6 @@ export default function MatchStatsModal({ match, teams, onClose }) {
       setDetails(data);
       setLoading(false);
     });
-
-    // Fetch champion data to map IDs to names for bans
-    fetch("https://ddragon.leagueoflegends.com/cdn/16.12.1/data/en_US/champion.json")
-      .then(res => res.json())
-      .then(data => {
-        const champMap = {};
-        Object.values(data.data).forEach(champ => {
-          champMap[champ.key] = champ.id; // key is the numeric ID (string format), id is the name
-        });
-        setChampionMap(champMap);
-      })
-      .catch(err => console.error("Failed to load champion data", err));
 
     return unsub;
   }, [match]);
@@ -49,24 +47,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Helper to get champion icon URL from Data Dragon CDN
-  const getChampionIcon = (championName) => {
-    if (!championName) return "https://placehold.co/40x40";
-    const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
-    return `https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${cleanName}.png`;
-  };
-
-  const getChampionIconById = (championId) => {
-    const name = championMap[championId];
-    if (!name) return "https://placehold.co/40x40";
-    return getChampionIcon(name);
-  };
-
-  // Helper to get item icon URL from Data Dragon CDN
-  const getItemIcon = (itemId) => {
-    if (!itemId || itemId === 0) return null;
-    return `https://ddragon.leagueoflegends.com/cdn/16.12.1/img/item/${itemId}.png`;
-  };
+  // Helpers resolved dynamically from useDDragon hook
 
   const getKdaRatio = (k, d, a) => {
     if (d === 0) return `${(k + a).toFixed(1)} Perfect`;
@@ -333,7 +314,43 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                     {blueParticipants.map((p, idx) => (
                       <div key={idx} style={{ display: "flex", alignItems: "center", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-dark)", borderRadius: "4px", padding: "0.6rem 0.8rem", flexWrap: "wrap", gap: "1rem" }}>
                         <div className="sb-col-player" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "32px", height: "32px", borderRadius: "4px", border: "1px solid var(--border-dark)" }} />
+                          <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "36px", height: "36px", borderRadius: "4px", border: "1px solid var(--border-dark)" }} />
+                          {p.summonerSpells && p.runes && (
+                            <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                <img 
+                                  src={getSummonerSpellIcon(p.summonerSpells[0])} 
+                                  alt="spell1" 
+                                  style={{ width: "16px", height: "16px", borderRadius: "2px" }} 
+                                  onError={(e) => { e.target.style.display = "none" }}
+                                />
+                                <img 
+                                  src={getSummonerSpellIcon(p.summonerSpells[1])} 
+                                  alt="spell2" 
+                                  style={{ width: "16px", height: "16px", borderRadius: "2px" }} 
+                                  onError={(e) => { e.target.style.display = "none" }}
+                                />
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                <div style={{ width: "16px", height: "16px", backgroundColor: "rgba(0,0,0,0.5)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
+                                  <img 
+                                    src={getRuneIcon(p.runes.keystoneId)} 
+                                    alt="keystone" 
+                                    style={{ width: "14px", height: "14px", objectFit: "contain" }} 
+                                    onError={(e) => { e.target.style.display = "none" }}
+                                  />
+                                </div>
+                                <div style={{ width: "16px", height: "16px", backgroundColor: "rgba(0,0,0,0.5)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
+                                  <img 
+                                    src={getRuneIcon(p.runes.primaryStyleId)} 
+                                    alt="rune-style" 
+                                    style={{ width: "12px", height: "12px", objectFit: "contain", opacity: 0.8 }} 
+                                    onError={(e) => { e.target.style.display = "none" }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
                           <div>
                             <div style={{ fontWeight: "700", color: "var(--text-primary)", fontSize: "0.85rem", display: "flex", alignItems: "center" }}>
                               {p.playerName}
@@ -418,7 +435,43 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                     {redParticipants.map((p, idx) => (
                       <div key={idx} style={{ display: "flex", alignItems: "center", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-dark)", borderRadius: "4px", padding: "0.6rem 0.8rem", flexWrap: "wrap", gap: "1rem" }}>
                         <div className="sb-col-player" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "32px", height: "32px", borderRadius: "4px", border: "1px solid var(--border-dark)" }} />
+                          <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "36px", height: "36px", borderRadius: "4px", border: "1px solid var(--border-dark)" }} />
+                          {p.summonerSpells && p.runes && (
+                            <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                <img 
+                                  src={getSummonerSpellIcon(p.summonerSpells[0])} 
+                                  alt="spell1" 
+                                  style={{ width: "16px", height: "16px", borderRadius: "2px" }} 
+                                  onError={(e) => { e.target.style.display = "none" }}
+                                />
+                                <img 
+                                  src={getSummonerSpellIcon(p.summonerSpells[1])} 
+                                  alt="spell2" 
+                                  style={{ width: "16px", height: "16px", borderRadius: "2px" }} 
+                                  onError={(e) => { e.target.style.display = "none" }}
+                                />
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                <div style={{ width: "16px", height: "16px", backgroundColor: "rgba(0,0,0,0.5)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
+                                  <img 
+                                    src={getRuneIcon(p.runes.keystoneId)} 
+                                    alt="keystone" 
+                                    style={{ width: "14px", height: "14px", objectFit: "contain" }} 
+                                    onError={(e) => { e.target.style.display = "none" }}
+                                  />
+                                </div>
+                                <div style={{ width: "16px", height: "16px", backgroundColor: "rgba(0,0,0,0.5)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
+                                  <img 
+                                    src={getRuneIcon(p.runes.primaryStyleId)} 
+                                    alt="rune-style" 
+                                    style={{ width: "12px", height: "12px", objectFit: "contain", opacity: 0.8 }} 
+                                    onError={(e) => { e.target.style.display = "none" }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
                           <div>
                             <div style={{ fontWeight: "700", color: "var(--text-primary)", fontSize: "0.85rem", display: "flex", alignItems: "center" }}>
                               {p.playerName}

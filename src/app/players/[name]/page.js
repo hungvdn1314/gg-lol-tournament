@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { subscribeToData, subscribeToAllMatchDetails } from "@/lib/db";
 import { ArrowLeft, Target, Shield, Eye, Sword, Award, Activity } from "lucide-react";
 import MatchStatsModal from "@/components/MatchStatsModal";
+import { getLatestDDragonVersion } from "@/lib/riot";
 
 export default function PlayerProfile() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function PlayerProfile() {
   const [teams, setTeams] = useState({});
   const [allDetails, setAllDetails] = useState({});
   const [loading, setLoading] = useState(true);
+  const [version, setVersion] = useState("16.13.1");
 
   const [selectedMatch, setSelectedMatch] = useState(null);
 
@@ -26,6 +28,8 @@ export default function PlayerProfile() {
       setLoading(false);
     });
 
+    getLatestDDragonVersion().then(v => setVersion(v));
+
     return () => {
       unsubMatches();
       unsubTeams();
@@ -36,7 +40,7 @@ export default function PlayerProfile() {
   const getChampionIcon = (championName) => {
     if (!championName) return "https://placehold.co/40x40";
     const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
-    return `https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${cleanName}.png`;
+    return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${cleanName}.png`;
   };
 
   if (loading) {

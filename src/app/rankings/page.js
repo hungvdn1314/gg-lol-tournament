@@ -5,6 +5,7 @@ import Link from "next/link";
 import { subscribeToAllMatchDetails } from "@/lib/db";
 import { SummonersCup, HextechCrest } from "@/components/Icons";
 import { Award, Eye, Crosshair, Shield, Coins, Target } from "lucide-react";
+import { getLatestDDragonVersion } from "@/lib/riot";
 
 // Helper MVP calculator copied to use for aggregated logic
 const calculateGameMVP = (participants, bKills, rKills, bDmg, rDmg, bGold, rGold, gameDuration) => {
@@ -41,6 +42,7 @@ export default function PlayerRankings() {
   const [allMatches, setAllMatches] = useState({});
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("seriesMvpCount");
+  const [version, setVersion] = useState("16.13.1");
   
   // Sort options
   const metrics = [
@@ -61,13 +63,16 @@ export default function PlayerRankings() {
       setAllMatches(data || {});
       setLoading(false);
     });
+
+    getLatestDDragonVersion().then(v => setVersion(v));
+
     return unsub;
   }, []);
 
   const getChampionIcon = (championName) => {
     if (!championName) return "https://placehold.co/40x40";
     const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
-    return `https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${cleanName}.png`;
+    return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${cleanName}.png`;
   };
 
   // Aggregate stats!

@@ -1,8 +1,7 @@
-# Task List: Scoreboard & Player Leaderboard Stats Expansion
+# Task List: LCU-based Custom Game Telemetry Sync
 
-- [x] Update `/api/riot-import` route to parse expanded player stats from Riot API
-- [x] Update `/api/riot-webhook` route (simulator and parser) to extract expanded player stats
-- [x] Update Admin Dashboard client-side simulator payload in `src/app/admin/page.js`
-- [x] Redesign `MatchStatsModal.js` with tabs: Scoreboard, Combat Charts, Utility & Vision, Team Comparison
-- [x] Verify build with `npm run build`
-- [ ] Test importing stats or triggering simulation
+- `[x]` Step 1: Create the Next.js API endpoint `/api/lcu-import` to parse and save the LCU JSON payload.
+- `[x]` Step 2: Implement the exporter script `scripts/import-lcu.mjs` to extract data from local LoL client LCU.
+- `[x]` Step 3: Register the script shortcut in `package.json`.
+- `[x]` Step 4: Add manual override backup information/instructions to the admin panel or settings if helpful.
+- `[x]` Step 5: Verify the changes with a build run and testing.

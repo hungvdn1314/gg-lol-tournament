@@ -11,6 +11,7 @@ import {
   subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard,
   subscribeToNews, saveNews, deleteNews
 } from "@/lib/db";
+import { getLatestDDragonVersion } from "@/lib/riot";
 
 export default function Admin() {
   // Authentication State
@@ -50,6 +51,11 @@ export default function Admin() {
   const [fetchingSyncDetails, setFetchingSyncDetails] = useState(false);
 
   // Form State
+  const [version, setVersion] = useState("16.13.1");
+
+  useEffect(() => {
+    getLatestDDragonVersion().then(v => setVersion(v));
+  }, []);
   const [configForm, setConfigForm] = useState({ title: "", date: "", venue: "", description: "", providerId: "", tournamentId: "" });
   const [teamForm, setTeamForm] = useState({ id: "", name: "", logo: "", group: "A", players: [
     { role: "Top", name: "", riotId: "" },
@@ -209,6 +215,7 @@ export default function Admin() {
         const match = matches[matchId];
         if (!match) throw new Error("Match not found");
 
+        const gameIndex = (match.scoreA || 0) + (match.scoreB || 0);
         let scoreA = match.scoreA || 0;
         let scoreB = match.scoreB || 0;
 
@@ -238,7 +245,7 @@ export default function Admin() {
           winnerId
         };
 
-        // Generate realistic mock matchDetails
+        // Generate realistic mock matchDetails with summonerSpells and runes
         const mockDetails = {
           gameDuration: 1654,
           teams: {
@@ -247,23 +254,34 @@ export default function Admin() {
           },
           participants: [
             // Blue Team (Team A)
-            { playerName: "Zeus", teamId: 100, champion: "Ornn", win: winnerSide === 100, kills: 2, deaths: 1, assists: 9, gold: 11200, cs: 210, vision: 24, damageDealt: 18400, damageTaken: 29500, healing: 1500, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 2, wardsPlaced: 12, wardsKilled: 3, turretsKilled: 1, inhibitorsKilled: 0, ccDuration: 42, items: [3068, 3075, 3111, 3001, 0, 0] },
-            { playerName: "Oner", teamId: 100, champion: "Sejuani", win: winnerSide === 100, kills: 1, deaths: 2, assists: 12, gold: 9800, cs: 165, vision: 32, damageDealt: 12100, damageTaken: 28400, healing: 2200, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: true, controlWards: 4, wardsPlaced: 18, wardsKilled: 5, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 55, items: [3068, 3111, 3109, 0, 0, 0] },
-            { playerName: "Faker", teamId: 100, champion: "Azir", win: winnerSide === 100, kills: 6, deaths: 1, assists: 7, gold: 13500, cs: 245, vision: 28, damageDealt: 29400, damageTaken: 11400, healing: 900, tripleKills: 1, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 3, wardsPlaced: 15, wardsKilled: 4, turretsKilled: 2, inhibitorsKilled: 1, ccDuration: 18, items: [3006, 6655, 3089, 3157, 0, 0] },
-            { playerName: "Gumayusi", teamId: 100, champion: "Aphelios", win: winnerSide === 100, kills: 5, deaths: 0, assists: 5, gold: 14200, cs: 265, vision: 18, damageDealt: 27500, damageTaken: 9400, healing: 2100, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 1, wardsPlaced: 10, wardsKilled: 2, turretsKilled: 2, inhibitorsKilled: 0, ccDuration: 8, items: [3006, 6672, 3031, 3046, 0, 0] },
-            { playerName: "Keria", teamId: 100, champion: "Thresh", win: winnerSide === 100, kills: 1, deaths: 2, assists: 10, gold: 7500, cs: 42, vision: 65, damageDealt: 4500, damageTaken: 14200, healing: 1100, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 8, wardsPlaced: 35, wardsKilled: 12, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 48, items: [3158, 3859, 3190, 0, 0, 0] },
+            { playerName: "Zeus", teamId: 100, champion: "Ornn", win: winnerSide === 100, kills: 2, deaths: 1, assists: 9, gold: 11200, cs: 210, vision: 24, damageDealt: 18400, damageTaken: 29500, healing: 1500, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 2, wardsPlaced: 12, wardsKilled: 3, turretsKilled: 1, inhibitorsKilled: 0, ccDuration: 42, items: [3068, 3075, 3111, 3001, 0, 0], summonerSpells: [12, 4], runes: { keystoneId: 8437, primaryStyleId: 8400 } },
+            { playerName: "Oner", teamId: 100, champion: "Sejuani", win: winnerSide === 100, kills: 1, deaths: 2, assists: 12, gold: 9800, cs: 165, vision: 32, damageDealt: 12100, damageTaken: 28400, healing: 2200, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: true, controlWards: 4, wardsPlaced: 18, wardsKilled: 5, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 55, items: [3068, 3111, 3109, 0, 0, 0], summonerSpells: [11, 4], runes: { keystoneId: 8439, primaryStyleId: 8400 } },
+            { playerName: "Faker", teamId: 100, champion: "Azir", win: winnerSide === 100, kills: 6, deaths: 1, assists: 7, gold: 13500, cs: 245, vision: 28, damageDealt: 29400, damageTaken: 11400, healing: 900, tripleKills: 1, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 3, wardsPlaced: 15, wardsKilled: 4, turretsKilled: 2, inhibitorsKilled: 1, ccDuration: 18, items: [3006, 6655, 3089, 3157, 0, 0], summonerSpells: [12, 4], runes: { keystoneId: 8021, primaryStyleId: 8000 } },
+            { playerName: "Gumayusi", teamId: 100, champion: "Aphelios", win: winnerSide === 100, kills: 5, deaths: 0, assists: 5, gold: 14200, cs: 265, vision: 18, damageDealt: 27500, damageTaken: 9400, healing: 2100, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 1, wardsPlaced: 10, wardsKilled: 2, turretsKilled: 2, inhibitorsKilled: 0, ccDuration: 8, items: [3006, 6672, 3031, 3046, 0, 0], summonerSpells: [7, 4], runes: { keystoneId: 8008, primaryStyleId: 8000 } },
+            { playerName: "Keria", teamId: 100, champion: "Thresh", win: winnerSide === 100, kills: 1, deaths: 2, assists: 10, gold: 7500, cs: 42, vision: 65, damageDealt: 4500, damageTaken: 14200, healing: 1100, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 8, wardsPlaced: 35, wardsKilled: 12, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 48, items: [3158, 3859, 3190, 0, 0, 0], summonerSpells: [14, 4], runes: { keystoneId: 8465, primaryStyleId: 8400 } },
             // Red Team (Team B)
-            { playerName: "Kiin", teamId: 200, champion: "K'Sante", win: winnerSide === 200, kills: 1, deaths: 3, assists: 2, gold: 9200, cs: 195, vision: 19, damageDealt: 14100, damageTaken: 32100, healing: 3500, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 1, wardsPlaced: 9, wardsKilled: 2, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 29, items: [3068, 3111, 3001, 0, 0, 0] },
-            { playerName: "Canyon", teamId: 200, champion: "Maokai", win: winnerSide === 200, kills: 0, deaths: 4, assists: 4, gold: 8100, cs: 145, vision: 41, damageDealt: 8900, damageTaken: 25400, healing: 1800, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 5, wardsPlaced: 22, wardsKilled: 6, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 52, items: [3068, 3111, 3109, 0, 0, 0] },
-            { playerName: "Chovy", teamId: 200, champion: "Yone", win: winnerSide === 200, kills: 3, deaths: 3, assists: 1, gold: 11500, cs: 232, vision: 21, damageDealt: 19200, damageTaken: 18400, healing: 1200, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 2, wardsPlaced: 11, wardsKilled: 3, turretsKilled: 1, inhibitorsKilled: 0, ccDuration: 15, items: [3006, 6672, 3031, 0, 0, 0] },
-            { playerName: "Peyz", teamId: 200, champion: "Zeri", win: winnerSide === 200, kills: 2, deaths: 2, assists: 2, gold: 12100, cs: 250, vision: 15, damageDealt: 21400, damageTaken: 11200, healing: 800, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 2, wardsPlaced: 8, wardsKilled: 1, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 4, items: [3006, 6672, 3046, 0, 0, 0] },
-            { playerName: "Lehends", teamId: 200, champion: "Lulu", win: winnerSide === 200, kills: 0, deaths: 3, assists: 4, gold: 6800, cs: 35, vision: 54, damageDealt: 3200, damageTaken: 12500, healing: 4200, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 6, wardsPlaced: 28, wardsKilled: 8, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 34, items: [3158, 3859, 3190, 0, 0, 0] }
+            { playerName: "Kiin", teamId: 200, champion: "K'Sante", win: winnerSide === 200, kills: 1, deaths: 3, assists: 2, gold: 9200, cs: 195, vision: 19, damageDealt: 14100, damageTaken: 32100, healing: 3500, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 1, wardsPlaced: 9, wardsKilled: 2, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 29, items: [3068, 3111, 3001, 0, 0, 0], summonerSpells: [12, 4], runes: { keystoneId: 8437, primaryStyleId: 8400 } },
+            { playerName: "Canyon", teamId: 200, champion: "Maokai", win: winnerSide === 200, kills: 0, deaths: 4, assists: 4, gold: 8100, cs: 145, vision: 41, damageDealt: 8900, damageTaken: 25400, healing: 1800, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 5, wardsPlaced: 22, wardsKilled: 6, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 52, items: [3068, 3111, 3109, 0, 0, 0], summonerSpells: [11, 4], runes: { keystoneId: 8010, primaryStyleId: 8000 } },
+            { playerName: "Chovy", teamId: 200, champion: "Yone", win: winnerSide === 200, kills: 3, deaths: 3, assists: 1, gold: 11500, cs: 232, vision: 21, damageDealt: 19200, damageTaken: 18400, healing: 1200, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 2, wardsPlaced: 11, wardsKilled: 3, turretsKilled: 1, inhibitorsKilled: 0, ccDuration: 15, items: [3006, 6672, 3031, 0, 0, 0], summonerSpells: [12, 4], runes: { keystoneId: 8010, primaryStyleId: 8000 } },
+            { playerName: "Peyz", teamId: 200, champion: "Zeri", win: winnerSide === 200, kills: 2, deaths: 2, assists: 2, gold: 12100, cs: 250, vision: 15, damageDealt: 21400, damageTaken: 11200, healing: 800, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 2, wardsPlaced: 8, wardsKilled: 1, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 4, items: [3006, 6672, 3046, 0, 0, 0], summonerSpells: [7, 4], runes: { keystoneId: 8008, primaryStyleId: 8000 } },
+            { playerName: "Lehends", teamId: 200, champion: "Lulu", win: winnerSide === 200, kills: 0, deaths: 3, assists: 4, gold: 6800, cs: 35, vision: 54, damageDealt: 3200, damageTaken: 12500, healing: 4200, tripleKills: 0, quadraKills: 0, pentaKills: 0, firstBlood: false, controlWards: 6, wardsPlaced: 28, wardsKilled: 8, turretsKilled: 0, inhibitorsKilled: 0, ccDuration: 34, items: [3158, 3859, 3190, 0, 0, 0], summonerSpells: [14, 4], runes: { keystoneId: 8214, primaryStyleId: 8200 } }
           ]
         };
 
-        const { saveMatchDetails } = await import("@/lib/db");
+        const { fetchMatchDetails, saveMatchDetails } = await import("@/lib/db");
+        let existingDetails = await fetchMatchDetails(matchId);
+        if (!existingDetails) {
+          existingDetails = [];
+        } else if (!Array.isArray(existingDetails)) {
+          existingDetails = [existingDetails];
+        }
+        while (existingDetails.length <= gameIndex) {
+          existingDetails.push(null);
+        }
+        existingDetails[gameIndex] = mockDetails;
+
         await saveMatch(updatedMatch);
-        await saveMatchDetails(matchId, mockDetails);
+        await saveMatchDetails(matchId, existingDetails);
 
         // Advance knockout bracket
         if (status === "completed" && match.type === "knockout") {
@@ -1195,8 +1213,11 @@ export default function Admin() {
                 <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "1rem", marginBottom: "1.5rem", fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
                   <Info size={18} style={{ color: "var(--primary-gold)", flexShrink: 0, marginTop: "0.1rem" }} />
                   <div>
-                    <strong>Match Telemetry Synchronization:</strong><br />
-                    Select a match series below to view its games based on the format (BO3/BO5). You can sync telemetry for each individual game using a player's Riot ID.
+                    <strong>Custom Game Result Tracking:</strong><br />
+                    Since custom games are not available on public Riot APIs, do one of the following to update scores and stats:<br />
+                    • <strong>LCU Match Exporter (Auto-Sync Stats):</strong> Run the local exporter script in your project root using command <code>npm run import-lcu</code> on any machine running the League client that participated in the custom lobby. This reads the client's local match history and uploads detailed post-game stats.<br />
+                    • <strong>Score Center Search:</strong> If you are not using custom games (e.g. normals/ranked) and have a public Riot API Key, you can search via a player's Riot ID below.<br />
+                    • <strong>Manual Override:</strong> Use the <strong>Live Score Center</strong> tab to manually set match scores (winner only, detailed statistics scorecard won't be generated).
                   </div>
                 </div>
 
@@ -1320,7 +1341,7 @@ export default function Admin() {
                                             >
                                               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                                                 <img 
-                                                  src={`https://ddragon.leagueoflegends.com/cdn/16.12.1/img/champion/${rm.champion.replace(/[^a-zA-Z0-9]/g, "")}.png`} 
+                                                  src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${rm.champion.replace(/[^a-zA-Z0-9]/g, "")}.png`} 
                                                   alt={rm.champion} 
                                                   style={{ width: "32px", height: "32px", borderRadius: "4px" }} 
                                                   onError={(e) => { e.target.src = "https://placehold.co/32x32" }}
