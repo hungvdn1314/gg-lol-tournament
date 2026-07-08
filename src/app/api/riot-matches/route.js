@@ -15,8 +15,8 @@ export async function POST(request) {
     const { playerRiotId } = await request.json();
     const apiKey = process.env.RIOT_API_KEY;
 
-    if (!playerRiotId || !playerRiotId.includes("#")) {
-      return NextResponse.json({ error: "Invalid Riot ID. Format must be Name#Tag." }, { status: 400 });
+    if (!playerRiotId) {
+      return NextResponse.json({ error: "Riot ID is required." }, { status: 400 });
     }
 
     if (!apiKey || apiKey === "placeholder") {
@@ -24,19 +24,31 @@ export async function POST(request) {
     }
 
     const [gameName, tagLine] = playerRiotId.split("#");
+    const tagsToTry = playerRiotId.includes("#") ? [tagLine] : ["VN2", "VN1", "VN"];
+    let puuid = null;
+    let lastStatus = 404;
 
-    // 1. Get PUUID
-    const accountUrl = `https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName.trim())}/${encodeURIComponent(tagLine.trim())}`;
-    const accountRes = await fetch(accountUrl, {
-      headers: { "X-Riot-Token": apiKey }
-    });
-
-    if (!accountRes.ok) {
-      return NextResponse.json({ error: `Riot Account not found: ${accountRes.status}` }, { status: accountRes.status });
+    for (const tag of tagsToTry) {
+      const accountUrl = `https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName.trim())}/${encodeURIComponent(tag.trim())}`;
+      try {
+        const accountRes = await fetch(accountUrl, {
+          headers: { "X-Riot-Token": apiKey }
+        });
+        if (accountRes.ok) {
+          const account = await accountRes.json();
+          puuid = account.puuid;
+          break;
+        } else {
+          lastStatus = accountRes.status;
+        }
+      } catch (e) {
+        console.error(`Fetch failed for tag ${tag}:`, e);
+      }
     }
 
-    const account = await accountRes.json();
-    const puuid = account.puuid;
+    if (!puuid) {
+      return NextResponse.json({ error: `Riot Account not found for ${gameName}. Status ${lastStatus}` }, { status: lastStatus });
+    }
 
     // 2. Fetch last 15 matches
     const matchesUrl = `https://sea.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=15`;
