@@ -1,7 +1,5 @@
-# Task List: LCU-based Custom Game Telemetry Sync
-
-- `[x]` Step 1: Create the Next.js API endpoint `/api/lcu-import` to parse and save the LCU JSON payload.
-- `[x]` Step 2: Implement the exporter script `scripts/import-lcu.mjs` to extract data from local LoL client LCU.
-- `[x]` Step 3: Register the script shortcut in `package.json`.
-- `[x]` Step 4: Add manual override backup information/instructions to the admin panel or settings if helpful.
-- `[x]` Step 5: Verify the changes with a build run and testing.
+- [x] Implement footer poro easter egg styles in `globals.css`
+- [x] Revert `grid-3` back to `grid-2` layout and remove the Poro card in `src/app/page.js`
+- [x] Add the CSS-interactive Poro SVG into the footer of `src/app/layout.js`
+- [x] Run build command to verify compilation success
+- [x] Create walkthrough documenting changes

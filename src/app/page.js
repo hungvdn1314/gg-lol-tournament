@@ -161,9 +161,9 @@ export default function Home() {
         <div className="grid-2">
           {/* Countdown Card */}
           {nextMatch && (
-            <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "300px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
-                <ZhonyaHourglass size={14} /> Next Match Countdown
+            <div className="card card-hud" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "320px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-red)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
+                <ZhonyaHourglass size={14} className="indicator-pulse" /> Next Match Countdown
               </div>
               <h3 style={{ fontSize: "1.1rem", marginBottom: "1.5rem", textAlign: "center" }}>
                 {teams[nextMatch.teamAId]?.name || "TBD"} vs {teams[nextMatch.teamBId]?.name || "TBD"}
@@ -194,20 +194,20 @@ export default function Home() {
           )}
 
           {/* Tournament Overview info */}
-          <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "300px", border: "1px solid var(--border-gold)" }}>
-            <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", color: "var(--primary-gold)", marginBottom: "1rem" }}>Tournament Rules & Format</h3>
-            <ul style={{ listStyleType: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.95rem" }}>
+          <div className="card card-hud" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "320px" }}>
+            <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", color: "var(--primary-red)", marginBottom: "1.25rem" }}>Rules & Format</h3>
+            <ul style={{ listStyleType: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.9rem", color: "var(--text-secondary)" }}>
               <li style={{ display: "flex", gap: "0.5rem" }}>
-                <span style={{ color: "var(--primary-gold)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>ARAM Format:</strong> All Random All Mid. Games take place on the Howling Abyss with random champion selections.</span>
+                <span style={{ color: "var(--primary-red)", fontWeight: "bold" }}>&bull;</span>
+                <span><strong>ARAM Format:</strong> All Random All Mid. Games take place on the Howling Abyss map with random champion selections.</span>
               </li>
               <li style={{ display: "flex", gap: "0.5rem" }}>
-                <span style={{ color: "var(--primary-gold)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>Group & Playoffs:</strong> Round-robin groups advance to a single-elimination bracket. All series are Best of 3 (Finals are Bo5).</span>
+                <span style={{ color: "var(--primary-red)", fontWeight: "bold" }}>&bull;</span>
+                <span><strong>Group & Playoffs:</strong> Group stages lead to single-elimination playoffs (Bo3 matches, Finals are Bo5).</span>
               </li>
               <li style={{ display: "flex", gap: "0.5rem" }}>
-                <span style={{ color: "var(--primary-gold)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>Screenshot Score Tracking:</strong> Match captains upload a post-game screenshot after each game to verify results and update stats.</span>
+                <span style={{ color: "var(--primary-red)", fontWeight: "bold" }}>&bull;</span>
+                <span><strong>Score Screenshots:</strong> Captains upload a screenshot after games to verify results and parse stats automatically.</span>
               </li>
             </ul>
           </div>

@@ -61,7 +61,7 @@ export default function Bracket() {
         style={{ border: "1px solid var(--border-dark)", background: "var(--bg-tertiary)", borderRadius: "8px", overflow: "hidden", minWidth: "220px", display: "flex", flexDirection: "column" }}
       >
         {/* Match Header Info */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(0, 210, 255, 0.03)", padding: "0.3rem 0.75rem", fontSize: "0.7rem", borderBottom: "1px solid var(--border-dark)", color: "var(--text-muted)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(245, 176, 65, 0.08)", padding: "0.3rem 0.75rem", fontSize: "0.7rem", borderBottom: "1px solid var(--border-dark)", color: "var(--text-muted)" }}>
           <span style={{ fontWeight: "600", color: "var(--primary-gold-bright)" }}>{label}</span>
           <span>Bo{match.bestOf}</span>
         </div>

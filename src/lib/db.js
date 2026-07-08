@@ -523,7 +523,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-22T19:00:00.000Z",
+    "scheduledTime": "2026-07-22T12:00:00.000Z",
     "winnerId": null
   },
   "match-g-a2": {
@@ -537,7 +537,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-23T19:00:00.000Z",
+    "scheduledTime": "2026-07-23T12:00:00.000Z",
     "winnerId": null
   },
   "match-g-a3": {
@@ -551,7 +551,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-24T19:00:00.000Z",
+    "scheduledTime": "2026-07-24T12:00:00.000Z",
     "winnerId": null
   },
   "match-g-b1": {
@@ -565,7 +565,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-22T19:00:00.000Z",
+    "scheduledTime": "2026-07-22T12:00:00.000Z",
     "winnerId": null
   },
   "match-g-b2": {
@@ -579,7 +579,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-23T19:00:00.000Z",
+    "scheduledTime": "2026-07-23T12:00:00.000Z",
     "winnerId": null
   },
   "match-g-b3": {
@@ -593,7 +593,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-24T19:00:00.000Z",
+    "scheduledTime": "2026-07-24T12:00:00.000Z",
     "winnerId": null
   },
   "match-g-c1": {
@@ -607,7 +607,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-22T19:00:00.000Z",
+    "scheduledTime": "2026-07-22T12:00:00.000Z",
     "winnerId": null
   },
   "match-g-c2": {
@@ -621,7 +621,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-23T19:00:00.000Z",
+    "scheduledTime": "2026-07-23T12:00:00.000Z",
     "winnerId": null
   },
   "match-g-c3": {
@@ -635,7 +635,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-24T19:00:00.000Z",
+    "scheduledTime": "2026-07-24T12:00:00.000Z",
     "winnerId": null
   },
   "match-playoff-1": {
@@ -648,7 +648,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-27T19:00:00.000Z",
+    "scheduledTime": "2026-07-27T12:00:00.000Z",
     "winnerId": null
   },
   "match-playoff-2": {
@@ -661,7 +661,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-27T19:00:00.000Z",
+    "scheduledTime": "2026-07-27T12:00:00.000Z",
     "winnerId": null
   },
   "match-playoff-3": {
@@ -674,7 +674,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-28T19:00:00.000Z",
+    "scheduledTime": "2026-07-28T12:00:00.000Z",
     "winnerId": null
   },
   "match-playoff-4": {
@@ -687,7 +687,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-28T19:00:00.000Z",
+    "scheduledTime": "2026-07-28T12:00:00.000Z",
     "winnerId": null
   },
   "match-playoff-5": {
@@ -700,7 +700,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-29T19:00:00.000Z",
+    "scheduledTime": "2026-07-29T12:00:00.000Z",
     "winnerId": null
   },
   "match-playoff-6": {
@@ -713,7 +713,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 3,
-    "scheduledTime": "2026-07-29T19:00:00.000Z",
+    "scheduledTime": "2026-07-29T12:00:00.000Z",
     "winnerId": null
   },
   "match-playoff-7": {
@@ -726,7 +726,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 5,
-    "scheduledTime": "2026-07-30T19:00:00.000Z",
+    "scheduledTime": "2026-07-30T12:00:00.000Z",
     "winnerId": null
   },
   "match-playoff-8": {
@@ -739,7 +739,7 @@ const DEFAULT_MATCHES = {
     "scoreB": 0,
     "status": "scheduled",
     "bestOf": 5,
-    "scheduledTime": "2026-08-03T19:00:00.000Z",
+    "scheduledTime": "2026-08-03T12:00:00.000Z",
     "winnerId": null
   }
 };

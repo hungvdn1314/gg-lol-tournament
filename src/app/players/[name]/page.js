@@ -207,7 +207,7 @@ export default function PlayerProfile() {
             <img 
               src={profileIconUrl} 
               alt="Profile Icon" 
-              style={{ width: "100%", height: "100%", borderRadius: "50%", border: "3px solid var(--border-gold)", boxShadow: "0 0 15px rgba(0, 210, 255, 0.2)" }} 
+              style={{ width: "100%", height: "100%", borderRadius: "50%", border: "3px solid var(--border-gold)", boxShadow: "0 0 15px rgba(var(--primary-red-rgb), 0.15)" }} 
               onError={(e) => {
                 e.target.src = "https://ddragon.leagueoflegends.com/cdn/14.3.1/img/profileicon/29.png";
               }}
@@ -260,7 +260,7 @@ export default function PlayerProfile() {
             
             {riotLoading ? (
               <div style={{ padding: "2rem 1rem", textAlign: "center", color: "var(--text-muted)" }}>
-                <span className="loading-spinner" style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #00d2ff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite", marginRight: "0.5rem" }}></span>
+                <span className="loading-spinner" style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid var(--primary-red)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite", marginRight: "0.5rem" }}></span>
                 Fetching live ARAM data from Riot API...
               </div>
             ) : riotError ? (

@@ -1,35 +1,42 @@
 /* Gear Games Corporate LoL Cup 2026 - Global Styling */
 
 :root {
-  /* Colors - Frosty ARAM Mayhem */
-  --bg-primary: #050913;
-  --bg-secondary: #0b1325;
-  --bg-tertiary: #111c33;
+  /* Colors - Red, Yellow & White Light Esports Redesign */
+  --bg-primary: #FFFFFF;      /* Pure White Background */
+  --bg-secondary: #F8FAFC;    /* Slate 50 Off-White */
+  --bg-tertiary: #F1F5F9;     /* Slate 100 Soft Gray */
   
-  --primary-gold: #00d2ff;
-  --primary-gold-bright: #3bf0ff;
-  --primary-gold-dim: #005b70;
-  --primary-gold-rgb: 0, 210, 255;
+  --primary-red: #FF2E3B;     /* Esports Action Red */
+  --primary-red-bright: #FF5E6A;
+  --primary-red-dim: #D32F2F;
+  --primary-red-rgb: 255, 46, 59;
+
+  --primary-gold: #F5B041;    /* Championship Yellow/Gold */
+  --primary-gold-bright: #F8C471;
+  --primary-gold-dim: #D68910;
+  --primary-gold-rgb: 245, 176, 65;
   
-  --text-primary: #FFFFFF;
-  --text-secondary: #E2ECF8;
-  --text-muted: #7d8ea6;
+  --text-primary: #0F172A;    /* Slate 900 High-Contrast Primary Text */
+  --text-secondary: #334155;  /* Slate 700 Secondary Text */
+  --text-muted: #64748B;      /* Slate 500 Muted Text */
   
   --color-success: #10B981;
-  --color-danger: #EF4444;
-  --color-warning: #00d2ff;
-  --color-info: #3b82f6;
+  --color-danger: #FF2E3B;    /* Tied to esports red */
+  --color-warning: #F5B041;   /* Tied to gold/yellow */
+  --color-info: #3B82F6;
 
-  --accent-purple: #c084fc;
-  --accent-purple-glow: rgba(192, 132, 252, 0.35);
+  --accent-purple: var(--primary-red);
+  --accent-purple-glow: rgba(255, 46, 59, 0.15);
   
-  --border-gold: rgba(0, 210, 255, 0.25);
-  --border-gold-hover: rgba(0, 210, 255, 0.55);
-  --border-dark: #1b2a47;
+  --border-gold: rgba(245, 176, 65, 0.35);
+  --border-gold-hover: rgba(245, 176, 65, 0.65);
+  --border-red: rgba(255, 46, 59, 0.3);
+  --border-red-hover: rgba(255, 46, 59, 0.6);
+  --border-dark: #E2E8F0;     /* Slate 200 light border */
   
   /* Glassmorphism */
-  --glass-bg: rgba(11, 19, 37, 0.65);
-  --glass-border: rgba(0, 210, 255, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(226, 232, 240, 0.8);
 
   /* Layout & Transitions */
   --font-family: var(--font-chakra-petch), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -47,6 +54,11 @@
 
 html, body {
   background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle, transparent 20%, var(--bg-primary) 20%, var(--bg-primary) 80%, transparent 80%, transparent),
+    repeating-linear-gradient(0deg, rgba(226, 232, 240, 0.22) 0px, rgba(226, 232, 240, 0.22) 1px, transparent 1px, transparent 24px),
+    repeating-linear-gradient(90deg, rgba(226, 232, 240, 0.22) 0px, rgba(226, 232, 240, 0.22) 1px, transparent 1px, transparent 24px);
+  background-size: 24px 24px, 24px 24px, 24px 24px;
   color: var(--text-secondary);
   font-family: var(--font-family);
   min-height: 100vh;
@@ -105,9 +117,10 @@ a {
 
 /* Layout Parts */
 .app-header {
-  background-color: rgba(15, 18, 22, 0.85);
+  background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-gold);
+  border-bottom: 3px solid var(--primary-red);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -135,10 +148,10 @@ a {
   font-size: 1.25rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary-gold-bright) 100%);
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary-red) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 10px rgba(var(--primary-gold-rgb), 0.15);
+  text-shadow: none;
 }
 
 .nav-links {
@@ -157,8 +170,12 @@ a {
   position: relative;
 }
 
-.nav-link:hover, .nav-link.active {
-  color: var(--primary-gold-bright);
+.nav-link:hover {
+  color: var(--primary-red);
+}
+
+.nav-link.active {
+  color: var(--primary-gold-dim);
 }
 
 .nav-link::after {
@@ -167,10 +184,14 @@ a {
   bottom: -4px;
   left: 0.75rem;
   right: 0.75rem;
-  height: 2px;
-  background-color: var(--primary-gold);
+  height: 3px;
+  background-color: var(--primary-red);
   transform: scaleX(0);
   transition: transform var(--transition-speed) ease;
+}
+
+.nav-link.active::after {
+  background-color: var(--primary-gold);
 }
 
 .nav-link:hover::after, .nav-link.active::after {
@@ -209,12 +230,12 @@ a {
 }
 
 .footer-links a:hover {
-  color: var(--primary-gold);
+  color: var(--primary-red);
 }
 
 /* Hero Section */
 .hero-banner {
-  background: linear-gradient(rgba(5, 9, 19, 0.55), var(--bg-primary)), url('/aram_banner.jpg') no-repeat center center;
+  background: linear-gradient(rgba(255, 255, 255, 0.88), var(--bg-primary)), url('/aram_banner.jpg') no-repeat center center;
   background-size: cover;
   min-height: 400px;
   display: flex;
@@ -223,7 +244,7 @@ a {
   align-items: center;
   text-align: center;
   padding: 4rem 1rem;
-  border-bottom: 1px solid var(--border-gold);
+  border-bottom: 2px solid var(--primary-red);
   position: relative;
 }
 
@@ -234,16 +255,18 @@ a {
   left: 0;
   right: 0;
   bottom: 0;
-  border: 1px solid var(--border-gold);
+  border: 1px solid var(--primary-red);
   margin: 1rem;
   pointer-events: none;
+  opacity: 0.2;
+  box-shadow: inset 0 0 15px rgba(var(--primary-red-rgb), 0.05);
 }
 
 .hero-badge {
   display: inline-block;
-  background-color: rgba(var(--primary-gold-rgb), 0.15);
-  border: 1px solid var(--primary-gold);
-  color: var(--primary-gold-bright);
+  background-color: rgba(var(--primary-red-rgb), 0.06);
+  border: 1px solid var(--primary-red);
+  color: var(--primary-red);
   padding: 0.35rem 1rem;
   font-size: 0.8rem;
   font-weight: 700;
@@ -259,7 +282,8 @@ a {
   text-transform: uppercase;
   line-height: 1.1;
   margin-bottom: 1rem;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  color: var(--text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .hero-subtitle {
@@ -292,25 +316,52 @@ a {
 }
 
 .btn-primary {
-  background-color: var(--primary-gold);
-  border: 1px solid var(--primary-gold);
-  color: var(--bg-primary);
+  background-color: var(--primary-red);
+  border: 1px solid var(--primary-red);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(var(--primary-red-rgb), 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  transition: all 0.6s ease;
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-gold-bright);
-  box-shadow: 0 0 15px rgba(var(--primary-gold-rgb), 0.4);
+  background-color: var(--primary-red-bright);
+  border-color: var(--primary-red-bright);
+  box-shadow: 0 4px 15px rgba(var(--primary-red-rgb), 0.25);
   transform: translateY(-2px);
 }
 
+.btn-primary:hover::before {
+  left: 100%;
+}
+
 .btn-secondary {
-  background-color: transparent;
+  background-color: var(--primary-gold);
   border: 1px solid var(--primary-gold);
-  color: var(--primary-gold-bright);
+  color: #0F172A;
+  box-shadow: 0 4px 12px rgba(var(--primary-gold-rgb), 0.15);
 }
 
 .btn-secondary:hover {
-  background-color: rgba(var(--primary-gold-rgb), 0.1);
+  background-color: var(--primary-gold-bright);
+  border-color: var(--primary-gold-bright);
+  box-shadow: 0 4px 15px rgba(var(--primary-gold-rgb), 0.3);
   transform: translateY(-2px);
 }
 
@@ -321,8 +372,9 @@ a {
 }
 
 .btn-outline:hover {
-  border-color: var(--text-muted);
-  color: var(--text-primary);
+  border-color: var(--primary-red);
+  color: var(--primary-red);
+  background-color: rgba(var(--primary-red-rgb), 0.02);
 }
 
 /* Cards */
@@ -337,8 +389,8 @@ a {
 }
 
 .card:hover {
-  border-color: var(--primary-gold);
-  box-shadow: 0 0 15px rgba(var(--primary-gold-rgb), 0.15), 0 8px 30px rgba(0, 0, 0, 0.6);
+  border-color: var(--primary-red);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 
@@ -359,8 +411,8 @@ a {
 }
 
 .card-gold:hover {
-  border-color: var(--primary-gold-bright);
-  box-shadow: 0 0 20px rgba(var(--primary-gold-rgb), 0.25), 0 8px 30px rgba(0, 0, 0, 0.7);
+  border-color: var(--primary-gold-dim);
+  box-shadow: 0 10px 25px -5px rgba(245, 176, 65, 0.15);
 }
 
 /* Grids */
@@ -1026,4 +1078,141 @@ a {
 @keyframes skeleton-loading {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* --- Fancy ARAM HUD & Mascots Additions --- */
+
+/* Hextech HUD Bracket Cards */
+.card-hud {
+  position: relative;
+  border: 1px solid var(--border-dark);
+  background-color: var(--bg-secondary);
+  transition: all var(--transition-speed) ease;
+}
+
+.card-hud::before, .card-hud::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  transition: all var(--transition-speed) ease;
+}
+
+.card-hud::before {
+  top: -1px;
+  left: -1px;
+  border-top: 3px solid var(--primary-red);
+  border-left: 3px solid var(--primary-red);
+}
+
+.card-hud::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 3px solid var(--primary-gold);
+  border-right: 3px solid var(--primary-gold);
+}
+
+.card-hud:hover {
+  border-color: rgba(var(--primary-red-rgb), 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05), 0 0 12px rgba(var(--primary-red-rgb), 0.05);
+  transform: translateY(-2px);
+}
+
+.card-hud:hover::before {
+  width: 16px;
+  height: 16px;
+  border-color: var(--primary-red-bright);
+}
+
+.card-hud:hover::after {
+  width: 16px;
+  height: 16px;
+  border-color: var(--primary-gold-bright);
+}
+
+/* Matchup Crossed Swords Clash Animation */
+.match-strip:hover svg {
+  animation: sword-wiggle 0.5s ease-in-out;
+}
+
+@keyframes sword-wiggle {
+  0% { transform: rotate(0deg) scale(1); }
+  15% { transform: rotate(-10deg) scale(1.15); }
+  30% { transform: rotate(8deg) scale(1.15); }
+  45% { transform: rotate(-6deg) scale(1.1); }
+  60% { transform: rotate(4deg) scale(1.1); }
+  75% { transform: rotate(-2deg) scale(1.05); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* Micro scanlines overlay for high-fidelity panels */
+.hud-scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.hud-scanlines::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(15, 23, 42, 0.015),
+    rgba(15, 23, 42, 0.015) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Pulse indicator animation */
+.indicator-pulse {
+  animation: hud-pulse 2s infinite ease-in-out;
+}
+
+@keyframes hud-pulse {
+  0% { opacity: 0.5; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.5; transform: scale(0.95); }
+}
+
+/* Poro Mascot wiggling animation */
+@keyframes poro-wiggle {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-6deg) scale(1.05); }
+  50% { transform: rotate(6deg) scale(0.98); }
+  75% { transform: rotate(-4deg) scale(1.03); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+.poro-animate-wiggle {
+  animation: poro-wiggle 0.5s ease-in-out;
+}
+
+/* Footer Poro Easter Egg */
+.footer-poro {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+  overflow: visible;
+  transition: transform 0.2s ease;
+}
+
+.footer-poro:hover {
+  animation: poro-wiggle 0.5s ease-in-out infinite;
+}
+
+.footer-poro .poro-tongue {
+  transform: scaleY(0.2);
+  transform-origin: 50px 58px;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.footer-poro:hover .poro-tongue {
+  transform: scaleY(1.1);
 }

@@ -174,7 +174,7 @@ export default function Teams() {
                       >
                         {player.name}
                       </Link>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "var(--primary-gold-bright)", fontWeight: "600", backgroundColor: "rgba(0, 210, 255, 0.05)", padding: "0.25rem 0.75rem", borderRadius: "20px", border: "1px solid rgba(0, 210, 255, 0.1)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "var(--primary-red)", fontWeight: "600", backgroundColor: "rgba(var(--primary-red-rgb), 0.05)", padding: "0.25rem 0.75rem", borderRadius: "20px", border: "1px solid rgba(var(--primary-red-rgb), 0.15)" }}>
                         <CrossedSwords size={14} />
                         <span>ARAM Combatant</span>
                       </div>

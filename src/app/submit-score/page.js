@@ -536,7 +536,7 @@ export default function SubmitScore() {
               <div className="grid-2">
                 {/* Team A stats */}
                 <div>
-                  <h4 style={{ color: "#00d2ff", marginBottom: "1rem", textTransform: "uppercase", fontSize: "0.9rem", borderBottom: "2px solid #005b70", paddingBottom: "0.25rem" }}>
+                  <h4 style={{ color: "var(--primary-red)", marginBottom: "1rem", textTransform: "uppercase", fontSize: "0.9rem", borderBottom: "2px solid var(--border-gold)", paddingBottom: "0.25rem" }}>
                     {teamA?.name} (Blue)
                   </h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -692,12 +692,12 @@ export default function SubmitScore() {
               width: "90%",
               padding: "3rem 2rem",
               textAlign: "center",
-              border: "1px solid var(--border-gold)",
-              boxShadow: "0 0 35px rgba(0, 210, 255, 0.3)",
+              border: "1px solid var(--border-dark)",
+              boxShadow: "0 10px 25px rgba(0, 0, 0, 0.08)",
               background: "var(--bg-secondary)"
             }}>
               <div style={{
-                border: "4px solid rgba(0, 210, 255, 0.1)",
+                border: "4px solid rgba(var(--primary-red-rgb), 0.1)",
                 borderTop: "4px solid var(--primary-gold)",
                 borderRadius: "50%",
                 width: "55px",
@@ -722,9 +722,9 @@ export default function SubmitScore() {
                   <div style={{
                     width: `${ocrProgress * 100}%`,
                     height: "100%",
-                    background: "linear-gradient(90deg, #7b2cbf, #3bf0ff)",
+                    background: "linear-gradient(90deg, var(--primary-red), var(--primary-gold))",
                     transition: "width 0.25s ease-out",
-                    boxShadow: "0 0 10px rgba(59, 240, 255, 0.5)"
+                    boxShadow: "0 0 10px rgba(var(--primary-red-rgb), 0.3)"
                   }} />
                 </div>
               )}
@@ -740,7 +740,7 @@ export default function SubmitScore() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(5, 9, 19, 0.85)",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
             backdropFilter: "blur(8px)",
             display: "flex",
             justifyContent: "center",
@@ -753,9 +753,9 @@ export default function SubmitScore() {
               maxWidth: "850px",
               width: "100%",
               padding: "2.5rem",
-              border: "1px solid var(--border-gold)",
+              border: "1px solid var(--border-dark)",
               backgroundColor: "var(--bg-secondary)",
-              boxShadow: "0 0 45px rgba(0, 210, 255, 0.35)",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)",
               display: "flex",
               flexDirection: "column",
               maxHeight: "90vh"
@@ -807,7 +807,7 @@ export default function SubmitScore() {
                 <div className="grid-2">
                   {/* Blue Team */}
                   <div>
-                    <h4 style={{ color: "#00d2ff", marginBottom: "1rem", textTransform: "uppercase", fontSize: "0.85rem", borderBottom: "2px solid #005b70", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between" }}>
+                    <h4 style={{ color: "var(--primary-red)", marginBottom: "1rem", textTransform: "uppercase", fontSize: "0.85rem", borderBottom: "2px solid var(--border-gold)", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between" }}>
                       <span>{teamA?.name || "Team A"} (Blue)</span>
                       <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Detected</span>
                     </h4>
@@ -940,9 +940,9 @@ export default function SubmitScore() {
                     display: "flex",
                     gap: "0.5rem",
                     alignItems: "center",
-                    background: "linear-gradient(135deg, #00d2ff 0%, #7b2cbf 100%)",
+                    background: "linear-gradient(135deg, var(--primary-red) 0%, var(--primary-gold) 100%)",
                     border: "none",
-                    boxShadow: "0 0 15px rgba(0, 210, 255, 0.25)"
+                    boxShadow: "0 4px 15px rgba(var(--primary-red-rgb), 0.2)"
                   }}
                 >
                   <span>Apply Detected Stats</span>
