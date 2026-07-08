@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { subscribeToData, submitCaptainGameScore } from "@/lib/db";
 import { getLatestDDragonVersion } from "@/lib/riot";
-import { CheckCircle2, ShieldAlert, Award, Eye, Clock, Upload, ArrowRight } from "lucide-react";
+import { CheckCircle2, ShieldAlert, Award, Eye, Clock, Upload, ArrowRight, Sparkles } from "lucide-react";
+import { parseOcrText } from "@/lib/ocr";
 
 export default function SubmitScore() {
   const router = useRouter();
@@ -27,6 +28,12 @@ export default function SubmitScore() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // OCR States
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrStatus, setOcrStatus] = useState("");
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [ocrResults, setOcrResults] = useState(null);
 
   useEffect(() => {
     const unsubConfig = subscribeToData("config", setConfig);
@@ -118,6 +125,89 @@ export default function SubmitScore() {
         [field]: val
       }
     }));
+  };
+
+  const runOcrOnScreenshot = async () => {
+    if (!screenshot) return;
+    setOcrLoading(true);
+    setOcrStatus("Initializing OCR Engine...");
+    setOcrProgress(0);
+
+    try {
+      // Dynamic import of tesseract.js for performance optimization
+      const Tesseract = (await import("tesseract.js")).default;
+      
+      setOcrStatus("Processing image...");
+      
+      const result = await Tesseract.recognize(
+        screenshot,
+        "eng",
+        {
+          logger: (m) => {
+            if (m.status === "recognizing text") {
+              setOcrStatus(`Extracting text... ${Math.round(m.progress * 100)}%`);
+              setOcrProgress(m.progress);
+            } else {
+              // Map nice status descriptions
+              const statusMap = {
+                "loading tesseract core": "Loading OCR Engine Core...",
+                "initializing tesseract": "Initializing OCR Engine...",
+                "initialized tesseract": "OCR Engine Ready.",
+                "loading language traineddata": "Loading Language Dictionary...",
+                "loaded language traineddata": "Language Dictionary Loaded.",
+                "initializing api": "Starting Text Reader...",
+                "initialized api": "Text Reader Started."
+              };
+              setOcrStatus(statusMap[m.status] || m.status);
+            }
+          }
+        }
+      );
+
+      const text = result.data.text;
+      console.log("OCR Extracted Text:\n", text);
+
+      const parsed = parseOcrText(text, teamA, teamB, champions);
+      setOcrResults(parsed);
+    } catch (err) {
+      console.error("OCR Error:", err);
+      setErrorMsg(`OCR recognition failed: ${err.message}. You can still fill stats manually.`);
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const handleOcrResultStatChange = (playerName, field, val) => {
+    setOcrResults(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        playerStats: {
+          ...prev.playerStats,
+          [playerName]: {
+            ...prev.playerStats[playerName],
+            [field]: field === "champion" ? val : (val === "" ? 0 : parseInt(val) || 0)
+          }
+        }
+      };
+    });
+  };
+
+  const applyOcrResults = () => {
+    if (!ocrResults) return;
+    if (ocrResults.gameDuration) {
+      setGameDuration(ocrResults.gameDuration);
+    }
+    setPlayerStats(ocrResults.playerStats);
+    setOcrResults(null);
+    
+    // Auto-scroll to stats section
+    setTimeout(() => {
+      const statsSection = document.getElementById("stats-section-heading");
+      if (statsSection) {
+        statsSection.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
   };
 
   const handleSubmit = async (e) => {
@@ -379,8 +469,56 @@ export default function SubmitScore() {
               </div>
             </div>
             {screenshot && (
-              <div style={{ marginTop: "1rem", border: "1px solid var(--border-dark)", borderRadius: "4px", padding: "0.5rem", backgroundColor: "#000", display: "inline-block", maxWidth: "200px" }}>
-                <img src={screenshot} alt="Preview" style={{ width: "100%", height: "auto", display: "block", borderRadius: "2px" }} />
+              <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", marginTop: "1rem", backgroundColor: "rgba(11, 28, 51, 0.3)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)", flexWrap: "wrap" }}>
+                <div style={{ border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "0.25rem", backgroundColor: "#000", display: "inline-block", maxWidth: "150px" }}>
+                  <img src={screenshot} alt="Preview" style={{ width: "100%", height: "auto", display: "block", borderRadius: "2px" }} />
+                </div>
+                <div style={{ flex: "1 1 300px" }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={runOcrOnScreenshot}
+                    disabled={ocrLoading || !selectedMatchId}
+                    style={{
+                      background: !selectedMatchId 
+                        ? "var(--bg-tertiary)" 
+                        : "linear-gradient(135deg, #7b2cbf 0%, #3bf0ff 100%)",
+                      color: !selectedMatchId ? "var(--text-muted)" : "#fff",
+                      border: "none",
+                      padding: "0.85rem 1.75rem",
+                      fontSize: "0.95rem",
+                      fontWeight: "bold",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                      boxShadow: !selectedMatchId ? "none" : "0 0 15px rgba(59, 240, 255, 0.3)",
+                      cursor: !selectedMatchId ? "not-allowed" : "pointer",
+                      borderRadius: "6px",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseOver={(e) => {
+                      if (selectedMatchId) {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 0 25px rgba(59, 240, 255, 0.6)";
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (selectedMatchId) {
+                        e.currentTarget.style.transform = "none";
+                        e.currentTarget.style.boxShadow = "0 0 15px rgba(59, 240, 255, 0.3)";
+                      }
+                    }}
+                  >
+                    <Sparkles size={18} className={ocrLoading ? "animate-pulse" : ""} />
+                    <span>✨ Auto-Detect Score & Stats (OCR)</span>
+                  </button>
+                  <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.6rem", lineHeight: "1.4" }}>
+                    {!selectedMatchId 
+                      ? "⚠️ Please select a match first to enable auto-detection." 
+                      : "Scan the uploaded scoreboard image to automatically extract match duration, champion selections, and player KDA."
+                    }
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -388,7 +526,7 @@ export default function SubmitScore() {
           {/* Section 3: Player stats tracking */}
           {selectedMatch && Object.keys(playerStats).length > 0 && (
             <div style={{ marginBottom: "2.5rem" }}>
-              <h3 style={{ borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.5rem", marginBottom: "1.5rem", fontSize: "1.1rem", color: "var(--primary-gold-bright)" }}>
+              <h3 id="stats-section-heading" style={{ borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.5rem", marginBottom: "1.5rem", fontSize: "1.1rem", color: "var(--primary-gold-bright)" }}>
                 3. Player Champions & KDA (Optional)
               </h3>
               <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "1.5rem", lineHeight: "1.4" }}>
@@ -532,6 +670,288 @@ export default function SubmitScore() {
             </button>
           </div>
         </form>
+
+        {/* OCR Processing Overlay */}
+        {ocrLoading && (
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(5, 9, 19, 0.9)",
+            backdropFilter: "blur(10px)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}>
+            <div className="card" style={{
+              maxWidth: "500px",
+              width: "90%",
+              padding: "3rem 2rem",
+              textAlign: "center",
+              border: "1px solid var(--border-gold)",
+              boxShadow: "0 0 35px rgba(0, 210, 255, 0.3)",
+              background: "var(--bg-secondary)"
+            }}>
+              <div style={{
+                border: "4px solid rgba(0, 210, 255, 0.1)",
+                borderTop: "4px solid var(--primary-gold)",
+                borderRadius: "50%",
+                width: "55px",
+                height: "55px",
+                animation: "ocr-spin 1.2s linear infinite",
+                margin: "0 auto 2rem auto"
+              }} />
+              <style>{`
+                @keyframes ocr-spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}</style>
+              <h3 style={{ marginBottom: "1rem", color: "var(--primary-gold-bright)", fontSize: "1.35rem", letterSpacing: "0.08em" }}>
+                Analyzing Screenshot
+              </h3>
+              <p style={{ color: "var(--text-secondary)", marginBottom: "2rem", fontSize: "0.95rem" }}>
+                {ocrStatus}
+              </p>
+              {ocrProgress > 0 && (
+                <div style={{ width: "100%", height: "6px", backgroundColor: "var(--bg-tertiary)", borderRadius: "3px", overflow: "hidden", position: "relative" }}>
+                  <div style={{
+                    width: `${ocrProgress * 100}%`,
+                    height: "100%",
+                    background: "linear-gradient(90deg, #7b2cbf, #3bf0ff)",
+                    transition: "width 0.25s ease-out",
+                    boxShadow: "0 0 10px rgba(59, 240, 255, 0.5)"
+                  }} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* OCR Results Review Modal */}
+        {ocrResults && (
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(5, 9, 19, 0.85)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9998,
+            overflowY: "auto",
+            padding: "2rem 1rem"
+          }}>
+            <div className="card" style={{
+              maxWidth: "850px",
+              width: "100%",
+              padding: "2.5rem",
+              border: "1px solid var(--border-gold)",
+              backgroundColor: "var(--bg-secondary)",
+              boxShadow: "0 0 45px rgba(0, 210, 255, 0.35)",
+              display: "flex",
+              flexDirection: "column",
+              maxHeight: "90vh"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+                <div>
+                  <h2 style={{ color: "var(--primary-gold-bright)", marginBottom: "0.25rem", fontSize: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <Sparkles size={20} />
+                    OCR Detection Results
+                  </h2>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                    Review and correct any misread stats before applying them to the scorecard.
+                  </p>
+                </div>
+              </div>
+
+              {/* Game Duration */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor: "var(--bg-tertiary)",
+                padding: "1rem",
+                borderRadius: "6px",
+                border: "1px solid var(--border-dark)",
+                marginBottom: "1.5rem"
+              }}>
+                <div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold" }}>Detected Game Duration</div>
+                  <div style={{ fontSize: "1.3rem", fontWeight: "bold", color: "var(--primary-gold-bright)", marginTop: "0.25rem" }}>
+                    {ocrResults.gameDuration || "Not detected"}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <label style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Adjust Duration:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. 21:30"
+                    style={{ width: "120px", textAlign: "center", fontSize: "0.9rem", padding: "0.5rem" }}
+                    value={ocrResults.gameDuration || ""}
+                    onChange={(e) => setOcrResults(prev => ({ ...prev, gameDuration: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Players stats list */}
+              <div style={{ flex: 1, overflowY: "auto", marginBottom: "2rem", paddingRight: "0.5rem" }}>
+                <div className="grid-2">
+                  {/* Blue Team */}
+                  <div>
+                    <h4 style={{ color: "#00d2ff", marginBottom: "1rem", textTransform: "uppercase", fontSize: "0.85rem", borderBottom: "2px solid #005b70", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between" }}>
+                      <span>{teamA?.name || "Team A"} (Blue)</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Detected</span>
+                    </h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                      {teamA?.players?.map(player => {
+                        const stat = ocrResults.playerStats[player.name] || { champion: "", kills: 0, deaths: 0, assists: 0 };
+                        return (
+                          <div key={player.name} style={{ backgroundColor: "var(--bg-tertiary)", padding: "0.85rem", borderRadius: "6px", border: "1px solid var(--border-dark)" }}>
+                            <div style={{ fontWeight: "bold", fontSize: "0.85rem", marginBottom: "0.6rem", color: "var(--text-primary)" }}>{player.name}</div>
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <select
+                                className="form-control"
+                                style={{ flex: 1.5, fontSize: "0.8rem", padding: "0.35rem" }}
+                                value={stat.champion || ""}
+                                onChange={(e) => handleOcrResultStatChange(player.name, "champion", e.target.value)}
+                              >
+                                <option value="">Champion</option>
+                                {champions.map(c => <option key={c} value={c}>{c}</option>)}
+                              </select>
+                              <div style={{ display: "flex", gap: "3px", width: "110px", alignItems: "center" }}>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="K"
+                                  style={{ padding: "0.35rem 0.25rem", textAlign: "center", fontSize: "0.8rem" }}
+                                  value={stat.kills !== undefined ? stat.kills : ""}
+                                  onChange={(e) => handleOcrResultStatChange(player.name, "kills", e.target.value)}
+                                />
+                                <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>/</span>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="D"
+                                  style={{ padding: "0.35rem 0.25rem", textAlign: "center", fontSize: "0.8rem" }}
+                                  value={stat.deaths !== undefined ? stat.deaths : ""}
+                                  onChange={(e) => handleOcrResultStatChange(player.name, "deaths", e.target.value)}
+                                />
+                                <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>/</span>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="A"
+                                  style={{ padding: "0.35rem 0.25rem", textAlign: "center", fontSize: "0.8rem" }}
+                                  value={stat.assists !== undefined ? stat.assists : ""}
+                                  onChange={(e) => handleOcrResultStatChange(player.name, "assists", e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Red Team */}
+                  <div>
+                    <h4 style={{ color: "#c084fc", marginBottom: "1rem", textTransform: "uppercase", fontSize: "0.85rem", borderBottom: "2px solid #8b5cf6", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between" }}>
+                      <span>{teamB?.name || "Team B"} (Red)</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Detected</span>
+                    </h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                      {teamB?.players?.map(player => {
+                        const stat = ocrResults.playerStats[player.name] || { champion: "", kills: 0, deaths: 0, assists: 0 };
+                        return (
+                          <div key={player.name} style={{ backgroundColor: "var(--bg-tertiary)", padding: "0.85rem", borderRadius: "6px", border: "1px solid var(--border-dark)" }}>
+                            <div style={{ fontWeight: "bold", fontSize: "0.85rem", marginBottom: "0.6rem", color: "var(--text-primary)" }}>{player.name}</div>
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <select
+                                className="form-control"
+                                style={{ flex: 1.5, fontSize: "0.8rem", padding: "0.35rem" }}
+                                value={stat.champion || ""}
+                                onChange={(e) => handleOcrResultStatChange(player.name, "champion", e.target.value)}
+                              >
+                                <option value="">Champion</option>
+                                {champions.map(c => <option key={c} value={c}>{c}</option>)}
+                              </select>
+                              <div style={{ display: "flex", gap: "3px", width: "110px", alignItems: "center" }}>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="K"
+                                  style={{ padding: "0.35rem 0.25rem", textAlign: "center", fontSize: "0.8rem" }}
+                                  value={stat.kills !== undefined ? stat.kills : ""}
+                                  onChange={(e) => handleOcrResultStatChange(player.name, "kills", e.target.value)}
+                                />
+                                <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>/</span>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="D"
+                                  style={{ padding: "0.35rem 0.25rem", textAlign: "center", fontSize: "0.8rem" }}
+                                  value={stat.deaths !== undefined ? stat.deaths : ""}
+                                  onChange={(e) => handleOcrResultStatChange(player.name, "deaths", e.target.value)}
+                                />
+                                <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>/</span>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="A"
+                                  style={{ padding: "0.35rem 0.25rem", textAlign: "center", fontSize: "0.8rem" }}
+                                  value={stat.assists !== undefined ? stat.assists : ""}
+                                  onChange={(e) => handleOcrResultStatChange(player.name, "assists", e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", borderTop: "1px solid var(--border-dark)", paddingTop: "1.5rem" }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setOcrResults(null)}
+                  style={{ padding: "0.75rem 1.5rem" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={applyOcrResults}
+                  style={{
+                    padding: "0.75rem 2rem",
+                    display: "flex",
+                    gap: "0.5rem",
+                    alignItems: "center",
+                    background: "linear-gradient(135deg, #00d2ff 0%, #7b2cbf 100%)",
+                    border: "none",
+                    boxShadow: "0 0 15px rgba(0, 210, 255, 0.25)"
+                  }}
+                >
+                  <span>Apply Detected Stats</span>
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
