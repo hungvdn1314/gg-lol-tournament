@@ -11,6 +11,7 @@ export default function Schedule() {
   const [teams, setTeams] = useState({});
   const [statusFilter, setStatusFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
+  const [groupFilter, setGroupFilter] = useState("all");
   const [selectedStatsMatch, setSelectedStatsMatch] = useState(null);
   const [copiedMatchId, setCopiedMatchId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,6 +40,7 @@ export default function Schedule() {
   const filteredMatches = matchList.filter((match) => {
     const statusMatch = statusFilter === "all" || match.status === statusFilter;
     const stageMatch = stageFilter === "all" || match.type === stageFilter;
+    const groupMatch = groupFilter === "all" || match.group === groupFilter;
     
     const teamA = teams[match.teamAId];
     const teamB = teams[match.teamBId];
@@ -48,7 +50,7 @@ export default function Schedule() {
       (teamA?.name || "").toLowerCase().includes(query) || 
       (teamB?.name || "").toLowerCase().includes(query);
       
-    return statusMatch && stageMatch && matchesSearch;
+    return statusMatch && stageMatch && groupMatch && matchesSearch;
   });
 
   const getStatusBadge = (status) => {
@@ -150,18 +152,52 @@ export default function Schedule() {
               All Stages
             </button>
             <button
-              onClick={() => setStageFilter("group")}
-              className={`btn ${stageFilter === "group" ? "btn-primary" : "btn-outline"}`}
+              onClick={() => { setStageFilter("group"); }}
+              className={`btn ${stageFilter === "group" && groupFilter === "all" ? "btn-primary" : "btn-outline"}`}
               style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}
             >
               Group Stage
             </button>
             <button
-              onClick={() => setStageFilter("knockout")}
+              onClick={() => { setStageFilter("knockout"); setGroupFilter("all"); }}
               className={`btn ${stageFilter === "knockout" ? "btn-primary" : "btn-outline"}`}
               style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}
             >
               Knockout Stage
+            </button>
+          </div>
+
+          <div style={{ width: "1px", height: "30px", backgroundColor: "var(--border-dark)", alignSelf: "center" }}></div>
+
+          {/* Group Filters */}
+          <div className="scrollable-tabs" style={{ maxWidth: "100%" }}>
+            <button
+              onClick={() => setGroupFilter("all")}
+              className={`btn ${groupFilter === "all" ? "btn-primary" : "btn-outline"}`}
+              style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}
+            >
+              All Groups
+            </button>
+            <button
+              onClick={() => { setGroupFilter("A"); setStageFilter("group"); }}
+              className={`btn ${groupFilter === "A" ? "btn-primary" : "btn-outline"}`}
+              style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}
+            >
+              Group A
+            </button>
+            <button
+              onClick={() => { setGroupFilter("B"); setStageFilter("group"); }}
+              className={`btn ${groupFilter === "B" ? "btn-primary" : "btn-outline"}`}
+              style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}
+            >
+              Group B
+            </button>
+            <button
+              onClick={() => { setGroupFilter("C"); setStageFilter("group"); }}
+              className={`btn ${groupFilter === "C" ? "btn-primary" : "btn-outline"}`}
+              style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}
+            >
+              Group C
             </button>
           </div>
         </div>

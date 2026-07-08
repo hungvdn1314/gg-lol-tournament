@@ -79,6 +79,13 @@ export default function Teams() {
           >
             Group B
           </button>
+          <button
+            onClick={() => setGroupFilter("C")}
+            className={`btn ${groupFilter === "C" ? "btn-primary" : "btn-outline"}`}
+            style={{ padding: "0.5rem 1.25rem", fontSize: "0.85rem" }}
+          >
+            Group C
+          </button>
         </div>
       </div>
 

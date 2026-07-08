@@ -10,7 +10,7 @@ export default function Bracket() {
   const [matches, setMatches] = useState({});
   const [teams, setTeams] = useState({});
   const [bracket, setBracket] = useState({ size: 6, rounds: [] });
-  const [activeView, setActiveView] = useState("upper"); // upper, lower, final
+  const [activeView, setActiveView] = useState("full"); // full, upper, lower, final
 
   useEffect(() => {
     const unsubMatches = subscribeToData("matches", setMatches);
@@ -113,7 +113,14 @@ export default function Bracket() {
         </p>
 
         {/* Bracket tabs */}
-        <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem", flexWrap: "wrap" }}>
+          <button 
+            onClick={() => setActiveView("full")} 
+            className={`btn ${activeView === "full" ? "btn-primary" : "btn-outline"}`}
+            style={{ padding: "0.4rem 1.25rem", fontSize: "0.85rem" }}
+          >
+            Full Bracket
+          </button>
           <button 
             onClick={() => setActiveView("upper")} 
             className={`btn ${activeView === "upper" ? "btn-primary" : "btn-outline"}`}
@@ -139,8 +146,61 @@ export default function Bracket() {
       </div>
 
       <div className="bracket-viewport card" style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-dark)", padding: "3rem 1.5rem", minHeight: "450px" }}>
-        <div className="bracket-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", overflowX: "auto" }}>
+        <div className="bracket-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", overflowX: "auto", flexDirection: activeView === "full" ? "column" : "row" }}>
           
+          {/* Full Bracket View */}
+          {activeView === "full" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "4rem", width: "100%" }}>
+              {/* Section 1: Winners */}
+              <div style={{ borderBottom: "1px solid var(--border-dark)", paddingBottom: "3rem" }}>
+                <h4 style={{ color: "var(--primary-gold)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1.5rem", textAlign: "center" }}>Winners Bracket</h4>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "3rem", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                    <h5 style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.8rem" }}>Upper Semifinals</h5>
+                    {renderMatchNode("match-playoff-1", "Match 1")}
+                    {renderMatchNode("match-playoff-2", "Match 2")}
+                  </div>
+                  <div style={{ color: "var(--border-gold-hover)" }}><ChevronRight size={24} style={{ transform: "rotate(90deg) scale(0.8)", margin: "0.5rem" }} className="bracket-arrow-mobile" /></div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                    <h5 style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.8rem" }}>Upper Finals</h5>
+                    {renderMatchNode("match-playoff-5", "Match 5")}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Losers */}
+              <div style={{ borderBottom: "1px solid var(--border-dark)", paddingBottom: "3rem" }}>
+                <h4 style={{ color: "var(--accent-purple)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1.5rem", textAlign: "center" }}>Losers Bracket</h4>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "2.5rem", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                    <h5 style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.8rem" }}>LB Quarterfinals</h5>
+                    {renderMatchNode("match-playoff-3", "Match 3")}
+                    {renderMatchNode("match-playoff-4", "Match 4")}
+                  </div>
+                  <div style={{ color: "var(--border-gold-hover)" }}><ChevronRight size={20} style={{ transform: "rotate(90deg) scale(0.8)", margin: "0.5rem" }} className="bracket-arrow-mobile" /></div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                    <h5 style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.8rem" }}>LB Semifinals</h5>
+                    {renderMatchNode("match-playoff-6", "Match 6")}
+                  </div>
+                  <div style={{ color: "var(--border-gold-hover)" }}><ChevronRight size={20} style={{ transform: "rotate(90deg) scale(0.8)", margin: "0.5rem" }} className="bracket-arrow-mobile" /></div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                    <h5 style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.8rem" }}>LB Finals</h5>
+                    {renderMatchNode("match-playoff-7", "Match 7")}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Grand Final */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem" }}>
+                <h4 style={{ color: "var(--primary-gold-bright)", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>Championship Final</h4>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--primary-gold)", fontSize: "0.8rem", fontWeight: "700", textTransform: "uppercase" }}>
+                  <SummonersCup size={16} /> ARAM Mayhem Champion Trophy
+                </div>
+                {renderMatchNode("match-playoff-8", "Match 8 (Grand Final)")}
+              </div>
+            </div>
+          )}
+
           {/* Winners Bracket View */}
           {activeView === "upper" && (
             <div style={{ display: "flex", alignItems: "center", gap: "3rem" }}>

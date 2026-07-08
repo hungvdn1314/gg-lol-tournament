@@ -63,7 +63,7 @@ export default function Leaderboard() {
 
 
       {/* Group Tables */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2.5rem", marginBottom: "4rem", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", marginBottom: "4rem" }}>
         {loading ? (
           <>
             <div className="skeleton" style={{ height: "300px" }}></div>
