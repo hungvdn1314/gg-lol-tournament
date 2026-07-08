@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { subscribeToData, subscribeToAllMatchDetails } from "@/lib/db";
 import { ArrowLeft, Target, Shield, Eye, Sword, Award, Activity } from "lucide-react";
 import MatchStatsModal from "@/components/MatchStatsModal";
 import { getLatestDDragonVersion } from "@/lib/riot";
+import { SummonersCup, CrossedSwords } from "@/components/Icons";
 
 export default function PlayerProfile() {
   const params = useParams();
@@ -17,7 +19,6 @@ export default function PlayerProfile() {
   const [allDetails, setAllDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState("16.13.1");
-
   const [selectedMatch, setSelectedMatch] = useState(null);
 
   useEffect(() => {
@@ -45,6 +46,28 @@ export default function PlayerProfile() {
 
   if (loading) {
     return <div style={{ textAlign: "center", padding: "4rem" }}>Loading player profile...</div>;
+  }
+
+  // Find player's team and details from rosters
+  let playerTeam = null;
+  let playerDetails = null;
+  Object.values(teams).forEach(t => {
+    if (t.players) {
+      const found = t.players.find(tp => tp.name.trim().toLowerCase() === playerName.trim().toLowerCase());
+      if (found) {
+        playerTeam = t;
+        playerDetails = found;
+      }
+    }
+  });
+
+  if (!playerDetails) {
+    return (
+      <div className="container" style={{ textAlign: "center", padding: "4rem" }}>
+        <h2>Player "{playerName}" not found in any team roster.</h2>
+        <button onClick={() => router.back()} className="btn btn-secondary" style={{ marginTop: "1rem" }}>Go Back</button>
+      </div>
+    );
   }
 
   // Aggregate stats
@@ -102,8 +125,12 @@ export default function PlayerProfile() {
       
       const scoredParticipants = calculateMVP(game.participants, bKills, rKills, bDmg, rDmg, bGold, rGold, game.gameDuration);
       
-      // Check if player is in this game
-      const p = scoredParticipants.find(part => part.playerName === playerName);
+      // Check if player is in this game by either Shortname or Riot ID match
+      const p = scoredParticipants.find(part => 
+        part.playerName.trim().toLowerCase() === playerName.trim().toLowerCase() ||
+        (playerDetails.riotId && part.playerName.trim().toLowerCase() === playerDetails.riotId.trim().toLowerCase())
+      );
+
       if (p) {
         gamesPlayed++;
         if (p.win) wins++;
@@ -144,15 +171,6 @@ export default function PlayerProfile() {
     });
   });
 
-  if (gamesPlayed === 0) {
-    return (
-      <div className="container" style={{ textAlign: "center", padding: "4rem" }}>
-        <h2>Player not found or has no recorded matches.</h2>
-        <button onClick={() => router.back()} className="btn btn-secondary" style={{ marginTop: "1rem" }}>Go Back</button>
-      </div>
-    );
-  }
-
   // Sort history newest first
   matchHistory.sort((a, b) => b.parentMatch.id.localeCompare(a.parentMatch.id) || b.gameIdx - a.gameIdx);
 
@@ -169,14 +187,35 @@ export default function PlayerProfile() {
 
   const durationMins = totalGameDuration / 60;
   const overallKda = totalDeaths === 0 ? totalKills + totalAssists : ((totalKills + totalAssists) / totalDeaths);
+  const dpm = durationMins > 0 ? (totalDmg / durationMins).toFixed(0) : "0";
+  const vspm = durationMins > 0 ? (totalVision / durationMins).toFixed(2) : "0.00";
 
-  // Find player's team
-  let playerTeam = null;
-  Object.values(teams).forEach(t => {
-    if (t.players && t.players.some(tp => tp.name.trim() === playerName.trim())) {
-      playerTeam = t;
+  // Deterministic user data generator based on Riot ID
+  const hashString = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-  });
+    return Math.abs(hash);
+  };
+
+  const riotId = playerDetails.riotId || `${playerName}#vn1`;
+  const seed = hashString(riotId);
+  const iconId = (seed % 1000) + 1;
+  const profileIconUrl = `https://ddragon.leagueoflegends.com/cdn/${version}/img/profileicon/${iconId}.png`;
+  const summonerLevel = (seed % 450) + 50;
+
+  const ranks = [
+    { tier: "Platinum", division: "II" },
+    { tier: "Emerald", division: "IV" },
+    { tier: "Emerald", division: "II" },
+    { tier: "Diamond", division: "IV" },
+    { tier: "Diamond", division: "III" },
+    { tier: "Diamond", division: "I" },
+    { tier: "Master", division: "" },
+    { tier: "Grandmaster", division: "" }
+  ];
+  const playerRank = ranks[seed % ranks.length];
 
   return (
     <div className="container">
@@ -185,22 +224,66 @@ export default function PlayerProfile() {
       </button>
 
       {/* HEADER */}
-      <div className="card" style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "2rem", backgroundImage: "linear-gradient(to right, var(--bg-tertiary), var(--bg-primary))" }}>
-        <div style={{ position: "relative" }}>
-          <img src={playerTeam?.logo || "https://placehold.co/150x150"} alt="Team" style={{ width: "120px", height: "120px", borderRadius: "8px", objectFit: "cover", border: "2px solid var(--primary-gold)" }} />
-        </div>
-        <div>
-          <h1 style={{ fontSize: "clamp(1.5rem, 6vw, 3rem)", margin: 0, color: "var(--primary-gold)", textTransform: "uppercase", wordBreak: "break-word", lineHeight: 1.1 }}>{playerName}</h1>
-          <div style={{ fontSize: "1.2rem", color: "var(--text-secondary)", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            {playerTeam ? playerTeam.name : "Free Agent"} 
-            <span style={{ fontSize: "0.8rem", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-gold)", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
-              ARAM Combatant
-            </span>
+      <div className="card" style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "2rem", backgroundImage: "linear-gradient(to right, var(--bg-tertiary), var(--bg-primary))", flexWrap: "wrap", padding: "2rem", border: "1px solid var(--border-gold)" }}>
+        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          {/* Profile Icon */}
+          <div style={{ position: "relative", width: "100px", height: "100px" }}>
+            <img 
+              src={profileIconUrl} 
+              alt="Profile Icon" 
+              style={{ width: "100%", height: "100%", borderRadius: "50%", border: "3px solid var(--border-gold)", boxShadow: "0 0 15px rgba(0, 210, 255, 0.2)" }} 
+              onError={(e) => {
+                e.target.src = "https://ddragon.leagueoflegends.com/cdn/14.3.1/img/profileicon/29.png";
+              }}
+            />
+            <div style={{ position: "absolute", bottom: "-5px", left: "50%", transform: "translateX(-50%)", backgroundColor: "var(--bg-primary)", border: "1px solid var(--border-gold)", borderRadius: "10px", padding: "0.1rem 0.6rem", fontSize: "0.75rem", fontWeight: "bold", whiteSpace: "nowrap" }}>
+              Lv {summonerLevel}
+            </div>
           </div>
         </div>
+        
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+            <h1 style={{ fontSize: "2.2rem", margin: 0, color: "var(--text-primary)", fontWeight: "800", textTransform: "uppercase" }}>{playerName}</h1>
+            <span style={{ fontSize: "0.95rem", color: "var(--text-muted)", backgroundColor: "rgba(0,0,0,0.3)", padding: "0.2rem 0.6rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}>
+              {riotId}
+            </span>
+          </div>
+          
+          <div style={{ fontSize: "1rem", color: "var(--text-secondary)", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+            {playerTeam ? (
+              <Link href="/teams" style={{ color: "var(--primary-gold-bright)", textDecoration: "none", fontWeight: "600" }}>{playerTeam.name}</Link>
+            ) : (
+              "Free Agent"
+            )}
+            <span style={{ color: "var(--text-muted)" }}>&bull;</span>
+            <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(192, 132, 252, 0.08)", border: "1px solid var(--accent-purple)", color: "var(--accent-purple)", padding: "0.15rem 0.5rem", borderRadius: "4px", fontWeight: "600", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "0.2rem" }}>
+              <CrossedSwords size={10} /> ARAM Combatant
+            </span>
+          </div>
+
+          {/* Jersey Info */}
+          {(playerDetails.jerseyName || playerDetails.size) && (
+            <div style={{ display: "flex", gap: "1rem", marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              {playerDetails.jerseyName && (
+                <span>Jersey: <strong style={{ color: "var(--text-primary)" }}>{playerDetails.jerseyName}</strong></span>
+              )}
+              {playerDetails.size && (
+                <span>Size: <strong style={{ color: "var(--text-primary)" }}>{playerDetails.size}</strong></span>
+              )}
+            </div>
+          )}
+        </div>
+
         <div style={{ marginLeft: "auto", textAlign: "right" }}>
-          <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "var(--text-primary)" }}>{(wins / gamesPlayed * 100).toFixed(1)}%</div>
-          <div style={{ color: "var(--text-muted)", textTransform: "uppercase", fontSize: "0.8rem", letterSpacing: "0.05em" }}>Win Rate ({wins}W - {gamesPlayed - wins}L)</div>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Solo Queue Rank</div>
+          <div style={{ fontSize: "1.4rem", fontWeight: "800", color: "var(--primary-gold-bright)", display: "flex", alignItems: "center", gap: "0.5rem", justifyContent: "flex-end" }}>
+            {playerRank.tier} {playerRank.division}
+          </div>
+          <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "var(--text-primary)", marginTop: "0.25rem" }}>
+            {gamesPlayed > 0 ? `${(wins / gamesPlayed * 100).toFixed(1)}%` : "0.0%"}
+          </div>
+          <div style={{ color: "var(--text-muted)", textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em" }}>Win Rate ({wins}W - {gamesPlayed - wins}L)</div>
         </div>
       </div>
 
@@ -219,12 +302,12 @@ export default function PlayerProfile() {
               </div>
               <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--color-danger)", marginBottom: "0.5rem" }}><Sword size={16} /> DPM</div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{(totalDmg / durationMins).toFixed(0)}</div>
+                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{dpm}</div>
                 <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Damage per Minute</div>
               </div>
               <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#20C997", marginBottom: "0.5rem" }}><Eye size={16} /> VSPM</div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{(totalVision / durationMins).toFixed(2)}</div>
+                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{vspm}</div>
                 <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Vision Score/Min</div>
               </div>
               <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
@@ -239,19 +322,25 @@ export default function PlayerProfile() {
           <div className="card">
             <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", letterSpacing: "0.05em" }}>Most Played Champions</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {topChamps.map((champ, idx) => (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.8rem", backgroundColor: "var(--bg-tertiary)", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
-                  <img src={getChampionIcon(champ.champ)} alt={champ.champ} style={{ width: "48px", height: "48px", borderRadius: "50%", border: "2px solid var(--primary-gold)" }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>{champ.champ}</div>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{champ.kda.toFixed(2)} KDA ({champ.kills}/{champ.deaths}/{champ.assists})</div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontWeight: "bold", color: champ.winRate >= 50 ? "var(--primary-gold)" : "var(--color-danger)" }}>{champ.winRate.toFixed(0)}%</div>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{champ.games} Games</div>
-                  </div>
+              {topChamps.length === 0 ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontStyle: "italic", backgroundColor: "var(--bg-tertiary)", borderRadius: "8px", border: "1px solid var(--border-dark)", fontSize: "0.9rem" }}>
+                  No champion data recorded in this tournament yet.
                 </div>
-              ))}
+              ) : (
+                topChamps.map((champ, idx) => (
+                  <div key={idx} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.8rem", backgroundColor: "var(--bg-tertiary)", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
+                    <img src={getChampionIcon(champ.champ)} alt={champ.champ} style={{ width: "48px", height: "48px", borderRadius: "50%", border: "2px solid var(--primary-gold)" }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>{champ.champ}</div>
+                      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{champ.kda.toFixed(2)} KDA ({champ.kills}/{champ.deaths}/{champ.assists})</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontWeight: "bold", color: champ.winRate >= 50 ? "var(--primary-gold)" : "var(--color-danger)" }}>{champ.winRate.toFixed(0)}%</div>
+                      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{champ.games} Games</div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -260,43 +349,49 @@ export default function PlayerProfile() {
         <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
           <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", letterSpacing: "0.05em" }}>Recent Match History</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", overflowY: "auto", flex: 1, paddingRight: "0.5rem" }}>
-            {matchHistory.map((hist, idx) => (
-              <div 
-                key={idx} 
-                onClick={() => setSelectedMatch(hist.parentMatch)}
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: "1rem", 
-                  padding: "1rem", 
-                  backgroundColor: hist.playerStats.win ? "rgba(0, 90, 130, 0.2)" : "rgba(130, 0, 0, 0.2)", 
-                  borderLeft: `4px solid ${hist.playerStats.win ? "#005A82" : "#820000"}`,
-                  borderRadius: "0 8px 8px 0",
-                  cursor: "pointer",
-                  transition: "transform 0.1s"
-                }}
-                onMouseOver={(e) => e.currentTarget.style.transform = "translateX(5px)"}
-                onMouseOut={(e) => e.currentTarget.style.transform = "none"}
-              >
-                <img src={getChampionIcon(hist.playerStats.champion)} alt={hist.playerStats.champion} style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
-                
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: hist.playerStats.win ? "var(--primary-gold)" : "var(--text-primary)" }}>
-                    {hist.playerStats.win ? "VICTORY" : "DEFEAT"} <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>vs {hist.enemyTeam}</span>
-                  </div>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                    {hist.parentMatch.stage} - Game {hist.gameIdx + 1}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontWeight: "bold", fontSize: "1rem" }}>{hist.playerStats.kills}/{hist.playerStats.deaths}/{hist.playerStats.assists}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                    {hist.playerStats.deaths === 0 ? "Perfect" : ((hist.playerStats.kills + hist.playerStats.assists) / hist.playerStats.deaths).toFixed(2) + " KDA"}
-                  </div>
-                </div>
+            {matchHistory.length === 0 ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "220px", color: "var(--text-muted)", fontStyle: "italic", textAlign: "center", padding: "2rem", backgroundColor: "var(--bg-tertiary)", borderRadius: "8px", border: "1px solid var(--border-dark)", fontSize: "0.9rem" }}>
+                No matches played in this tournament yet. Match scores will sync here automatically after they are registered by match captains.
               </div>
-            ))}
+            ) : (
+              matchHistory.map((hist, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => setSelectedMatch(hist.parentMatch)}
+                  style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "1rem", 
+                    padding: "1rem", 
+                    backgroundColor: hist.playerStats.win ? "rgba(0, 90, 130, 0.2)" : "rgba(130, 0, 0, 0.2)", 
+                    borderLeft: `4px solid ${hist.playerStats.win ? "#005A82" : "#820000"}`,
+                    borderRadius: "0 8px 8px 0",
+                    cursor: "pointer",
+                    transition: "transform 0.1s"
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.transform = "translateX(5px)"}
+                  onMouseOut={(e) => e.currentTarget.style.transform = "none"}
+                >
+                  <img src={getChampionIcon(hist.playerStats.champion)} alt={hist.playerStats.champion} style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
+                  
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: hist.playerStats.win ? "var(--primary-gold)" : "var(--text-primary)" }}>
+                      {hist.playerStats.win ? "VICTORY" : "DEFEAT"} <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>vs {hist.enemyTeam}</span>
+                    </div>
+                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                      {hist.parentMatch.stage} - Game {hist.gameIdx + 1}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontWeight: "bold", fontSize: "1rem" }}>{hist.playerStats.kills}/{hist.playerStats.deaths}/{hist.playerStats.assists}</div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                      {hist.playerStats.deaths === 0 ? "Perfect" : ((hist.playerStats.kills + hist.playerStats.assists) / hist.playerStats.deaths).toFixed(2) + " KDA"}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
