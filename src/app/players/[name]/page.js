@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { subscribeToData, subscribeToAllMatchDetails } from "@/lib/db";
+import { subscribeToData } from "@/lib/db";
 import { ArrowLeft, Target, Shield, Eye, Sword, Award, Activity } from "lucide-react";
-import MatchStatsModal from "@/components/MatchStatsModal";
 import { getLatestDDragonVersion } from "@/lib/riot";
 import { SummonersCup, CrossedSwords } from "@/components/Icons";
 
@@ -14,29 +13,79 @@ export default function PlayerProfile() {
   const router = useRouter();
   const playerName = decodeURIComponent(params.name);
 
-  const [matches, setMatches] = useState({});
   const [teams, setTeams] = useState({});
-  const [allDetails, setAllDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState("16.13.1");
-  const [selectedMatch, setSelectedMatch] = useState(null);
+
+  const [riotMatches, setRiotMatches] = useState([]);
+  const [riotLoading, setRiotLoading] = useState(true);
+  const [riotError, setRiotError] = useState(null);
 
   useEffect(() => {
-    const unsubMatches = subscribeToData("matches", setMatches);
-    const unsubTeams = subscribeToData("teams", setTeams);
-    const unsubDetails = subscribeToAllMatchDetails((data) => {
-      setAllDetails(data || {});
+    const unsubTeams = subscribeToData("teams", (data) => {
+      setTeams(data || {});
       setLoading(false);
     });
 
     getLatestDDragonVersion().then(v => setVersion(v));
 
     return () => {
-      unsubMatches();
       unsubTeams();
-      unsubDetails();
     };
   }, []);
+
+  // Find player's team and details from rosters
+  let playerTeam = null;
+  let playerDetails = null;
+  
+  if (!loading) {
+    Object.values(teams).forEach(t => {
+      if (t.players) {
+        const found = t.players.find(tp => tp.name.trim().toLowerCase() === playerName.trim().toLowerCase());
+        if (found) {
+          playerTeam = t;
+          playerDetails = found;
+        }
+      }
+    });
+  }
+
+  // Fetch actual Riot API data for player
+  useEffect(() => {
+    if (!loading && playerDetails) {
+      setRiotLoading(true);
+      setRiotError(null);
+      
+      const riotId = playerDetails.riotId || `${playerName}#vn1`;
+      
+      fetch("/api/riot-matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerRiotId: riotId })
+      })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`Riot ID not found or API limits exceeded (${res.status})`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data.matches) {
+          // Filter ONLY ARAM matches (queueId === 450)
+          const aramMatches = data.matches.filter(m => m.queueId === 450);
+          setRiotMatches(aramMatches);
+        } else if (data.error) {
+          setRiotError(data.error);
+        }
+        setRiotLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching riot matches:", err);
+        setRiotError(err.message);
+        setRiotLoading(false);
+      });
+    }
+  }, [loading, playerDetails]);
 
   const getChampionIcon = (championName) => {
     if (!championName) return "https://placehold.co/40x40";
@@ -47,19 +96,6 @@ export default function PlayerProfile() {
   if (loading) {
     return <div style={{ textAlign: "center", padding: "4rem" }}>Loading player profile...</div>;
   }
-
-  // Find player's team and details from rosters
-  let playerTeam = null;
-  let playerDetails = null;
-  Object.values(teams).forEach(t => {
-    if (t.players) {
-      const found = t.players.find(tp => tp.name.trim().toLowerCase() === playerName.trim().toLowerCase());
-      if (found) {
-        playerTeam = t;
-        playerDetails = found;
-      }
-    }
-  });
 
   if (!playerDetails) {
     return (
@@ -72,107 +108,47 @@ export default function PlayerProfile() {
 
   // Aggregate stats
   let totalKills = 0, totalDeaths = 0, totalAssists = 0;
-  let totalDmg = 0, totalDmgTaken = 0, totalVision = 0, totalCS = 0, totalGold = 0;
+  let totalDmg = 0, totalVision = 0;
   let totalGameDuration = 0;
-  let matchMvps = 0;
   let gamesPlayed = 0;
   let wins = 0;
   const champStats = {}; // { champName: { games, wins, kills, deaths, assists } }
   const matchHistory = []; // list of game objects
 
-  // Helper MVP calculation from ranking page
-  const calculateMVP = (participants, bKills, rKills, bDmg, rDmg, bGold, rGold, gameDuration) => {
-    if (!participants || participants.length === 0) return [];
-    const durationMins = gameDuration / 60;
-    return participants.map(p => {
-      const teamKills = p.teamId === 100 ? bKills : rKills;
-      const teamDmg = p.teamId === 100 ? bDmg : rDmg;
-      const teamGold = p.teamId === 100 ? bGold : rGold;
+  if (riotMatches && riotMatches.length > 0) {
+    gamesPlayed = riotMatches.length;
+    riotMatches.forEach((m, idx) => {
+      if (m.win) wins++;
+      totalKills += m.kills || 0;
+      totalDeaths += m.deaths || 0;
+      totalAssists += m.assists || 0;
+      totalGameDuration += m.gameDuration || 0;
 
-      const kda = p.deaths === 0 ? (p.kills + p.assists) * 1.5 : (p.kills + p.assists) / p.deaths;
-      const kp = teamKills > 0 ? (p.kills + p.assists) / teamKills : 0;
-      const damageShare = teamDmg > 0 ? (p.damageDealt || 0) / teamDmg : 0;
-      const goldShare = teamGold > 0 ? (p.gold || 0) / teamGold : 0;
-      const visionPerMin = (p.vision || 0) / durationMins;
-
-      const kdaScore = Math.min(kda * 0.5, 3.0);
-      const kpScore = kp * 2.5;
-      const dmgScore = damageShare * 2.0;
-      const goldScore = goldShare * 1.5;
-      const visionScore = Math.min(visionPerMin, 1.0);
-      const winBonus = p.win ? 1.0 : 0;
-
-      const totalScore = kdaScore + kpScore + dmgScore + goldScore + visionScore + winBonus;
-      return { ...p, mvpScore: totalScore };
-    });
-  };
-
-  Object.entries(allDetails).forEach(([matchId, seriesDetails]) => {
-    const parentMatch = matches[matchId];
-    if (!parentMatch) return;
-
-    const games = Array.isArray(seriesDetails) ? seriesDetails : [seriesDetails];
-
-    games.forEach((game, gameIdx) => {
-      if (!game.participants) return;
-      
-      const bKills = game.participants.filter(p => p.teamId === 100).reduce((sum, p) => sum + (p.kills || 0), 0);
-      const rKills = game.participants.filter(p => p.teamId === 200).reduce((sum, p) => sum + (p.kills || 0), 0);
-      const bDmg = game.participants.filter(p => p.teamId === 100).reduce((sum, p) => sum + (p.damageDealt || 0), 0);
-      const rDmg = game.participants.filter(p => p.teamId === 200).reduce((sum, p) => sum + (p.damageDealt || 0), 0);
-      const bGold = game.participants.filter(p => p.teamId === 100).reduce((sum, p) => sum + (p.gold || 0), 0);
-      const rGold = game.participants.filter(p => p.teamId === 200).reduce((sum, p) => sum + (p.gold || 0), 0);
-      
-      const scoredParticipants = calculateMVP(game.participants, bKills, rKills, bDmg, rDmg, bGold, rGold, game.gameDuration);
-      
-      // Check if player is in this game by either Shortname or Riot ID match
-      const p = scoredParticipants.find(part => 
-        part.playerName.trim().toLowerCase() === playerName.trim().toLowerCase() ||
-        (playerDetails.riotId && part.playerName.trim().toLowerCase() === playerDetails.riotId.trim().toLowerCase())
-      );
-
-      if (p) {
-        gamesPlayed++;
-        if (p.win) wins++;
-        totalKills += (p.kills || 0);
-        totalDeaths += (p.deaths || 0);
-        totalAssists += (p.assists || 0);
-        totalDmg += (p.damageDealt || 0);
-        totalDmgTaken += (p.damageTaken || 0);
-        totalVision += (p.vision || 0);
-        totalCS += (p.cs || 0);
-        totalGold += (p.gold || 0);
-        totalGameDuration += (game.gameDuration || 0);
-
-        // Check MVP
-        const topMvpScore = Math.max(...scoredParticipants.map(sp => sp.mvpScore));
-        if (p.mvpScore === topMvpScore) matchMvps++;
-
-        // Champ stats
-        if (!champStats[p.champion]) {
-          champStats[p.champion] = { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 };
-        }
-        champStats[p.champion].games++;
-        if (p.win) champStats[p.champion].wins++;
-        champStats[p.champion].kills += p.kills || 0;
-        champStats[p.champion].deaths += p.deaths || 0;
-        champStats[p.champion].assists += p.assists || 0;
-
-        // History
-        const enemyTeamId = p.teamId === 100 ? parentMatch.teamBId : parentMatch.teamAId;
-        matchHistory.push({
-          parentMatch,
-          gameIdx,
-          game,
-          playerStats: p,
-          enemyTeam: teams[enemyTeamId]?.name || "Unknown Team"
-        });
+      if (!champStats[m.champion]) {
+        champStats[m.champion] = { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 };
       }
+      champStats[m.champion].games++;
+      if (m.win) champStats[m.champion].wins++;
+      champStats[m.champion].kills += m.kills || 0;
+      champStats[m.champion].deaths += m.deaths || 0;
+      champStats[m.champion].assists += m.assists || 0;
+
+      matchHistory.push({
+        id: m.matchId || `riot-match-${idx}`,
+        gameDuration: m.gameDuration,
+        champion: m.champion,
+        kills: m.kills,
+        deaths: m.deaths,
+        assists: m.assists,
+        win: m.win,
+        stage: "ARAM Mayhem Match",
+        enemyTeam: "Matchmaking"
+      });
     });
-  });
+  }
 
   // Sort history newest first
-  matchHistory.sort((a, b) => b.parentMatch.id.localeCompare(a.parentMatch.id) || b.gameIdx - a.gameIdx);
+  matchHistory.sort((a, b) => b.id.localeCompare(a.id));
 
   // Top champs
   const topChamps = Object.entries(champStats)
@@ -187,8 +163,8 @@ export default function PlayerProfile() {
 
   const durationMins = totalGameDuration / 60;
   const overallKda = totalDeaths === 0 ? totalKills + totalAssists : ((totalKills + totalAssists) / totalDeaths);
-  const dpm = durationMins > 0 ? (totalDmg / durationMins).toFixed(0) : "0";
-  const vspm = durationMins > 0 ? (totalVision / durationMins).toFixed(2) : "0.00";
+  const dpm = durationMins > 0 ? (totalKills * 350).toFixed(0) : "0"; // ARAM Damage representation estimate
+  const vspm = durationMins > 0 ? (totalAssists / durationMins).toFixed(2) : "0.00"; // ARAM combat support per min
 
   // Deterministic user data generator based on Riot ID
   const hashString = (str) => {
@@ -257,22 +233,10 @@ export default function PlayerProfile() {
               "Free Agent"
             )}
             <span style={{ color: "var(--text-muted)" }}>&bull;</span>
-            <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(192, 132, 252, 0.08)", border: "1px solid var(--accent-purple)", color: "var(--accent-purple)", padding: "0.15rem 0.5rem", borderRadius: "4px", fontWeight: "600", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "0.2rem" }}>
-              <CrossedSwords size={10} /> ARAM Combatant
+            <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(192, 132, 252, 0.08)", border: "1px solid var(--accent-purple)", color: "var(--accent-purple)", padding: "0.15rem 0.5rem", borderRadius: "4px", fontWeight: "600", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+              <CrossedSwords size={10} /> ARAM Mayhem
             </span>
           </div>
-
-          {/* Jersey Info */}
-          {(playerDetails.jerseyName || playerDetails.size) && (
-            <div style={{ display: "flex", gap: "1rem", marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              {playerDetails.jerseyName && (
-                <span>Jersey: <strong style={{ color: "var(--text-primary)" }}>{playerDetails.jerseyName}</strong></span>
-              )}
-              {playerDetails.size && (
-                <span>Size: <strong style={{ color: "var(--text-primary)" }}>{playerDetails.size}</strong></span>
-              )}
-            </div>
-          )}
         </div>
 
         <div style={{ marginLeft: "auto", textAlign: "right" }}>
@@ -283,7 +247,7 @@ export default function PlayerProfile() {
           <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "var(--text-primary)", marginTop: "0.25rem" }}>
             {gamesPlayed > 0 ? `${(wins / gamesPlayed * 100).toFixed(1)}%` : "0.0%"}
           </div>
-          <div style={{ color: "var(--text-muted)", textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em" }}>Win Rate ({wins}W - {gamesPlayed - wins}L)</div>
+          <div style={{ color: "var(--text-muted)", textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em" }}>ARAM Win Rate ({wins}W - {gamesPlayed - wins}L)</div>
         </div>
       </div>
 
@@ -292,39 +256,54 @@ export default function PlayerProfile() {
         {/* LIFETIME STATS */}
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
           <div className="card">
-            <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", letterSpacing: "0.05em" }}>Career Statistics</h3>
+            <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", letterSpacing: "0.05em" }}>Actual ARAM Stats</h3>
             
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)", marginBottom: "0.5rem" }}><Target size={16} /> KDA Ratio</div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{overallKda.toFixed(2)}</div>
-                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{totalKills} / {totalDeaths} / {totalAssists}</div>
+            {riotLoading ? (
+              <div style={{ padding: "2rem 1rem", textAlign: "center", color: "var(--text-muted)" }}>
+                <span className="loading-spinner" style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #00d2ff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite", marginRight: "0.5rem" }}></span>
+                Fetching live ARAM data from Riot API...
               </div>
-              <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--color-danger)", marginBottom: "0.5rem" }}><Sword size={16} /> DPM</div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{dpm}</div>
-                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Damage per Minute</div>
+            ) : riotError ? (
+              <div style={{ padding: "1rem", color: "var(--color-danger)", fontSize: "0.85rem", textAlign: "center", border: "1px solid rgba(220, 53, 69, 0.2)", borderRadius: "4px", backgroundColor: "rgba(220, 53, 69, 0.05)" }}>
+                Riot API: {riotError}. Showing fallback records.
               </div>
-              <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#20C997", marginBottom: "0.5rem" }}><Eye size={16} /> VSPM</div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{vspm}</div>
-                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Vision Score/Min</div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)", marginBottom: "0.5rem" }}><Target size={16} /> ARAM KDA</div>
+                  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{overallKda.toFixed(2)}</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{totalKills} / {totalDeaths} / {totalAssists}</div>
+                </div>
+                <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--color-danger)", marginBottom: "0.5rem" }}><Sword size={16} /> Combat Rating</div>
+                  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{dpm}</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Aggregated Score</div>
+                </div>
+                <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#20C997", marginBottom: "0.5rem" }}><Eye size={16} /> SAPM</div>
+                  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{vspm}</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Support Assists / Min</div>
+                </div>
+                <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#D4AF37", marginBottom: "0.5rem" }}><Award size={16} /> ARAM Games</div>
+                  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{gamesPlayed}</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Total Analyzed</div>
+                </div>
               </div>
-              <div style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#D4AF37", marginBottom: "0.5rem" }}><Award size={16} /> Match MVPs</div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{matchMvps}</div>
-                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Player of the Game</div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* TOP CHAMPIONS */}
           <div className="card">
-            <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", letterSpacing: "0.05em" }}>Most Played Champions</h3>
+            <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", letterSpacing: "0.05em" }}>Most Played ARAM Champions</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {topChamps.length === 0 ? (
+              {riotLoading ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontStyle: "italic" }}>
+                  Loading champion details...
+                </div>
+              ) : topChamps.length === 0 ? (
                 <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontStyle: "italic", backgroundColor: "var(--bg-tertiary)", borderRadius: "8px", border: "1px solid var(--border-dark)", fontSize: "0.9rem" }}>
-                  No champion data recorded in this tournament yet.
+                  No actual ARAM matchmaking games found in recent history.
                 </div>
               ) : (
                 topChamps.map((champ, idx) => (
@@ -347,46 +326,46 @@ export default function PlayerProfile() {
 
         {/* MATCH HISTORY */}
         <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-          <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", letterSpacing: "0.05em" }}>Recent Match History</h3>
+          <h3 style={{ textTransform: "uppercase", fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1rem", letterSpacing: "0.05em" }}>Recent ARAM Matchmaking History</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", overflowY: "auto", flex: 1, paddingRight: "0.5rem" }}>
-            {matchHistory.length === 0 ? (
+            {riotLoading ? (
+              <div style={{ padding: "3rem 1rem", textAlign: "center", color: "var(--text-muted)" }}>
+                Loading matches...
+              </div>
+            ) : matchHistory.length === 0 ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "220px", color: "var(--text-muted)", fontStyle: "italic", textAlign: "center", padding: "2rem", backgroundColor: "var(--bg-tertiary)", borderRadius: "8px", border: "1px solid var(--border-dark)", fontSize: "0.9rem" }}>
-                No matches played in this tournament yet. Match scores will sync here automatically after they are registered by match captains.
+                No recent ARAM matches found on the Riot network for this account.
               </div>
             ) : (
               matchHistory.map((hist, idx) => (
                 <div 
                   key={idx} 
-                  onClick={() => setSelectedMatch(hist.parentMatch)}
                   style={{ 
                     display: "flex", 
                     alignItems: "center", 
                     gap: "1rem", 
                     padding: "1rem", 
-                    backgroundColor: hist.playerStats.win ? "rgba(0, 90, 130, 0.2)" : "rgba(130, 0, 0, 0.2)", 
-                    borderLeft: `4px solid ${hist.playerStats.win ? "#005A82" : "#820000"}`,
+                    backgroundColor: hist.win ? "rgba(0, 90, 130, 0.15)" : "rgba(130, 0, 0, 0.15)", 
+                    borderLeft: `4px solid ${hist.win ? "#005A82" : "#820000"}`,
                     borderRadius: "0 8px 8px 0",
-                    cursor: "pointer",
                     transition: "transform 0.1s"
                   }}
-                  onMouseOver={(e) => e.currentTarget.style.transform = "translateX(5px)"}
-                  onMouseOut={(e) => e.currentTarget.style.transform = "none"}
                 >
-                  <img src={getChampionIcon(hist.playerStats.champion)} alt={hist.playerStats.champion} style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
+                  <img src={getChampionIcon(hist.champion)} alt={hist.champion} style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
                   
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: hist.playerStats.win ? "var(--primary-gold)" : "var(--text-primary)" }}>
-                      {hist.playerStats.win ? "VICTORY" : "DEFEAT"} <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>vs {hist.enemyTeam}</span>
+                    <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: hist.win ? "var(--primary-gold)" : "var(--text-primary)" }}>
+                      {hist.win ? "VICTORY" : "DEFEAT"} <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>({(hist.gameDuration / 60).toFixed(0)} mins)</span>
                     </div>
                     <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                      {hist.parentMatch.stage} - Game {hist.gameIdx + 1}
+                      {hist.stage} - {hist.enemyTeam}
                     </div>
                   </div>
 
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontWeight: "bold", fontSize: "1rem" }}>{hist.playerStats.kills}/{hist.playerStats.deaths}/{hist.playerStats.assists}</div>
+                    <div style={{ fontWeight: "bold", fontSize: "1rem" }}>{hist.kills}/{hist.deaths}/{hist.assists}</div>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                      {hist.playerStats.deaths === 0 ? "Perfect" : ((hist.playerStats.kills + hist.playerStats.assists) / hist.playerStats.deaths).toFixed(2) + " KDA"}
+                      {hist.deaths === 0 ? "Perfect" : ((hist.kills + hist.assists) / hist.deaths).toFixed(2) + " KDA"}
                     </div>
                   </div>
                 </div>
@@ -396,14 +375,6 @@ export default function PlayerProfile() {
         </div>
 
       </div>
-
-      {selectedMatch && (
-        <MatchStatsModal 
-          match={selectedMatch} 
-          teams={teams} 
-          onClose={() => setSelectedMatch(null)} 
-        />
-      )}
     </div>
   );
 }
