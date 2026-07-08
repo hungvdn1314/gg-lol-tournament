@@ -52,7 +52,8 @@ export default function Header() {
     { href: "/rankings", label: "Rankings" },
     { href: "/bracket", label: "Bracket" },
     { href: "/schedule", label: "Schedule" },
-    { href: "/teams", label: "Teams" }
+    { href: "/teams", label: "Teams" },
+    { href: "/submit-score", label: "Submit Score" }
   ];
 
   return (

@@ -193,8 +193,8 @@ export default function PlayerProfile() {
           <h1 style={{ fontSize: "clamp(1.5rem, 6vw, 3rem)", margin: 0, color: "var(--primary-gold)", textTransform: "uppercase", wordBreak: "break-word", lineHeight: 1.1 }}>{playerName}</h1>
           <div style={{ fontSize: "1.2rem", color: "var(--text-secondary)", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             {playerTeam ? playerTeam.name : "Free Agent"} 
-            <span style={{ fontSize: "0.8rem", backgroundColor: "var(--bg-lighter)", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
-              {playerTeam?.players?.find(p => p.name === playerName)?.role || "Flex"}
+            <span style={{ fontSize: "0.8rem", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-gold)", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
+              ARAM Combatant
             </span>
           </div>
         </div>

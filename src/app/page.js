@@ -86,9 +86,8 @@ export default function Home() {
 
   return (
     <div>
-      {/* Hero Banner */}
       <section className="hero-banner">
-        <span className="hero-badge">Esports Tournament</span>
+        <span className="hero-badge" style={{ borderColor: "var(--accent-purple)", color: "var(--accent-purple)", background: "rgba(192, 132, 252, 0.08)" }}>ARAM Mayhem Edition</span>
         <h1 className="hero-title">{config.title}</h1>
         <p className="hero-subtitle">{config.description}</p>
         
@@ -195,20 +194,20 @@ export default function Home() {
           )}
 
           {/* Tournament Overview info */}
-          <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "300px" }}>
+          <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "300px", border: "1px solid var(--border-gold)" }}>
             <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", color: "var(--primary-gold)", marginBottom: "1rem" }}>Tournament Rules & Format</h3>
             <ul style={{ listStyleType: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.95rem" }}>
               <li style={{ display: "flex", gap: "0.5rem" }}>
                 <span style={{ color: "var(--primary-gold)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>Group Stage:</strong> Round-robin format. Teams are split into groups. Winning a Bo3 match grants 3 points.</span>
+                <span><strong>ARAM Format:</strong> All Random All Mid. Games take place on the Howling Abyss with random champion selections.</span>
               </li>
               <li style={{ display: "flex", gap: "0.5rem" }}>
                 <span style={{ color: "var(--primary-gold)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>Knockout Stage:</strong> The top-performing teams from each group advance to a single-elimination bracket.</span>
+                <span><strong>Group & Playoffs:</strong> Round-robin groups advance to a single-elimination bracket. All series are Best of 3 (Finals are Bo5).</span>
               </li>
               <li style={{ display: "flex", gap: "0.5rem" }}>
                 <span style={{ color: "var(--primary-gold)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>Standings Rules:</strong> Ties on points will be resolved via game record (wins-losses differential) or head-to-head records.</span>
+                <span><strong>Screenshot Score Tracking:</strong> Match captains upload a post-game screenshot after each game to verify results and update stats.</span>
               </li>
             </ul>
           </div>

@@ -6,11 +6,12 @@ import { ref, get, set, update, remove, onValue } from "firebase/database";
 // ==========================================
 
 const DEFAULT_CONFIG = {
-  title: "Gear Games Corporate LoL Cup 2026",
+  title: "Gear Games ARAM Mayhem 2026",
   date: "June 25 - July 5, 2026",
-  venue: "Gear Games Arena & Online",
-  description: "The annual corporate showdown in Summoner's Rift. Eight departments clash for gold, glory, and the corporate trophy.",
-  finalized: false
+  venue: "Howling Abyss (Online)",
+  description: "The annual corporate showdown. Eight departments clash in the chaotic ARAM Mayhem for gold, glory, and the corporate trophy.",
+  finalized: false,
+  captainPasscode: "aram2026"
 };
 
 const DEFAULT_TEAMS = {
@@ -682,6 +683,113 @@ export async function fetchMatchDetails(matchId) {
       return null;
     }
   }
+}
+
+export async function submitCaptainGameScore(matchId, gameIndex, gameDetails) {
+  // 1. Fetch match metadata
+  const match = await fetchData(`matches/${matchId}`);
+  if (!match || !match.id) {
+    throw new Error(`Match ${matchId} not found`);
+  }
+
+  // 2. Fetch existing match details
+  let existingDetails = await fetchData(`matchDetails/${matchId}`) || [];
+  if (!Array.isArray(existingDetails)) {
+    existingDetails = [existingDetails];
+  }
+
+  // Ensure details array is large enough
+  while (existingDetails.length <= gameIndex) {
+    existingDetails.push(null);
+  }
+
+  // 3. Save the new gameDetails to the index
+  existingDetails[gameIndex] = gameDetails;
+
+  // Save details back to db
+  if (isMockMode) {
+    const allDetails = getMockStorage("matchDetails", {});
+    allDetails[matchId] = existingDetails;
+    setMockStorage("matchDetails", allDetails);
+  } else {
+    const dbRef = ref(database, `matchDetails/${matchId}`);
+    await set(dbRef, existingDetails);
+  }
+
+  // 4. Recalculate match scores based on existingDetails
+  let scoreA = 0;
+  let scoreB = 0;
+  existingDetails.forEach(game => {
+    if (game) {
+      const isBlueWinner = game.teams[100]?.winner;
+      if (isBlueWinner) {
+        scoreA += 1;
+      } else {
+        scoreB += 1;
+      }
+    }
+  });
+
+  const targetWins = Math.ceil(match.bestOf / 2);
+  let status = "live";
+  let winnerId = null;
+
+  if (scoreA >= targetWins) {
+    status = "completed";
+    winnerId = match.teamAId;
+  } else if (scoreB >= targetWins) {
+    status = "completed";
+    winnerId = match.teamBId;
+  }
+
+  const updatedMatch = {
+    ...match,
+    scoreA,
+    scoreB,
+    status,
+    winnerId
+  };
+
+  // 5. Save updated match metadata
+  if (isMockMode) {
+    const matches = getMockStorage("matches", DEFAULT_MATCHES);
+    matches[matchId] = updatedMatch;
+    
+    // Playoff Bracket Advancement
+    if (status === "completed" && match.type === "knockout") {
+      if (matchId === "match-semi1" && matches["match-final"]) {
+        matches["match-final"].teamAId = winnerId;
+        if (matches["match-third"]) {
+          matches["match-third"].teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId;
+        }
+      } else if (matchId === "match-semi2" && matches["match-final"]) {
+        matches["match-final"].teamBId = winnerId;
+        if (matches["match-third"]) {
+          matches["match-third"].teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId;
+        }
+      }
+    }
+    setMockStorage("matches", matches);
+  } else {
+    const { database: db } = await import("@/lib/firebase");
+    const { ref: dbRef, set: dbSet } = await import("firebase/database");
+    await dbSet(dbRef(db, `matches/${matchId}`), updatedMatch);
+    
+    // Playoff Bracket Advancement
+    if (status === "completed" && match.type === "knockout") {
+      if (matchId === "match-semi1") {
+        await dbSet(dbRef(db, "matches/match-final/teamAId"), winnerId);
+        await dbSet(dbRef(db, "matches/match-third/teamAId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
+      } else if (matchId === "match-semi2") {
+        await dbSet(dbRef(db, "matches/match-final/teamBId"), winnerId);
+        await dbSet(dbRef(db, "matches/match-third/teamBId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
+      }
+    }
+  }
+
+  // 6. Recalculate standings leaderboard
+  await recalculateLeaderboard();
+  return { updatedMatch, gameDetails };
 }
 
 export function subscribeToMatchDetails(matchId, callback) {

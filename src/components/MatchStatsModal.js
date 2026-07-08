@@ -57,6 +57,20 @@ export default function MatchStatsModal({ match, teams, onClose }) {
   const games = details ? (Array.isArray(details) ? details : [details]) : [];
   const currentGameDetails = games[selectedGameIndex] || null;
 
+  // Ensure activeTab is valid for this game
+  useEffect(() => {
+    if (currentGameDetails) {
+      const hasParticipants = currentGameDetails.participants && currentGameDetails.participants.length > 0;
+      const hasScreenshot = !!currentGameDetails.screenshot;
+      
+      if (!hasParticipants && hasScreenshot) {
+        setActiveTab("screenshot");
+      } else if (hasParticipants && activeTab === "screenshot" && !hasScreenshot) {
+        setActiveTab("scoreboard");
+      }
+    }
+  }, [currentGameDetails]);
+
   // Sort participants by team
   const blueParticipants = currentGameDetails?.participants?.filter(p => p.teamId === 100) || [];
   const redParticipants = currentGameDetails?.participants?.filter(p => p.teamId === 200) || [];
@@ -249,42 +263,74 @@ export default function MatchStatsModal({ match, teams, onClose }) {
               </div>
             </div>
 
-            {/* Modal Navigation Tabs */}
-            <div className="scrollable-tabs" style={{ borderBottom: "1px solid var(--border-dark)", marginBottom: "1.5rem", paddingBottom: "0.5rem" }}>
-              {[
-                { id: "scoreboard", label: "Scoreboard", icon: <CrossedSwords size={14} /> },
-                { id: "charts", label: "Combat Charts", icon: <BarChart2 size={14} /> },
-                { id: "utility", label: "Utility & Vision", icon: <Eye size={14} /> },
-                { id: "team", label: "Team Objectives", icon: <HextechCrest size={14} /> },
-                { id: "mvp", label: "MVP Calculation", icon: <Activity size={14} /> }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.4rem 0.8rem",
-                    backgroundColor: activeTab === tab.id ? "rgba(228,179,60,0.12)" : "transparent",
-                    border: "1px solid",
-                    borderColor: activeTab === tab.id ? "var(--border-gold)" : "transparent",
-                    color: activeTab === tab.id ? "var(--primary-gold-bright)" : "var(--text-secondary)",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "0.75rem",
-                    fontWeight: "600",
-                    textTransform: "uppercase",
-                    transition: "all 0.2s ease"
-                  }}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+             {/* Modal Navigation Tabs */}
+            {(() => {
+              const tabList = [];
+              if (currentGameDetails?.screenshot) {
+                tabList.push({ id: "screenshot", label: "Screenshot", icon: <Eye size={14} /> });
+              }
+              if (currentGameDetails?.participants && currentGameDetails.participants.length > 0) {
+                tabList.push({ id: "scoreboard", label: "Scoreboard", icon: <CrossedSwords size={14} /> });
+                tabList.push({ id: "charts", label: "Combat Charts", icon: <BarChart2 size={14} /> });
+                tabList.push({ id: "utility", label: "Utility & Vision", icon: <Eye size={14} /> });
+                tabList.push({ id: "team", label: "Team Objectives", icon: <HextechCrest size={14} /> });
+                tabList.push({ id: "mvp", label: "MVP Calculation", icon: <Activity size={14} /> });
+              }
+              return (
+                <div className="scrollable-tabs" style={{ borderBottom: "1px solid var(--border-dark)", marginBottom: "1.5rem", paddingBottom: "0.5rem" }}>
+                  {tabList.map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        padding: "0.4rem 0.8rem",
+                        backgroundColor: activeTab === tab.id ? "rgba(0, 210, 255, 0.12)" : "transparent",
+                        border: "1px solid",
+                        borderColor: activeTab === tab.id ? "var(--border-gold)" : "transparent",
+                        color: activeTab === tab.id ? "var(--primary-gold-bright)" : "var(--text-secondary)",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontSize: "0.75rem",
+                        fontWeight: "600",
+                        textTransform: "uppercase",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      {tab.icon}
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* TAB CONTENTS */}
+
+            {/* TAB 0: SCREENSHOT */}
+            {activeTab === "screenshot" && currentGameDetails?.screenshot && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", marginBottom: "2rem" }}>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", textAlign: "center" }}>
+                  Official post-game score screen capture submitted by the match captain.
+                </p>
+                <div style={{ position: "relative", width: "100%", overflow: "hidden", border: "1px solid var(--border-gold)", borderRadius: "8px", backgroundColor: "#000" }}>
+                  <img 
+                    src={currentGameDetails.screenshot} 
+                    alt="End Game Screenshot" 
+                    style={{ width: "100%", height: "auto", display: "block", maxHeight: "60vh", objectFit: "contain", cursor: "zoom-in" }} 
+                    onClick={() => {
+                      const w = window.open();
+                      w.document.write(`<img src="${currentGameDetails.screenshot}" style="width:100%;height:auto;" />`);
+                    }}
+                  />
+                </div>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                  Click image to open in full size.
+                </span>
+              </div>
+            )}
             
             {/* TAB 1: SCOREBOARD */}
             {activeTab === "scoreboard" && (
