@@ -42,6 +42,7 @@ export default function Leaderboard() {
 
   const groupATeams = teamList.filter((t) => t.group === "A").sort(sortTeams);
   const groupBTeams = teamList.filter((t) => t.group === "B").sort(sortTeams);
+  const groupCTeams = teamList.filter((t) => t.group === "C").sort(sortTeams);
 
   // Overall standings (for the podium)
   const overallStandings = [...teamList].sort(sortTeams);
@@ -62,11 +63,12 @@ export default function Leaderboard() {
 
 
       {/* Group Tables */}
-      <div className="grid-2" style={{ gap: "2.5rem", marginBottom: "4rem", alignItems: "flex-start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2.5rem", marginBottom: "4rem", alignItems: "flex-start" }}>
         {loading ? (
           <>
-            <div className="skeleton" style={{ height: "400px" }}></div>
-            <div className="skeleton" style={{ height: "400px" }}></div>
+            <div className="skeleton" style={{ height: "300px" }}></div>
+            <div className="skeleton" style={{ height: "300px" }}></div>
+            <div className="skeleton" style={{ height: "300px" }}></div>
           </>
         ) : (
           <>
@@ -148,6 +150,61 @@ export default function Leaderboard() {
               <tbody>
                 <AnimatePresence>
                   {groupBTeams.map((team, index) => (
+                    <motion.tr
+                      key={team.id}
+                      layout
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className={`rank-${index + 1}`}
+                    >
+                      <td className="leaderboard-rank">#{index + 1}</td>
+                      <td>
+                        <div className="leaderboard-team-cell">
+                          <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} className="leaderboard-team-logo" />
+                          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "160px" }}>{team.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: "center", fontWeight: "500" }}>{team.stats?.played || 0}</td>
+                      <td style={{ textAlign: "center", color: "var(--color-success)", fontWeight: "600" }}>{team.stats?.wins || 0}</td>
+                      <td style={{ textAlign: "center", color: "var(--color-danger)", fontWeight: "600" }}>{team.stats?.losses || 0}</td>
+                      <td style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                        {team.stats?.gameWins || 0}W - {team.stats?.gameLosses || 0}L
+                      </td>
+                      <td style={{ textAlign: "center", fontWeight: "800", color: index === 0 ? "var(--primary-gold-bright)" : "var(--text-primary)" }}>
+                        {team.stats?.points || 0}
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Group C Standings */}
+        <div className="card">
+          <h2 style={{ fontSize: "1.3rem", textTransform: "uppercase", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>Group C Standings</span>
+            <span className="hero-badge" style={{ margin: 0, fontSize: "0.7rem", padding: "0.15rem 0.5rem" }}>Group Stage</span>
+          </h2>
+          
+          <div className="table-responsive">
+            <table className="leaderboard-table">
+              <thead>
+                <tr>
+                  <th style={{ width: "8%" }}>Rank</th>
+                  <th>Team</th>
+                  <th style={{ width: "10%", textAlign: "center" }}>P</th>
+                  <th style={{ width: "10%", textAlign: "center" }}>W</th>
+                  <th style={{ width: "10%", textAlign: "center" }}>L</th>
+                  <th style={{ width: "15%", textAlign: "center" }}>Games</th>
+                  <th style={{ width: "12%", textAlign: "center" }}>PTS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {groupCTeams.map((team, index) => (
                     <motion.tr
                       key={team.id}
                       layout

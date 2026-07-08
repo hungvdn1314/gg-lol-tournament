@@ -15,362 +15,761 @@ const DEFAULT_CONFIG = {
 };
 
 const DEFAULT_TEAMS = {
-  "team-1": {
-    id: "team-1",
-    name: "T1 Dynasty (IT Dept)",
-    logo: "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?w=150&auto=format&fit=crop&q=80",
-    group: "A",
-    players: [
-      { name: "antifragile", role: "Top", riotId: "antifragile#102" },
-      { name: "MinhHuy", role: "Jungle", riotId: "MinhHuy#01997" },
-      { name: "BumbleBee", role: "Mid", riotId: "BumbleBee#LTT" },
-      { name: "Hay Quá Ta", role: "ADC", riotId: "Hay Quá Ta#1998" },
-      { name: "Hay Quá Nè", role: "Support", riotId: "Hay Quá Nè#8386" }
+  "team-kylan": {
+    "id": "team-kylan",
+    "name": "Kỳ Lân Parky",
+    "logo": "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=150&auto=format&fit=crop&q=80",
+    "group": "B",
+    "players": [
+      {
+        "name": "TienNX-10013",
+        "role": "ARAM Combatant",
+        "riotId": "Tớ Là Tínn#vn1",
+        "jerseyName": "Em Tínn",
+        "size": "2XL"
+      },
+      {
+        "name": "HieuVT2910-10061",
+        "role": "ARAM Combatant",
+        "riotId": "Tiểu Vân#2801",
+        "jerseyName": "Hieuthuhigh",
+        "size": "2XL"
+      },
+      {
+        "name": "ChinhNM",
+        "role": "ARAM Combatant",
+        "riotId": "⁦Zz Prince zZ⁩#⁦NMC⁩",
+        "jerseyName": "Prince",
+        "size": "2XL"
+      },
+      {
+        "name": "ThanhND - 10058",
+        "role": "ARAM Combatant",
+        "riotId": "Zinno#zinno",
+        "jerseyName": "Zinno",
+        "size": "3XL"
+      },
+      {
+        "name": "ThuyHT",
+        "role": "ARAM Combatant",
+        "riotId": "Em Cáo Kiêu Kì #3721",
+        "jerseyName": "Dotori",
+        "size": "M"
+      },
+      {
+        "name": "TamHD",
+        "role": "ARAM Combatant",
+        "riotId": "Cải Sama #alaba",
+        "jerseyName": "Cải Sama",
+        "size": "XL"
+      }
     ],
-    stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
   },
-  "team-2": {
-    id: "team-2",
-    name: "Gen.G Legends (HR Dept)",
-    logo: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150&auto=format&fit=crop&q=80",
-    group: "A",
-    players: [
-      { name: "Super Drama", role: "Top", riotId: "Super Drama#6969" },
-      { name: "Mỗi ngày Tốt lên", role: "Jungle", riotId: "Mỗi ngày Tốt lên#1545" },
-      { name: "Hơi Thở Của Cồn", role: "Mid", riotId: "Hơi Thở Của Cồn#21202" },
-      { name: "IrrationaL餃子", role: "ADC", riotId: "IrrationaL餃子#1337" },
-      { name: "Domjunis", role: "Support", riotId: "Domjunis#2306" }
+  "team-36loi": {
+    "id": "team-36loi",
+    "name": "36 Lõi Kim Cương",
+    "logo": "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?w=150&auto=format&fit=crop&q=80",
+    "group": "C",
+    "players": [
+      {
+        "name": "HaiLT-3238",
+        "role": "ARAM Combatant",
+        "riotId": "Amadeus#2507",
+        "jerseyName": "midking",
+        "size": "3XL"
+      },
+      {
+        "name": "HieuTT-2434",
+        "role": "ARAM Combatant",
+        "riotId": "HieuTT-2434#vn1",
+        "jerseyName": "Đòn Enjoyer",
+        "size": "3XL"
+      },
+      {
+        "name": "KienBD-10050",
+        "role": "ARAM Combatant",
+        "riotId": "mmbl#888",
+        "jerseyName": "neikcd",
+        "size": "L"
+      },
+      {
+        "name": "PhucDT-10055",
+        "role": "ARAM Combatant",
+        "riotId": "Phucego #phuc",
+        "jerseyName": "Phucego",
+        "size": "4XL"
+      },
+      {
+        "name": "QuanNP-3580",
+        "role": "ARAM Combatant",
+        "riotId": "DarkTurquois#7293",
+        "jerseyName": "DarkTurquois",
+        "size": "4XL"
+      },
+      {
+        "name": "MinhDH-2437",
+        "role": "ARAM Combatant",
+        "riotId": "LôngDáiVịLẩuThái#MG32",
+        "jerseyName": "Minh Cầu Giấy",
+        "size": "4XL"
+      }
     ],
-    stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
   },
-  "team-3": {
-    id: "team-3",
-    name: "G2 Samurai (Marketing)",
-    logo: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=150&auto=format&fit=crop&q=80",
-    group: "A",
-    players: [
-      { name: "Caps", role: "Mid" },
-      { name: "BrokenBlade", role: "Top" },
-      { name: "Yike", role: "Jungle" },
-      { name: "Hans Sama", role: "ADC" },
-      { name: "Mikyx", role: "Support" }
+  "team-siuu": {
+    "id": "team-siuu",
+    "name": "TEAM SIUUUUUU",
+    "logo": "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150&auto=format&fit=crop&q=80",
+    "group": "C",
+    "players": [
+      {
+        "name": "NhanNM",
+        "role": "ARAM Combatant",
+        "riotId": "JayQKA2",
+        "jerseyName": "10h37",
+        "size": "XL"
+      },
+      {
+        "name": "QuangPD0305",
+        "role": "ARAM Combatant",
+        "riotId": "SứtMôiĐẹpTrai",
+        "jerseyName": "6h50",
+        "size": "3XL"
+      },
+      {
+        "name": "DatNT1",
+        "role": "ARAM Combatant",
+        "riotId": "SuperiorDragon12#3883",
+        "jerseyName": "SuperiorDragon",
+        "size": "2XL"
+      },
+      {
+        "name": "SonNH",
+        "role": "ARAM Combatant",
+        "riotId": "Crying Over You#2307",
+        "jerseyName": "3 Ca Chưa Say",
+        "size": "3XL"
+      },
+      {
+        "name": "HungLN2703",
+        "role": "ARAM Combatant",
+        "riotId": "SmokeWeedAllTime",
+        "jerseyName": "Bảy Chọ",
+        "size": "3XL"
+      },
+      {
+        "name": "DuongNNP",
+        "role": "ARAM Combatant",
+        "riotId": "4th #2109",
+        "jerseyName": "mẹo m bé",
+        "size": "4XL"
+      }
     ],
-    stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
   },
-  "team-4": {
-    id: "team-4",
-    name: "Fnatic Force (Design)",
-    logo: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=150&auto=format&fit=crop&q=80",
-    group: "A",
-    players: [
-      { name: "Humanoid", role: "Mid" },
-      { name: "Oscarinin", role: "Top" },
-      { name: "Razork", role: "Jungle" },
-      { name: "Noah", role: "ADC" },
-      { name: "Jun", role: "Support" }
+  "team-4dtl": {
+    "id": "team-4dtl",
+    "name": "TEAM 4ĐTL",
+    "logo": "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=150&auto=format&fit=crop&q=80",
+    "group": "A",
+    "players": [
+      {
+        "name": "TinBT - 1526",
+        "role": "ARAM Combatant",
+        "riotId": "but my boo boo#266",
+        "jerseyName": "Remy",
+        "size": "4XL"
+      },
+      {
+        "name": "LinhHVK-875",
+        "role": "ARAM Combatant",
+        "riotId": "notyourbb#256",
+        "jerseyName": "kl",
+        "size": "M"
+      },
+      {
+        "name": "SonDT-10037",
+        "role": "ARAM Combatant",
+        "riotId": "Đoòng#129",
+        "jerseyName": "Đoòng",
+        "size": "4XL"
+      },
+      {
+        "name": "VuHQ-2418",
+        "role": "ARAM Combatant",
+        "riotId": "Quá Tam Ba Sáu #3636",
+        "jerseyName": "VuHQ",
+        "size": "XL"
+      },
+      {
+        "name": "XuanBN-10036",
+        "role": "ARAM Combatant",
+        "riotId": "Đại Mạç Cô Yên#2906",
+        "jerseyName": "Cain",
+        "size": "XL"
+      },
+      {
+        "name": "DoTV-10064",
+        "role": "ARAM Combatant",
+        "riotId": "Mai Quỳnh Hương#UwU",
+        "jerseyName": "mr.least",
+        "size": "3XL"
+      }
     ],
-    stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
   },
-  "team-5": {
-    id: "team-5",
-    name: "Cloud9 Tempest (Finance)",
-    logo: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=150&auto=format&fit=crop&q=80",
-    group: "B",
-    players: [
-      { name: "Jojopyun", role: "Mid" },
-      { name: "Thanatos", role: "Top" },
-      { name: "Blaber", role: "Jungle" },
-      { name: "Berserker", role: "ADC" },
-      { name: "Vulcan", role: "Support" }
+  "team-lienminh": {
+    "id": "team-lienminh",
+    "name": "TEAM Liên minh đá bay",
+    "logo": "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=150&auto=format&fit=crop&q=80",
+    "group": "B",
+    "players": [
+      {
+        "name": "HieuPV",
+        "role": "ARAM Combatant",
+        "riotId": "MochAme",
+        "jerseyName": "MochAme",
+        "size": "L"
+      },
+      {
+        "name": "HungVDN",
+        "role": "ARAM Combatant",
+        "riotId": "IrrationaL雨洁天青#1314",
+        "jerseyName": "IrrationaL",
+        "size": "2XL"
+      },
+      {
+        "name": "QuanNLH",
+        "role": "ARAM Combatant",
+        "riotId": "Cá Hồi Hộp",
+        "jerseyName": "Chovy Sông Hàn",
+        "size": "2XL"
+      },
+      {
+        "name": "PhongTH",
+        "role": "ARAM Combatant",
+        "riotId": "GateKeeper#phong",
+        "jerseyName": "Zion",
+        "size": "L"
+      },
+      {
+        "name": "TriDM-10066",
+        "role": "ARAM Combatant",
+        "riotId": "Nhớ Nhung#8438",
+        "jerseyName": "Trée",
+        "size": "L"
+      },
+      {
+        "name": "TriemPT",
+        "role": "ARAM Combatant",
+        "riotId": "Hadestrb#GAF",
+        "jerseyName": "Hadestrb",
+        "size": "L"
+      }
     ],
-    stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
   },
-  "team-6": {
-    id: "team-6",
-    name: "FlyQuest Rebels (Operations)",
-    logo: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=150&auto=format&fit=crop&q=80",
-    group: "B",
-    players: [
-      { name: "Quad", role: "Mid" },
-      { name: "Bwipo", role: "Top" },
-      { name: "Inspired", role: "Jungle" },
-      { name: "Massu", role: "ADC" },
-      { name: "Busio", role: "Support" }
+  "team-u40": {
+    "id": "team-u40",
+    "name": "U40-500KG",
+    "logo": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=150&auto=format&fit=crop&q=80",
+    "group": "A",
+    "players": [
+      {
+        "name": "TriTM-1529",
+        "role": "ARAM Combatant",
+        "riotId": "Pezzy#02208",
+        "jerseyName": "Pezzy",
+        "size": "3XL"
+      },
+      {
+        "name": "SonLN-3108",
+        "role": "ARAM Combatant",
+        "riotId": "Sơn Lê Stark#stark",
+        "jerseyName": "Stark",
+        "size": "2XL"
+      },
+      {
+        "name": "QuangPD-2397",
+        "role": "ARAM Combatant",
+        "riotId": "FakerDCMAntin#dz222",
+        "jerseyName": "Pentakill",
+        "size": "4XL"
+      },
+      {
+        "name": "LamHT-496",
+        "role": "ARAM Combatant",
+        "riotId": "Gối Ôm Wibu#19696",
+        "jerseyName": "LamHT",
+        "size": "XL"
+      },
+      {
+        "name": "HungLN-443",
+        "role": "ARAM Combatant",
+        "riotId": "Hector#REK7",
+        "jerseyName": "Hector",
+        "size": "2XL"
+      }
     ],
-    stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
   },
-  "team-7": {
-    id: "team-7",
-    name: "JD Gaming (Sales Dept)",
-    logo: "https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=150&auto=format&fit=crop&q=80",
-    group: "B",
-    players: [
-      { name: "Yagao", role: "Mid" },
-      { name: "Flandre", role: "Top" },
-      { name: "Kanavi", role: "Jungle" },
-      { name: "Ruler", role: "ADC" },
-      { name: "Missing", role: "Support" }
+  "team-gapvibe": {
+    "id": "team-gapvibe",
+    "name": "Gap Vibe",
+    "logo": "https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=150&auto=format&fit=crop&q=80",
+    "group": "A",
+    "players": [
+      {
+        "name": "TuanDV",
+        "role": "ARAM Combatant",
+        "riotId": "Hạ Cái Tôi Xuống#0701",
+        "jerseyName": "Chovy > Faker",
+        "size": "L"
+      },
+      {
+        "name": "ThangLD",
+        "role": "ARAM Combatant",
+        "riotId": "Silent Mary #thang",
+        "jerseyName": "ShaloMArtist",
+        "size": "2XL"
+      },
+      {
+        "name": "ChinhVQ",
+        "role": "ARAM Combatant",
+        "riotId": "Kiemhiepden",
+        "jerseyName": "Kiemhiepden",
+        "size": "L"
+      },
+      {
+        "name": "TuLQ",
+        "role": "ARAM Combatant",
+        "riotId": "Uchihahaha",
+        "jerseyName": "HASAGI",
+        "size": "L"
+      },
+      {
+        "name": "Tomas",
+        "role": "ARAM Combatant",
+        "riotId": "ioslav",
+        "jerseyName": "ioslav",
+        "size": "3XL"
+      }
     ],
-    stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
   },
-  "team-8": {
-    id: "team-8",
-    name: "Weibo Warriors (Legal)",
-    logo: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80",
-    group: "B",
-    players: [
-      { name: "Xiaohu", role: "Mid" },
-      { name: "Breathe", role: "Top" },
-      { name: "Tarzan", role: "Jungle" },
-      { name: "Light", role: "ADC" },
-      { name: "Crisp", role: "Support" }
+  "team-bodoi": {
+    "id": "team-bodoi",
+    "name": "BoDoi",
+    "logo": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80",
+    "group": "B",
+    "players": [
+      {
+        "name": "KhanhTT",
+        "role": "ARAM Combatant",
+        "riotId": "anryone#vn2",
+        "jerseyName": "anryone",
+        "size": "L"
+      },
+      {
+        "name": "CongNT",
+        "role": "ARAM Combatant",
+        "riotId": "BabyEvil",
+        "jerseyName": "B.E",
+        "size": "L"
+      },
+      {
+        "name": "HaoTM",
+        "role": "ARAM Combatant",
+        "riotId": "zzDaiKaLaTa0zz",
+        "jerseyName": "Vuacaulong",
+        "size": "XL"
+      },
+      {
+        "name": "HieuNM",
+        "role": "ARAM Combatant",
+        "riotId": "Vua Cục Khẳng",
+        "jerseyName": "SantosSiuuuu",
+        "size": "2XL"
+      },
+      {
+        "name": "NinhPQ",
+        "role": "ARAM Combatant",
+        "riotId": "Psychik",
+        "jerseyName": "Psychik",
+        "size": "4XL"
+      }
     ],
-    stats: { played: 0, wins: 0, losses: 0, points: 0, gameWins: 0, gameLosses: 0 }
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
+  },
+  "team-pickme": {
+    "id": "team-pickme",
+    "name": "Pick Me",
+    "logo": "https://images.unsplash.com/photo-1563089145-599997674d42?w=150&auto=format&fit=crop&q=80",
+    "group": "C",
+    "players": [
+      {
+        "name": "DungHP2712",
+        "role": "ARAM Combatant",
+        "riotId": "Cô giáo Moe",
+        "jerseyName": "Cô giáo Moe",
+        "size": "M"
+      },
+      {
+        "name": "DuyNN",
+        "role": "ARAM Combatant",
+        "riotId": "bobobi",
+        "jerseyName": "bobobi",
+        "size": "XL"
+      },
+      {
+        "name": "TuNN",
+        "role": "ARAM Combatant",
+        "riotId": "nabnedtaT",
+        "jerseyName": "nabnedtaT",
+        "size": "XL"
+      },
+      {
+        "name": "HungDV",
+        "role": "ARAM Combatant",
+        "riotId": "Mizutan",
+        "jerseyName": "Mizutan",
+        "size": "XL"
+      },
+      {
+        "name": "TuyenVT",
+        "role": "ARAM Combatant",
+        "riotId": "TQF5.TuyênTe",
+        "jerseyName": "TQF5.TuyênTe",
+        "size": "2XL"
+      }
+    ],
+    "stats": {
+      "played": 0,
+      "wins": 0,
+      "losses": 0,
+      "points": 0,
+      "gameWins": 0,
+      "gameLosses": 0
+    }
   }
 };
 
 const DEFAULT_MATCHES = {
-  // Group A Matches
-  "match-g1": {
-    id: "match-g1",
-    type: "group",
-    stage: "Group Stage",
-    group: "A",
-    teamAId: "team-1",
-    teamBId: "team-2",
-    scoreA: 2,
-    scoreB: 1,
-    status: "completed",
-    bestOf: 3,
-    scheduledTime: "2026-06-25T18:00:00.000Z",
-    winnerId: "team-1"
+  "match-g-a1": {
+    "id": "match-g-a1",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "A",
+    "teamAId": "team-u40",
+    "teamBId": "team-gapvibe",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-22T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g2": {
-    id: "match-g2",
-    type: "group",
-    stage: "Group Stage",
-    group: "A",
-    teamAId: "team-3",
-    teamBId: "team-4",
-    scoreA: 2,
-    scoreB: 0,
-    status: "completed",
-    bestOf: 3,
-    scheduledTime: "2026-06-26T18:00:00.000Z",
-    winnerId: "team-3"
+  "match-g-a2": {
+    "id": "match-g-a2",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "A",
+    "teamAId": "team-u40",
+    "teamBId": "team-4dtl",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-23T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g3": {
-    id: "match-g3",
-    type: "group",
-    stage: "Group Stage",
-    group: "A",
-    teamAId: "team-1",
-    teamBId: "team-3",
-    scoreA: 1,
-    scoreB: 1,
-    status: "live",
-    bestOf: 3,
-    scheduledTime: "2026-06-27T18:00:00.000Z",
-    winnerId: null
+  "match-g-a3": {
+    "id": "match-g-a3",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "A",
+    "teamAId": "team-gapvibe",
+    "teamBId": "team-4dtl",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-24T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g4": {
-    id: "match-g4",
-    type: "group",
-    stage: "Group Stage",
-    group: "A",
-    teamAId: "team-2",
-    teamBId: "team-4",
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-06-28T18:00:00.000Z",
-    winnerId: null
+  "match-g-b1": {
+    "id": "match-g-b1",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "B",
+    "teamAId": "team-lienminh",
+    "teamBId": "team-bodoi",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-22T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g5": {
-    id: "match-g5",
-    type: "group",
-    stage: "Group Stage",
-    group: "A",
-    teamAId: "team-1",
-    teamBId: "team-4",
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-06-29T18:00:00.000Z",
-    winnerId: null
+  "match-g-b2": {
+    "id": "match-g-b2",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "B",
+    "teamAId": "team-bodoi",
+    "teamBId": "team-kylan",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-23T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g6": {
-    id: "match-g6",
-    type: "group",
-    stage: "Group Stage",
-    group: "A",
-    teamAId: "team-2",
-    teamBId: "team-3",
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-06-29T20:30:00.000Z",
-    winnerId: null
+  "match-g-b3": {
+    "id": "match-g-b3",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "B",
+    "teamAId": "team-lienminh",
+    "teamBId": "team-kylan",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-24T19:00:00.000Z",
+    "winnerId": null
   },
-
-  // Group B Matches
-  "match-g7": {
-    id: "match-g7",
-    type: "group",
-    stage: "Group Stage",
-    group: "B",
-    teamAId: "team-5",
-    teamBId: "team-6",
-    scoreA: 2,
-    scoreB: 0,
-    status: "completed",
-    bestOf: 3,
-    scheduledTime: "2026-06-25T20:30:00.000Z",
-    winnerId: "team-5"
+  "match-g-c1": {
+    "id": "match-g-c1",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "C",
+    "teamAId": "team-siuu",
+    "teamBId": "team-36loi",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-22T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g8": {
-    id: "match-g8",
-    type: "group",
-    stage: "Group Stage",
-    group: "B",
-    teamAId: "team-7",
-    teamBId: "team-8",
-    scoreA: 1,
-    scoreB: 2,
-    status: "completed",
-    bestOf: 3,
-    scheduledTime: "2026-06-26T20:30:00.000Z",
-    winnerId: "team-8"
+  "match-g-c2": {
+    "id": "match-g-c2",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "C",
+    "teamAId": "team-36loi",
+    "teamBId": "team-pickme",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-23T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g9": {
-    id: "match-g9",
-    type: "group",
-    stage: "Group Stage",
-    group: "B",
-    teamAId: "team-5",
-    teamBId: "team-7",
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-06-27T20:30:00.000Z",
-    winnerId: null
+  "match-g-c3": {
+    "id": "match-g-c3",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "C",
+    "teamAId": "team-siuu",
+    "teamBId": "team-pickme",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-24T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g10": {
-    id: "match-g10",
-    type: "group",
-    stage: "Group Stage",
-    group: "B",
-    teamAId: "team-6",
-    teamBId: "team-8",
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-06-28T20:30:00.000Z",
-    winnerId: null
+  "match-playoff-1": {
+    "id": "match-playoff-1",
+    "type": "knockout",
+    "stage": "Upper Semifinals #1",
+    "teamAId": null,
+    "teamBId": null,
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-27T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g11": {
-    id: "match-g11",
-    type: "group",
-    stage: "Group Stage",
-    group: "B",
-    teamAId: "team-5",
-    teamBId: "team-8",
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-06-30T18:00:00.000Z",
-    winnerId: null
+  "match-playoff-2": {
+    "id": "match-playoff-2",
+    "type": "knockout",
+    "stage": "Upper Semifinals #2",
+    "teamAId": null,
+    "teamBId": null,
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-27T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-g12": {
-    id: "match-g12",
-    type: "group",
-    stage: "Group Stage",
-    group: "B",
-    teamAId: "team-6",
-    teamBId: "team-7",
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-06-30T20:30:00.000Z",
-    winnerId: null
+  "match-playoff-3": {
+    "id": "match-playoff-3",
+    "type": "knockout",
+    "stage": "Lower Quarterfinals #1",
+    "teamAId": null,
+    "teamBId": null,
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-28T19:00:00.000Z",
+    "winnerId": null
   },
-
-  // Knockout Stage (initialized but empty teams until group stage finishes)
-  "match-semi1": {
-    id: "match-semi1",
-    type: "knockout",
-    stage: "Semifinals",
-    teamAId: null, // Top Group A
-    teamBId: null, // 2nd Group B
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-07-02T18:00:00.000Z",
-    winnerId: null,
-    bracketPosition: { round: 0, matchIndex: 0 }
+  "match-playoff-4": {
+    "id": "match-playoff-4",
+    "type": "knockout",
+    "stage": "Lower Quarterfinals #2",
+    "teamAId": null,
+    "teamBId": null,
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-28T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-semi2": {
-    id: "match-semi2",
-    type: "knockout",
-    stage: "Semifinals",
-    teamAId: null, // Top Group B
-    teamBId: null, // 2nd Group A
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-07-02T20:30:00.000Z",
-    winnerId: null,
-    bracketPosition: { round: 0, matchIndex: 1 }
+  "match-playoff-5": {
+    "id": "match-playoff-5",
+    "type": "knockout",
+    "stage": "Upper Finals",
+    "teamAId": null,
+    "teamBId": null,
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-29T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-third": {
-    id: "match-third",
-    type: "knockout",
-    stage: "3rd Place Match",
-    teamAId: null, // Loser Semi 1
-    teamBId: null, // Loser Semi 2
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 3,
-    scheduledTime: "2026-07-04T18:00:00.000Z",
-    winnerId: null,
-    bracketPosition: { round: 1, matchIndex: 1 }
+  "match-playoff-6": {
+    "id": "match-playoff-6",
+    "type": "knockout",
+    "stage": "Lower Semifinals",
+    "teamAId": null,
+    "teamBId": null,
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-29T19:00:00.000Z",
+    "winnerId": null
   },
-  "match-final": {
-    id: "match-final",
-    type: "knockout",
-    stage: "Grand Final",
-    teamAId: null, // Winner Semi 1
-    teamBId: null, // Winner Semi 2
-    scoreA: 0,
-    scoreB: 0,
-    status: "scheduled",
-    bestOf: 5,
-    scheduledTime: "2026-07-05T18:00:00.000Z",
-    winnerId: null,
-    bracketPosition: { round: 1, matchIndex: 0 }
+  "match-playoff-7": {
+    "id": "match-playoff-7",
+    "type": "knockout",
+    "stage": "Losers Bracket Final",
+    "teamAId": null,
+    "teamBId": null,
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 5,
+    "scheduledTime": "2026-07-30T19:00:00.000Z",
+    "winnerId": null
+  },
+  "match-playoff-8": {
+    "id": "match-playoff-8",
+    "type": "knockout",
+    "stage": "Grand Final",
+    "teamAId": null,
+    "teamBId": null,
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
+    "bestOf": 5,
+    "scheduledTime": "2026-08-03T19:00:00.000Z",
+    "winnerId": null
   }
 };
 
 const DEFAULT_BRACKET = {
-  size: 4,
+  size: 6,
   rounds: [
     {
-      name: "Semifinals",
-      matches: ["match-semi1", "match-semi2"]
+      name: "Upper Semifinals",
+      matches: ["match-playoff-1", "match-playoff-2"]
     },
     {
-      name: "Finals",
-      matches: ["match-final", "match-third"] // Grand Final is index 0, 3rd place is index 1
+      name: "Upper Finals",
+      matches: ["match-playoff-5"]
+    },
+    {
+      name: "Lower Quarterfinals",
+      matches: ["match-playoff-3", "match-playoff-4"]
+    },
+    {
+      name: "Lower Semifinals",
+      matches: ["match-playoff-6"]
+    },
+    {
+      name: "Lower Finals",
+      matches: ["match-playoff-7"]
+    },
+    {
+      name: "Grand Finals",
+      matches: ["match-playoff-8"]
     }
   ]
 };
@@ -413,6 +812,15 @@ function setMockStorage(key, value) {
 
 // Initialise Local Storage defaults if not present
 if (typeof window !== "undefined") {
+  const currentTitle = getMockStorage("config", DEFAULT_CONFIG)?.title;
+  if (currentTitle && !currentTitle.includes("ARAM")) {
+    console.log("Old database detected. Resetting to finalized ARAM Mayhem structure.");
+    localStorage.removeItem("lol_tourney_config");
+    localStorage.removeItem("lol_tourney_teams");
+    localStorage.removeItem("lol_tourney_matches");
+    localStorage.removeItem("lol_tourney_bracket");
+    localStorage.removeItem("lol_tourney_matchDetails");
+  }
   getMockStorage("config", DEFAULT_CONFIG);
   getMockStorage("teams", DEFAULT_TEAMS);
   getMockStorage("matches", DEFAULT_MATCHES);
@@ -515,12 +923,26 @@ export async function saveMatch(match) {
     const matches = getMockStorage("matches", DEFAULT_MATCHES);
     matches[match.id] = match;
     
-    // Bracket Automation
+    // Double Elimination Playoff Bracket Automation
     if (match.status === "completed" && match.winnerId) {
-      if (match.id === "match-semi1" && matches["match-final"]) {
-        matches["match-final"].teamAId = match.winnerId;
-      } else if (match.id === "match-semi2" && matches["match-final"]) {
-        matches["match-final"].teamBId = match.winnerId;
+      const loserId = match.winnerId === match.teamAId ? match.teamBId : match.teamAId;
+      if (match.id === "match-playoff-1") {
+        if (matches["match-playoff-5"]) matches["match-playoff-5"].teamAId = match.winnerId;
+        if (matches["match-playoff-3"]) matches["match-playoff-3"].teamBId = loserId;
+      } else if (match.id === "match-playoff-2") {
+        if (matches["match-playoff-5"]) matches["match-playoff-5"].teamBId = match.winnerId;
+        if (matches["match-playoff-4"]) matches["match-playoff-4"].teamBId = loserId;
+      } else if (match.id === "match-playoff-3") {
+        if (matches["match-playoff-6"]) matches["match-playoff-6"].teamAId = match.winnerId;
+      } else if (match.id === "match-playoff-4") {
+        if (matches["match-playoff-6"]) matches["match-playoff-6"].teamBId = match.winnerId;
+      } else if (match.id === "match-playoff-5") {
+        if (matches["match-playoff-8"]) matches["match-playoff-8"].teamAId = match.winnerId;
+        if (matches["match-playoff-7"]) matches["match-playoff-7"].teamAId = loserId;
+      } else if (match.id === "match-playoff-6") {
+        if (matches["match-playoff-7"]) matches["match-playoff-7"].teamBId = match.winnerId;
+      } else if (match.id === "match-playoff-7") {
+        if (matches["match-playoff-8"]) matches["match-playoff-8"].teamBId = match.winnerId;
       }
     }
 
@@ -531,12 +953,26 @@ export async function saveMatch(match) {
     const dbRef = ref(database, `matches/${match.id}`);
     await set(dbRef, match);
     
-    // Bracket Automation
+    // Double Elimination Playoff Bracket Automation
     if (match.status === "completed" && match.winnerId) {
-      if (match.id === "match-semi1") {
-        await set(ref(database, `matches/match-final/teamAId`), match.winnerId);
-      } else if (match.id === "match-semi2") {
-        await set(ref(database, `matches/match-final/teamBId`), match.winnerId);
+      const loserId = match.winnerId === match.teamAId ? match.teamBId : match.teamAId;
+      if (match.id === "match-playoff-1") {
+        await set(ref(database, `matches/match-playoff-5/teamAId`), match.winnerId);
+        await set(ref(database, `matches/match-playoff-3/teamBId`), loserId);
+      } else if (match.id === "match-playoff-2") {
+        await set(ref(database, `matches/match-playoff-5/teamBId`), match.winnerId);
+        await set(ref(database, `matches/match-playoff-4/teamBId`), loserId);
+      } else if (match.id === "match-playoff-3") {
+        await set(ref(database, `matches/match-playoff-6/teamAId`), match.winnerId);
+      } else if (match.id === "match-playoff-4") {
+        await set(ref(database, `matches/match-playoff-6/teamBId`), match.winnerId);
+      } else if (match.id === "match-playoff-5") {
+        await set(ref(database, `matches/match-playoff-8/teamAId`), match.winnerId);
+        await set(ref(database, `matches/match-playoff-7/teamAId`), loserId);
+      } else if (match.id === "match-playoff-6") {
+        await set(ref(database, `matches/match-playoff-7/teamBId`), match.winnerId);
+      } else if (match.id === "match-playoff-7") {
+        await set(ref(database, `matches/match-playoff-8/teamBId`), match.winnerId);
       }
     }
 
