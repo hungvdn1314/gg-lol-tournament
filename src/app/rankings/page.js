@@ -8,29 +8,57 @@ import { Award, Eye, Crosshair, Shield, Coins, Target } from "lucide-react";
 import { getLatestDDragonVersion } from "@/lib/riot";
 
 // Helper MVP calculator copied to use for aggregated logic
-const calculateGameMVP = (participants, bKills, rKills, bDmg, rDmg, bGold, rGold, gameDuration) => {
+const calculateGameMVP = (participants, gameDuration) => {
   if (!participants || participants.length === 0) return [];
-  const durationMins = gameDuration / 60;
+
+  // Calculate team-level statistics directly from participants
+  const teamTotals = {
+    100: { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 },
+    200: { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 }
+  };
+
+  participants.forEach(p => {
+    const team = teamTotals[p.teamId];
+    if (team) {
+      team.kills += (p.kills || 0);
+      team.dmgDealt += (p.damageDealt || 0);
+      team.dmgTaken += (p.damageTaken || 0);
+      team.healing += (p.healing || 0);
+    }
+  });
 
   const scored = participants.map(p => {
-    const teamKills = p.teamId === 100 ? bKills : rKills;
-    const teamDmg = p.teamId === 100 ? bDmg : rDmg;
-    const teamGold = p.teamId === 100 ? bGold : rGold;
+    const team = teamTotals[p.teamId] || { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 };
 
-    const kda = p.deaths === 0 ? (p.kills + p.assists) * 1.5 : (p.kills + p.assists) / p.deaths;
-    const kp = teamKills > 0 ? (p.kills + p.assists) / teamKills : 0;
-    const damageShare = teamDmg > 0 ? (p.damageDealt || 0) / teamDmg : 0;
-    const goldShare = teamGold > 0 ? (p.gold || 0) / teamGold : 0;
-    const visionPerMin = (p.vision || 0) / durationMins;
+    // 1. KDA (Max 1.5 pts) - capped at 6.0 KDA for full points, no 0-death multiplier
+    const kda = (p.kills + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
+    const kdaScore = Math.min(kda * 0.25, 1.5);
 
-    const kdaScore = Math.min(kda * 0.5, 3.0);
+    // 2. Kill Participation (Max 2.5 pts)
+    const kp = team.kills > 0 ? (p.kills + (p.assists || 0)) / team.kills : 0;
     const kpScore = kp * 2.5;
+
+    // 3. Damage Share (Max 2.0 pts)
+    const damageShare = team.dmgDealt > 0 ? (p.damageDealt || 0) / team.dmgDealt : 0;
     const dmgScore = damageShare * 2.0;
-    const goldScore = goldShare * 1.5;
-    const visionScore = Math.min(visionPerMin, 1.0);
+
+    // 4. Defense & Utility Share (Max 2.5 pts)
+    const dmgTakenShare = team.dmgTaken > 0 ? (p.damageTaken || 0) / team.dmgTaken : 0;
+    const healingShare = team.healing > 0 ? (p.healing || 0) / team.healing : 0;
+    const defUtilScore = Math.max(dmgTakenShare, healingShare) * 2.5;
+
+    // 5. Objective & Hype Events (Max 1.5 pts)
+    const firstBloodBonus = p.firstBlood ? 0.3 : 0;
+    const turretInhibBonus = ((p.turretsKilled || 0) + (p.inhibitorsKilled || 0)) * 0.2;
+    const tripleBonus = (p.tripleKills || 0) > 0 ? 0.2 : 0;
+    const quadraBonus = (p.quadraKills || 0) > 0 ? 0.4 : 0;
+    const pentaBonus = (p.pentaKills || 0) > 0 ? 0.6 : 0;
+    const hypeScore = Math.min(firstBloodBonus + turretInhibBonus + tripleBonus + quadraBonus + pentaBonus, 1.5);
+
+    // 6. Win Bonus (Max 1.0 pt)
     const winBonus = p.win ? 1.0 : 0;
 
-    const totalScore = kdaScore + kpScore + dmgScore + goldScore + visionScore + winBonus;
+    const totalScore = kdaScore + kpScore + dmgScore + defUtilScore + hypeScore + winBonus;
 
     return { ...p, totalScore };
   });
@@ -98,7 +126,7 @@ export default function PlayerRankings() {
       const bDT = bP.reduce((s, p) => s + (p.damageTaken || 0), 0);
       const rDT = rP.reduce((s, p) => s + (p.damageTaken || 0), 0);
 
-      const scored = calculateGameMVP(game.participants, bK, rK, bD, rD, bG, rG, game.gameDuration);
+      const scored = calculateGameMVP(game.participants, game.gameDuration);
       const gameMvp = scored[0]?.playerName;
 
       game.participants.forEach(p => {

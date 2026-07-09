@@ -14,6 +14,1184 @@ const DEFAULT_CONFIG = {
   captainPasscode: "aram2026"
 };
 
+const DEFAULT_MATCH_DETAILS = {
+  "match-g-a1": [
+  {
+    "gameDuration": 977,
+    "teams": {
+      "100": {
+        "winner": true,
+        "bans": [],
+        "barons": 0,
+        "dragons": 0,
+        "firstBlood": true
+      },
+      "200": {
+        "winner": false,
+        "bans": [],
+        "barons": 0,
+        "dragons": 0,
+        "firstBlood": false
+      }
+    },
+    "participants": [
+      {
+        "playerName": "Hai Ba Con Zịt",
+        "teamId": 100,
+        "win": true,
+        "kills": 16,
+        "deaths": 5,
+        "assists": 33,
+        "gold": 14795,
+        "cs": 68,
+        "vision": 0,
+        "damageDealt": 32273,
+        "damageTaken": 14077,
+        "healing": 3748,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 2,
+        "inhibitorsKilled": 0,
+        "champion": "Jhin",
+        "items": [
+          3134,
+          126697,
+          6676,
+          3009,
+          6696,
+          3814
+        ],
+        "summonerSpells": [
+          6,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8021,
+          "primaryStyleId": 8000
+        }
+      },
+      {
+        "playerName": "TDlight",
+        "teamId": 100,
+        "win": true,
+        "kills": 10,
+        "deaths": 6,
+        "assists": 33,
+        "gold": 13064,
+        "cs": 90,
+        "vision": 0,
+        "damageDealt": 40812,
+        "damageTaken": 25838,
+        "healing": 6953,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 2,
+        "inhibitorsKilled": 1,
+        "champion": "Ryze",
+        "items": [
+          6657,
+          3040,
+          1001,
+          3089,
+          3802,
+          1026
+        ],
+        "summonerSpells": [
+          4,
+          14
+        ],
+        "runes": {
+          "keystoneId": 8230,
+          "primaryStyleId": 8200
+        }
+      },
+      {
+        "playerName": "NTD beos",
+        "teamId": 100,
+        "win": true,
+        "kills": 15,
+        "deaths": 9,
+        "assists": 24,
+        "gold": 12489,
+        "cs": 16,
+        "vision": 0,
+        "damageDealt": 24378,
+        "damageTaken": 19627,
+        "healing": 150,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Akali",
+        "items": [
+          4646,
+          3157,
+          3020,
+          4645,
+          2031,
+          1052
+        ],
+        "summonerSpells": [
+          4,
+          32
+        ],
+        "runes": {
+          "keystoneId": 8112,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "lucky luke 02",
+        "teamId": 100,
+        "win": true,
+        "kills": 16,
+        "deaths": 10,
+        "assists": 21,
+        "gold": 12898,
+        "cs": 6,
+        "vision": 0,
+        "damageDealt": 18698,
+        "damageTaken": 24036,
+        "healing": 4836,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Pyke",
+        "items": [
+          6696,
+          0,
+          3155,
+          6676,
+          3158,
+          3814
+        ],
+        "summonerSpells": [
+          4,
+          32
+        ],
+        "runes": {
+          "keystoneId": 9923,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "Shaco Ap",
+        "teamId": 100,
+        "win": true,
+        "kills": 3,
+        "deaths": 10,
+        "assists": 39,
+        "gold": 10753,
+        "cs": 7,
+        "vision": 0,
+        "damageDealt": 15150,
+        "damageTaken": 33798,
+        "healing": 3928,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Nautilus",
+        "items": [
+          3084,
+          3111,
+          3110,
+          8020,
+          1011,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          32
+        ],
+        "runes": {
+          "keystoneId": 8439,
+          "primaryStyleId": 8400
+        }
+      },
+      {
+        "playerName": "STH Yuu",
+        "teamId": 200,
+        "win": false,
+        "kills": 10,
+        "deaths": 11,
+        "assists": 16,
+        "gold": 11368,
+        "cs": 31,
+        "vision": 0,
+        "damageDealt": 17781,
+        "damageTaken": 24633,
+        "healing": 864,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Teemo",
+        "items": [
+          3115,
+          3006,
+          6653,
+          3124,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          14
+        ],
+        "runes": {
+          "keystoneId": 8128,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "ThoiDaiMoiDaDen",
+        "teamId": 200,
+        "win": false,
+        "kills": 4,
+        "deaths": 8,
+        "assists": 21,
+        "gold": 9373,
+        "cs": 20,
+        "vision": 0,
+        "damageDealt": 13479,
+        "damageTaken": 12527,
+        "healing": 464,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Xerath",
+        "items": [
+          6655,
+          2031,
+          4628,
+          1001,
+          1052,
+          1058
+        ],
+        "summonerSpells": [
+          13,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8128,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "1 Chén Tiêu Sầu",
+        "teamId": 200,
+        "win": false,
+        "kills": 6,
+        "deaths": 15,
+        "assists": 19,
+        "gold": 10354,
+        "cs": 40,
+        "vision": 0,
+        "damageDealt": 17410,
+        "damageTaken": 25700,
+        "healing": 1017,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Jayce",
+        "items": [
+          6676,
+          3042,
+          3158,
+          3155,
+          3035,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          32
+        ],
+        "runes": {
+          "keystoneId": 8008,
+          "primaryStyleId": 8000
+        }
+      },
+      {
+        "playerName": "TruongIC",
+        "teamId": 200,
+        "win": false,
+        "kills": 16,
+        "deaths": 9,
+        "assists": 14,
+        "gold": 14300,
+        "cs": 72,
+        "vision": 2,
+        "damageDealt": 26139,
+        "damageTaken": 20501,
+        "healing": 4096,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Kalista",
+        "items": [
+          3111,
+          3153,
+          3302,
+          3091,
+          3085,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          1
+        ],
+        "runes": {
+          "keystoneId": 8008,
+          "primaryStyleId": 8000
+        }
+      },
+      {
+        "playerName": "Tiểu Vân",
+        "teamId": 200,
+        "win": false,
+        "kills": 3,
+        "deaths": 17,
+        "assists": 18,
+        "gold": 9388,
+        "cs": 9,
+        "vision": 0,
+        "damageDealt": 14259,
+        "damageTaken": 51771,
+        "healing": 853,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Malphite",
+        "items": [
+          3084,
+          3047,
+          3082,
+          3083,
+          1029,
+          1027
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8128,
+          "primaryStyleId": 8100
+        }
+      }
+    ]
+  },
+  {
+    "gameDuration": 853,
+    "teams": {
+      "100": {
+        "winner": false,
+        "bans": [],
+        "barons": 0,
+        "dragons": 0,
+        "firstBlood": true
+      },
+      "200": {
+        "winner": true,
+        "bans": [],
+        "barons": 0,
+        "dragons": 0,
+        "firstBlood": false
+      }
+    },
+    "participants": [
+      {
+        "playerName": "Nhân Single",
+        "teamId": 100,
+        "win": false,
+        "kills": 3,
+        "deaths": 8,
+        "assists": 13,
+        "gold": 9432,
+        "cs": 32,
+        "vision": 0,
+        "damageDealt": 18206,
+        "damageTaken": 15561,
+        "healing": 2167,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Lucian",
+        "items": [
+          3070,
+          6696,
+          3006,
+          6676,
+          1038,
+          0
+        ],
+        "summonerSpells": [
+          21,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8005,
+          "primaryStyleId": 8000
+        }
+      },
+      {
+        "playerName": "Lào gì cũng tôn",
+        "teamId": 100,
+        "win": false,
+        "kills": 6,
+        "deaths": 11,
+        "assists": 11,
+        "gold": 10192,
+        "cs": 56,
+        "vision": 0,
+        "damageDealt": 17816,
+        "damageTaken": 19361,
+        "healing": 2288,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Graves",
+        "items": [
+          6676,
+          3033,
+          3006,
+          1053,
+          1037,
+          0
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8010,
+          "primaryStyleId": 8000
+        }
+      },
+      {
+        "playerName": "The MoP",
+        "teamId": 100,
+        "win": false,
+        "kills": 5,
+        "deaths": 8,
+        "assists": 5,
+        "gold": 9041,
+        "cs": 12,
+        "vision": 0,
+        "damageDealt": 17602,
+        "damageTaken": 31718,
+        "healing": 3038,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Garen",
+        "items": [
+          3084,
+          3111,
+          3071,
+          3105,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8010,
+          "primaryStyleId": 8000
+        }
+      },
+      {
+        "playerName": "Hydra Ác",
+        "teamId": 100,
+        "win": false,
+        "kills": 12,
+        "deaths": 11,
+        "assists": 10,
+        "gold": 11968,
+        "cs": 27,
+        "vision": 0,
+        "damageDealt": 21036,
+        "damageTaken": 26907,
+        "healing": 4404,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Rengar",
+        "items": [
+          6698,
+          6610,
+          2031,
+          3158,
+          6676,
+          1038
+        ],
+        "summonerSpells": [
+          4,
+          32
+        ],
+        "runes": {
+          "keystoneId": 8112,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "toiyeugiadinhban",
+        "teamId": 100,
+        "win": false,
+        "kills": 2,
+        "deaths": 11,
+        "assists": 12,
+        "gold": 8535,
+        "cs": 29,
+        "vision": 0,
+        "damageDealt": 18222,
+        "damageTaken": 21033,
+        "healing": 1891,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Samira",
+        "items": [
+          6676,
+          3111,
+          2031,
+          6673,
+          1036,
+          0
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8010,
+          "primaryStyleId": 8000
+        }
+      },
+      {
+        "playerName": "zzDoAzz",
+        "teamId": 200,
+        "win": true,
+        "kills": 9,
+        "deaths": 5,
+        "assists": 22,
+        "gold": 11033,
+        "cs": 46,
+        "vision": 0,
+        "damageDealt": 20280,
+        "damageTaken": 26309,
+        "healing": 10586,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 2,
+        "inhibitorsKilled": 0,
+        "champion": "Yorick",
+        "items": [
+          3084,
+          3047,
+          6662,
+          3076,
+          1028,
+          1029
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8437,
+          "primaryStyleId": 8400
+        }
+      },
+      {
+        "playerName": "Tiểu Phương Dung",
+        "teamId": 200,
+        "win": true,
+        "kills": 7,
+        "deaths": 8,
+        "assists": 34,
+        "gold": 10758,
+        "cs": 30,
+        "vision": 0,
+        "damageDealt": 19479,
+        "damageTaken": 19512,
+        "healing": 3064,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Viktor",
+        "items": [
+          6657,
+          3047,
+          3040,
+          6653,
+          1011,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          6
+        ],
+        "runes": {
+          "keystoneId": 8229,
+          "primaryStyleId": 8200
+        }
+      },
+      {
+        "playerName": "Zz Prince zZ",
+        "teamId": 200,
+        "win": true,
+        "kills": 14,
+        "deaths": 4,
+        "assists": 21,
+        "gold": 11310,
+        "cs": 12,
+        "vision": 0,
+        "damageDealt": 27986,
+        "damageTaken": 33340,
+        "healing": 13464,
+        "tripleKills": 1,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 1,
+        "inhibitorsKilled": 0,
+        "champion": "TahmKench",
+        "items": [
+          3084,
+          1001,
+          3083,
+          3105,
+          1011,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          32
+        ],
+        "runes": {
+          "keystoneId": 8439,
+          "primaryStyleId": 8400
+        }
+      },
+      {
+        "playerName": "FallenSataniel",
+        "teamId": 200,
+        "win": true,
+        "kills": 8,
+        "deaths": 7,
+        "assists": 30,
+        "gold": 10164,
+        "cs": 19,
+        "vision": 0,
+        "damageDealt": 17554,
+        "damageTaken": 13495,
+        "healing": 1760,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Seraphine",
+        "items": [
+          2503,
+          2031,
+          3158,
+          3165,
+          3040,
+          1052
+        ],
+        "summonerSpells": [
+          4,
+          7
+        ],
+        "runes": {
+          "keystoneId": 8128,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "ooo000ooo",
+        "teamId": 200,
+        "win": true,
+        "kills": 11,
+        "deaths": 5,
+        "assists": 22,
+        "gold": 11452,
+        "cs": 43,
+        "vision": 0,
+        "damageDealt": 21532,
+        "damageTaken": 11824,
+        "healing": 2250,
+        "tripleKills": 1,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 1,
+        "inhibitorsKilled": 1,
+        "champion": "Caitlyn",
+        "items": [
+          6676,
+          3031,
+          3070,
+          3006,
+          126697,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          21
+        ],
+        "runes": {
+          "keystoneId": 8005,
+          "primaryStyleId": 8000
+        }
+      }
+    ]
+  },
+  {
+    "gameDuration": 276,
+    "teams": {
+      "100": {
+        "winner": false,
+        "bans": [],
+        "barons": 0,
+        "dragons": 0,
+        "firstBlood": false
+      },
+      "200": {
+        "winner": true,
+        "bans": [],
+        "barons": 0,
+        "dragons": 0,
+        "firstBlood": true
+      }
+    },
+    "participants": [
+      {
+        "playerName": "Nhân Single",
+        "teamId": 100,
+        "win": false,
+        "kills": 1,
+        "deaths": 3,
+        "assists": 6,
+        "gold": 3493,
+        "cs": 1,
+        "vision": 0,
+        "damageDealt": 2543,
+        "damageTaken": 6689,
+        "healing": 176,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Thresh",
+        "items": [
+          1011,
+          1001,
+          3070,
+          1011,
+          1028,
+          2010
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8351,
+          "primaryStyleId": 8300
+        }
+      },
+      {
+        "playerName": "Lào gì cũng tôn",
+        "teamId": 100,
+        "win": false,
+        "kills": 2,
+        "deaths": 2,
+        "assists": 5,
+        "gold": 3839,
+        "cs": 7,
+        "vision": 0,
+        "damageDealt": 2737,
+        "damageTaken": 4681,
+        "healing": 483,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Malphite",
+        "items": [
+          3070,
+          2031,
+          3801,
+          1011,
+          1011,
+          1001
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8437,
+          "primaryStyleId": 8400
+        }
+      },
+      {
+        "playerName": "The MoP",
+        "teamId": 100,
+        "win": false,
+        "kills": 3,
+        "deaths": 3,
+        "assists": 3,
+        "gold": 3829,
+        "cs": 13,
+        "vision": 0,
+        "damageDealt": 2779,
+        "damageTaken": 6148,
+        "healing": 347,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Garen",
+        "items": [
+          3084,
+          2031,
+          1001,
+          0,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8437,
+          "primaryStyleId": 8400
+        }
+      },
+      {
+        "playerName": "Gió Thoảng Bờ Mu",
+        "teamId": 100,
+        "win": false,
+        "kills": 1,
+        "deaths": 3,
+        "assists": 5,
+        "gold": 3329,
+        "cs": 8,
+        "vision": 0,
+        "damageDealt": 4450,
+        "damageTaken": 3490,
+        "healing": 171,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Lux",
+        "items": [
+          6655,
+          1052,
+          0,
+          0,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          32
+        ],
+        "runes": {
+          "keystoneId": 8128,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "Jaian kunn",
+        "teamId": 100,
+        "win": false,
+        "kills": 0,
+        "deaths": 1,
+        "assists": 0,
+        "gold": 2696,
+        "cs": 0,
+        "vision": 0,
+        "damageDealt": 212,
+        "damageTaken": 797,
+        "healing": 0,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Ahri",
+        "items": [
+          3802,
+          2031,
+          0,
+          0,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          3,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8128,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "zzDoAzz",
+        "teamId": 200,
+        "win": true,
+        "kills": 2,
+        "deaths": 1,
+        "assists": 3,
+        "gold": 3617,
+        "cs": 9,
+        "vision": 0,
+        "damageDealt": 3952,
+        "damageTaken": 4776,
+        "healing": 1269,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Aatrox",
+        "items": [
+          3084,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          32,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8010,
+          "primaryStyleId": 8000
+        }
+      },
+      {
+        "playerName": "Tiểu Phương Dung",
+        "teamId": 200,
+        "win": true,
+        "kills": 5,
+        "deaths": 2,
+        "assists": 3,
+        "gold": 4317,
+        "cs": 3,
+        "vision": 0,
+        "damageDealt": 4075,
+        "damageTaken": 2696,
+        "healing": 193,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Corki",
+        "items": [
+          3057,
+          3070,
+          2003,
+          3158,
+          3051,
+          1028
+        ],
+        "summonerSpells": [
+          4,
+          32
+        ],
+        "runes": {
+          "keystoneId": 8229,
+          "primaryStyleId": 8200
+        }
+      },
+      {
+        "playerName": "Zz Prince zZ",
+        "teamId": 200,
+        "win": true,
+        "kills": 3,
+        "deaths": 0,
+        "assists": 6,
+        "gold": 4013,
+        "cs": 3,
+        "vision": 0,
+        "damageDealt": 5426,
+        "damageTaken": 2039,
+        "healing": 627,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Leblanc",
+        "items": [
+          3802,
+          2031,
+          0,
+          0,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          14
+        ],
+        "runes": {
+          "keystoneId": 8112,
+          "primaryStyleId": 8100
+        }
+      },
+      {
+        "playerName": "FallenSataniel",
+        "teamId": 200,
+        "win": true,
+        "kills": 0,
+        "deaths": 2,
+        "assists": 9,
+        "gold": 3354,
+        "cs": 6,
+        "vision": 0,
+        "damageDealt": 2430,
+        "damageTaken": 3166,
+        "healing": 329,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": true,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Renata",
+        "items": [
+          3070,
+          3158,
+          3916,
+          2022,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          4,
+          7
+        ],
+        "runes": {
+          "keystoneId": 8214,
+          "primaryStyleId": 8200
+        }
+      },
+      {
+        "playerName": "Š PhongKa ",
+        "teamId": 200,
+        "win": true,
+        "kills": 2,
+        "deaths": 2,
+        "assists": 5,
+        "gold": 4198,
+        "cs": 18,
+        "vision": 0,
+        "damageDealt": 6127,
+        "damageTaken": 3969,
+        "healing": 951,
+        "tripleKills": 0,
+        "quadraKills": 0,
+        "pentaKills": 0,
+        "firstBlood": false,
+        "turretsKilled": 0,
+        "inhibitorsKilled": 0,
+        "champion": "Graves",
+        "items": [
+          126697,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "summonerSpells": [
+          7,
+          4
+        ],
+        "runes": {
+          "keystoneId": 8128,
+          "primaryStyleId": 8100
+        }
+      }
+    ]
+  }
+]
+};
+
 const DEFAULT_TEAMS = {
   "team-kylan": {
     "id": "team-kylan",
@@ -519,12 +1697,12 @@ const DEFAULT_MATCHES = {
     "group": "A",
     "teamAId": "team-u40",
     "teamBId": "team-gapvibe",
-    "scoreA": 0,
-    "scoreB": 0,
-    "status": "scheduled",
+    "scoreA": 1,
+    "scoreB": 2,
+    "status": "completed",
     "bestOf": 3,
     "scheduledTime": "2026-07-22T12:00:00.000Z",
-    "winnerId": null
+    "winnerId": "team-gapvibe"
   },
   "match-g-a2": {
     "id": "match-g-a2",
@@ -825,7 +2003,7 @@ if (typeof window !== "undefined") {
   getMockStorage("teams", DEFAULT_TEAMS);
   getMockStorage("matches", DEFAULT_MATCHES);
   getMockStorage("bracket", DEFAULT_BRACKET);
-  getMockStorage("matchDetails", {});
+  getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
 }
 
 // ==========================================
@@ -1014,7 +2192,7 @@ export async function resetToDefaultData() {
     setMockStorage("teams", DEFAULT_TEAMS);
     setMockStorage("matches", DEFAULT_MATCHES);
     setMockStorage("bracket", DEFAULT_BRACKET);
-    setMockStorage("matchDetails", {});
+    setMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
     setMockStorage("news", {});
     await recalculateLeaderboard();
   } else {
@@ -1094,7 +2272,7 @@ export async function recalculateLeaderboard() {
 
 export async function saveMatchDetails(matchId, details) {
   if (isMockMode) {
-    const allDetails = getMockStorage("matchDetails", {});
+    const allDetails = getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
     allDetails[matchId] = details;
     setMockStorage("matchDetails", allDetails);
     return details;
@@ -1107,7 +2285,7 @@ export async function saveMatchDetails(matchId, details) {
 
 export async function fetchMatchDetails(matchId) {
   if (isMockMode) {
-    const allDetails = getMockStorage("matchDetails", {});
+    const allDetails = getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
     return allDetails[matchId] || null;
   } else {
     try {
@@ -1144,7 +2322,7 @@ export async function submitCaptainGameScore(matchId, gameIndex, gameDetails) {
 
   // Save details back to db
   if (isMockMode) {
-    const allDetails = getMockStorage("matchDetails", {});
+    const allDetails = getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
     allDetails[matchId] = existingDetails;
     setMockStorage("matchDetails", allDetails);
   } else {
@@ -1230,7 +2408,7 @@ export async function submitCaptainGameScore(matchId, gameIndex, gameDetails) {
 
 export function subscribeToMatchDetails(matchId, callback) {
   if (isMockMode) {
-    const allDetails = getMockStorage("matchDetails", {});
+    const allDetails = getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
     callback(allDetails[matchId] || null);
 
     const handler = (newAllDetails) => {
@@ -1253,7 +2431,7 @@ export function subscribeToMatchDetails(matchId, callback) {
 
 export async function fetchAllMatchDetails() {
   if (isMockMode) {
-    return getMockStorage("matchDetails", {});
+    return getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
   } else {
     try {
       const dbRef = ref(database, `matchDetails`);
@@ -1268,7 +2446,7 @@ export async function fetchAllMatchDetails() {
 
 export function subscribeToAllMatchDetails(callback) {
   if (isMockMode) {
-    callback(getMockStorage("matchDetails", {}));
+    callback(getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS));
     
     const handler = (newAllDetails) => {
       callback(newAllDetails || {});
