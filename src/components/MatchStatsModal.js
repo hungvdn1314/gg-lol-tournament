@@ -291,7 +291,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
               if (currentGameDetails?.participants && currentGameDetails.participants.length > 0) {
                 tabList.push({ id: "scoreboard", label: "Scoreboard", icon: <CrossedSwords size={14} /> });
                 tabList.push({ id: "charts", label: "Combat Charts", icon: <BarChart2 size={14} /> });
-                tabList.push({ id: "utility", label: "Utility & Vision", icon: <Eye size={14} /> });
+                tabList.push({ id: "utility", label: "Combat Utility", icon: <Activity size={14} /> });
                 tabList.push({ id: "team", label: "Team Objectives", icon: <HextechCrest size={14} /> });
                 tabList.push({ id: "mvp", label: "MVP Calculation", icon: <Activity size={14} /> });
               }
@@ -443,12 +443,6 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>CS</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.cs}</span>
                         </div>
-
-                        <div className="sb-col-vision">
-                          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Vision</span>
-                          <span style={{ fontSize: "0.8rem" }}>{p.vision || 0}</span>
-                        </div>
-
                         {/* Items */}
                         <div className="sb-col-player" style={{ display: "flex", gap: "3px" }}>
                           {p.items.map((itemId, i) => {
@@ -564,12 +558,6 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>CS</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.cs}</span>
                         </div>
-
-                        <div className="sb-col-vision">
-                          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Vision</span>
-                          <span style={{ fontSize: "0.8rem" }}>{p.vision || 0}</span>
-                        </div>
-
                         {/* Items */}
                         <div className="sb-col-player" style={{ display: "flex", gap: "3px" }}>
                           {p.items.map((itemId, i) => {
@@ -683,16 +671,13 @@ export default function MatchStatsModal({ match, teams, onClose }) {
               </div>
             )}
 
-            {/* TAB 3: UTILITY & VISION */}
+            {/* TAB 3: COMBAT UTILITY */}
             {activeTab === "utility" && (
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem", border: "1px solid var(--border-dark)" }}>
                   <thead>
                     <tr style={{ backgroundColor: "var(--bg-tertiary)", borderBottom: "1px solid var(--border-dark)", textTransform: "uppercase", fontSize: "0.7rem", color: "var(--text-muted)", textAlign: "left" }}>
                       <th style={{ padding: "0.6rem 0.8rem" }}>Player</th>
-                      <th style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>Wards Placed</th>
-                      <th style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>Wards Killed</th>
-                      <th style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>Control Wards</th>
                       <th style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>CC Duration</th>
                       <th style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>Towers Killed</th>
                       <th style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>Inhibs Killed</th>
@@ -705,9 +690,6 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "20px", height: "20px", borderRadius: "2px" }} />
                           <span style={{ fontWeight: "600", color: p.teamId === 100 ? "#4fa8ff" : "#ffd47f" }}>{p.playerName}</span>
                         </td>
-                        <td style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>{p.wardsPlaced || 0}</td>
-                        <td style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>{p.wardsKilled || 0}</td>
-                        <td style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>{p.controlWards || 0}</td>
                         <td style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>{p.ccDuration || 0}s</td>
                         <td style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>{p.turretsKilled || 0}</td>
                         <td style={{ padding: "0.6rem 0.8rem", textAlign: "center" }}>{p.inhibitorsKilled || 0}</td>

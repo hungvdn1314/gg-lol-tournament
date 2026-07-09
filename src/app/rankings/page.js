@@ -81,7 +81,6 @@ export default function PlayerRankings() {
     { id: "dmgShare", label: "DMG Share %", icon: <Target size={14} /> },
     { id: "kp", label: "Kill Part %", icon: <HextechCrest size={14} /> },
     { id: "gpm", label: "Gold / Min", icon: <Coins size={14} /> },
-    { id: "vspm", label: "Vision / Min", icon: <Eye size={14} /> },
     { id: "dmgTakenShare", label: "DMG Taken %", icon: <Shield size={14} /> },
     { id: "cspm", label: "CS / Min", icon: <Crosshair size={14} /> }
   ];
@@ -137,7 +136,7 @@ export default function PlayerRankings() {
             gamesPlayed: 0,
             kills: 0, deaths: 0, assists: 0,
             damageDealt: 0, damageTaken: 0,
-            gold: 0, vision: 0, cs: 0,
+            gold: 0, cs: 0,
             teamKills: 0, teamDamageDealt: 0, teamDamageTaken: 0,
             durationMins: 0,
             matchMvpCount: 0,
@@ -155,7 +154,6 @@ export default function PlayerRankings() {
         stats.damageDealt += (p.damageDealt || 0);
         stats.damageTaken += (p.damageTaken || 0);
         stats.gold += (p.gold || 0);
-        stats.vision += (p.vision || 0);
         stats.cs += (p.cs || 0);
         stats.durationMins += (game.gameDuration / 60);
 
@@ -193,7 +191,6 @@ export default function PlayerRankings() {
       dmgShare: p.teamDamageDealt > 0 ? (p.damageDealt / p.teamDamageDealt) * 100 : 0,
       kp: p.teamKills > 0 ? ((p.kills + p.assists) / p.teamKills) * 100 : 0,
       gpm: p.gold / p.durationMins,
-      vspm: p.vision / p.durationMins,
       dmgTakenShare: p.teamDamageTaken > 0 ? (p.damageTaken / p.teamDamageTaken) * 100 : 0,
       cspm: p.cs / p.durationMins
     };
@@ -209,7 +206,7 @@ export default function PlayerRankings() {
     if (["seriesMvpCount", "matchMvpCount"].includes(metricId)) return `${val} MVP${val !== 1 ? 's' : ''}`;
     if (metricId === "kda") return `${val.toFixed(2)} KDA`;
     if (["dmgShare", "kp", "dmgTakenShare"].includes(metricId)) return val.toFixed(1) + "%";
-    if (["dpm", "gpm", "vspm", "cspm"].includes(metricId)) return `${Math.round(val).toLocaleString()}/m`;
+    if (["dpm", "gpm", "cspm"].includes(metricId)) return `${Math.round(val).toLocaleString()}/m`;
     return `${val.toFixed(2)} pts`;
   };
 

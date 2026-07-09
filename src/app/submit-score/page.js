@@ -258,7 +258,6 @@ export default function SubmitScore() {
         assists: parseInt(stats.assists) || 0,
         gold: isWinner ? 12000 : 9000, // mock fallback gold
         cs: isWinner ? 110 : 80, // mock fallback cs
-        vision: isWinner ? 15 : 10,
         damageDealt: (parseInt(stats.kills) || 0) * 2000 + 8000, // mock approximate damage
         damageTaken: isWinner ? 12000 : 18000,
         healing: 1500,
