@@ -1973,7 +1973,29 @@ function getMockStorage(key, defaultValue) {
     return defaultValue;
   }
   try {
-    return JSON.parse(val);
+    const parsed = JSON.parse(val);
+    if (key === "matchDetails") {
+      const merged = { ...defaultValue, ...parsed };
+      if (Object.keys(merged).length > Object.keys(parsed).length) {
+        localStorage.setItem(`lol_tourney_${key}`, JSON.stringify(merged));
+      }
+      return merged;
+    }
+    if (key === "matches") {
+      const merged = { ...parsed };
+      let changed = false;
+      Object.keys(defaultValue).forEach(matchId => {
+        if (defaultValue[matchId].status === "completed" && (!merged[matchId] || merged[matchId].status === "scheduled")) {
+          merged[matchId] = defaultValue[matchId];
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem(`lol_tourney_${key}`, JSON.stringify(merged));
+      }
+      return merged;
+    }
+    return parsed;
   } catch (e) {
     return defaultValue;
   }
