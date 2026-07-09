@@ -19,7 +19,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
 
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("scoreboard"); // scoreboard, charts, utility, team
+  const [activeTab, setActiveTab] = useState("scoreboard"); // scoreboard, charts, team, mvp
   const [chartMetric, setChartMetric] = useState("damageDealt"); // damageDealt, damageTaken, healing
   const [selectedGameIndex, setSelectedGameIndex] = useState(0);
   const [mvpViewMode, setMvpViewMode] = useState("game"); // game, series
@@ -291,8 +291,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
               if (currentGameDetails?.participants && currentGameDetails.participants.length > 0) {
                 tabList.push({ id: "scoreboard", label: "Scoreboard", icon: <CrossedSwords size={14} /> });
                 tabList.push({ id: "charts", label: "Combat Charts", icon: <BarChart2 size={14} /> });
-                tabList.push({ id: "utility", label: "Combat Utility", icon: <Activity size={14} /> });
-                tabList.push({ id: "team", label: "Team Objectives", icon: <HextechCrest size={14} /> });
+                tabList.push({ id: "team", label: "Match Objectives", icon: <HextechCrest size={14} /> });
                 tabList.push({ id: "mvp", label: "MVP Calculation", icon: <Activity size={14} /> });
               }
               return (
@@ -443,16 +442,6 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>CS</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.cs}</span>
                         </div>
-
-                        <div style={{ width: "8%", textAlign: "center" }}>
-                          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Dmg Taken</span>
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: "bold" }}>{p.damageTaken?.toLocaleString() || 0}</span>
-                        </div>
-
-                        <div style={{ width: "8%", textAlign: "center" }}>
-                          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Healing</span>
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: "bold" }}>{p.healing?.toLocaleString() || 0}</span>
-                        </div>
                         {/* Items */}
                         <div className="sb-col-player" style={{ display: "flex", gap: "3px" }}>
                           {p.items.map((itemId, i) => {
@@ -568,16 +557,6 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>CS</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.cs}</span>
                         </div>
-
-                        <div style={{ width: "8%", textAlign: "center" }}>
-                          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Dmg Taken</span>
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: "bold" }}>{p.damageTaken?.toLocaleString() || 0}</span>
-                        </div>
-
-                        <div style={{ width: "8%", textAlign: "center" }}>
-                          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Healing</span>
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: "bold" }}>{p.healing?.toLocaleString() || 0}</span>
-                        </div>
                         {/* Items */}
                         <div className="sb-col-player" style={{ display: "flex", gap: "3px" }}>
                           {p.items.map((itemId, i) => {
@@ -691,53 +670,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
               </div>
             )}
 
-            {/* TAB 3: COMBAT UTILITY */}
-            {activeTab === "utility" && (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", border: "1px solid var(--border-dark)", color: "var(--text-primary)" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "var(--bg-tertiary)", borderBottom: "2px solid var(--border-dark)", textTransform: "uppercase", fontSize: "0.75rem", color: "var(--primary-gold)", textAlign: "left", fontWeight: "bold" }}>
-                      <th style={{ padding: "0.8rem 1rem" }}>Player</th>
-                      <th style={{ padding: "0.8rem 1rem", textAlign: "center" }}>Damage Taken</th>
-                      <th style={{ padding: "0.8rem 1rem", textAlign: "center" }}>Healing</th>
-                      <th style={{ padding: "0.8rem 1rem", textAlign: "center" }}>CC Duration</th>
-                      <th style={{ padding: "0.8rem 1rem", textAlign: "center" }}>Towers Killed</th>
-                      <th style={{ padding: "0.8rem 1rem", textAlign: "center" }}>Inhibs Killed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...blueParticipants, ...redParticipants].map((p, idx) => (
-                      <tr key={idx} style={{ 
-                        borderBottom: "1px solid var(--border-dark)", 
-                        backgroundColor: p.teamId === 100 ? "rgba(79, 168, 255, 0.04)" : "rgba(255, 212, 127, 0.04)"
-                      }}>
-                        <td style={{ padding: "0.8rem 1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "24px", height: "24px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)" }} />
-                          <span style={{ fontWeight: "600", color: p.teamId === 100 ? "#4fa8ff" : "#ffd47f" }}>{p.playerName}</span>
-                        </td>
-                        <td style={{ padding: "0.8rem 1rem", textAlign: "center", fontWeight: "bold", color: "var(--text-primary)" }}>
-                          {p.damageTaken?.toLocaleString() || 0}
-                        </td>
-                        <td style={{ padding: "0.8rem 1rem", textAlign: "center", fontWeight: "bold", color: "var(--text-primary)" }}>
-                          {p.healing?.toLocaleString() || 0}
-                        </td>
-                        <td style={{ padding: "0.8rem 1rem", textAlign: "center", color: "var(--text-secondary)" }}>
-                          {p.ccDuration || 0}s
-                        </td>
-                        <td style={{ padding: "0.8rem 1rem", textAlign: "center", color: "var(--text-secondary)" }}>
-                          {p.turretsKilled || 0}
-                        </td>
-                        <td style={{ padding: "0.8rem 1rem", textAlign: "center", color: "var(--text-secondary)" }}>
-                          {p.inhibitorsKilled || 0}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* TAB 4: TEAM OBJECTIVES & COMPARISON */}
+            {/* TAB 3: MATCH OBJECTIVES */}
             {activeTab === "team" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 {/* Gold Lead Visualizer */}
@@ -755,60 +688,63 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                   </div>
                 </div>
 
-                <div className="grid-2" style={{ gap: "2rem" }}>
-                  {/* Left Column: Side-by-side stats */}
-                  <div className="card" style={{ border: "1px solid var(--border-dark)", display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem" }}>
-                    <h4 style={{ fontSize: "0.9rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.4rem", textTransform: "uppercase" }}>Objectives Breakdown</h4>
-                    {[
-                      { label: "Total Kills", blue: blueTotalKills, red: redTotalKills },
-                      { label: "Dragons Slain", blue: currentGameDetails.teams[100]?.dragons || 0, red: currentGameDetails.teams[200]?.dragons || 0 },
-                      { label: "Barons Slain", blue: currentGameDetails.teams[100]?.barons || 0, red: currentGameDetails.teams[200]?.barons || 0 },
-                      { label: "First Blood", blue: currentGameDetails.teams[100]?.firstBlood ? "🩸 Yes" : "No", red: currentGameDetails.teams[200]?.firstBlood ? "🩸 Yes" : "No" }
-                    ].map((row, idx) => (
-                      <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "0.5rem" }}>
-                        <span style={{ color: "#4fa8ff", fontWeight: "bold", width: "30%", textAlign: "left" }}>{row.blue}</span>
-                        <span style={{ color: "var(--text-secondary)", fontSize: "0.8rem", width: "40%", textAlign: "center" }}>{row.label}</span>
-                        <span style={{ color: "#ffd47f", fontWeight: "bold", width: "30%", textAlign: "right" }}>{row.red}</span>
-                      </div>
-                    ))}
-                  </div>
+                {(() => {
+                  const blueTowers = blueParticipants.reduce((sum, p) => sum + (p.turretsKilled || 0), 0);
+                  const redTowers = redParticipants.reduce((sum, p) => sum + (p.turretsKilled || 0), 0);
+                  const blueInhibs = blueParticipants.reduce((sum, p) => sum + (p.inhibitorsKilled || 0), 0);
+                  const redInhibs = redParticipants.reduce((sum, p) => sum + (p.inhibitorsKilled || 0), 0);
 
-                  {/* Right Column: Bans */}
-                  <div className="card" style={{ border: "1px solid var(--border-dark)", padding: "1.5rem" }}>
-                    <h4 style={{ fontSize: "0.9rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.4rem", textTransform: "uppercase", marginBottom: "1rem" }}>Bans</h4>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                      <div>
-                        <span style={{ fontSize: "0.75rem", color: "#4fa8ff", display: "block", marginBottom: "0.5rem" }}>Blue Side Bans</span>
-                        <div style={{ display: "flex", gap: "0.4rem" }}>
-                          {(currentGameDetails.teams[100]?.bans || []).map((ban, i) => (
-                            <div key={i} style={{ width: "32px", height: "32px", border: "1px solid var(--border-dark)", borderRadius: "2px", overflow: "hidden", backgroundColor: "rgba(0,0,0,0.3)" }}>
-                              {/* check if ban is name or ID */}
-                              {typeof ban === "string" ? (
-                                <img src={getChampionIcon(ban)} alt="ban" style={{ width: "100%", height: "100%", filter: "grayscale(100%)" }} />
-                              ) : (
-                                <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", display: "block", textAlign: "center", paddingTop: "6px" }}>Banned</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
+                  return (
+                    <div className="grid-2" style={{ gap: "2rem" }}>
+                      {/* Left Column: Side-by-side stats */}
+                      <div className="card" style={{ border: "1px solid var(--border-dark)", display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem" }}>
+                        <h4 style={{ fontSize: "0.9rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.4rem", textTransform: "uppercase" }}>Objectives Breakdown</h4>
+                        {[
+                          { label: "Total Kills", blue: blueTotalKills, red: redTotalKills },
+                          { label: "Towers Destroyed", blue: blueTowers, red: redTowers },
+                          { label: "Inhibitors Destroyed", blue: blueInhibs, red: redInhibs },
+                          { label: "First Blood", blue: currentGameDetails.teams[100]?.firstBlood ? "🩸 Yes" : "No", red: currentGameDetails.teams[200]?.firstBlood ? "🩸 Yes" : "No" }
+                        ].map((row, idx) => (
+                          <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "0.5rem" }}>
+                            <span style={{ color: "#4fa8ff", fontWeight: "bold", width: "30%", textAlign: "left" }}>{row.blue}</span>
+                            <span style={{ color: "var(--text-secondary)", fontSize: "0.8rem", width: "40%", textAlign: "center" }}>{row.label}</span>
+                            <span style={{ color: "#ffd47f", fontWeight: "bold", width: "30%", textAlign: "right" }}>{row.red}</span>
+                          </div>
+                        ))}
                       </div>
-                      <div>
-                        <span style={{ fontSize: "0.75rem", color: "#ffd47f", display: "block", marginBottom: "0.5rem" }}>Red Side Bans</span>
-                        <div style={{ display: "flex", gap: "0.4rem" }}>
-                          {(currentGameDetails.teams[200]?.bans || []).map((ban, i) => (
-                            <div key={i} style={{ width: "32px", height: "32px", border: "1px solid var(--border-dark)", borderRadius: "2px", overflow: "hidden", backgroundColor: "rgba(0,0,0,0.3)" }}>
-                              {typeof ban === "string" ? (
-                                <img src={getChampionIcon(ban)} alt="ban" style={{ width: "100%", height: "100%", filter: "grayscale(100%)" }} />
-                              ) : (
-                                <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", display: "block", textAlign: "center", paddingTop: "6px" }}>Banned</span>
-                              )}
-                            </div>
-                          ))}
+
+                      {/* Right Column: Player structural stats */}
+                      <div className="card" style={{ border: "1px solid var(--border-dark)", padding: "1.5rem" }}>
+                        <h4 style={{ fontSize: "0.9rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.4rem", textTransform: "uppercase", marginBottom: "1.0rem" }}>Player Takedowns</h4>
+                        <div style={{ overflowX: "auto" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem" }}>
+                            <thead>
+                              <tr style={{ borderBottom: "1px solid var(--border-dark)", color: "var(--text-muted)", textAlign: "left" }}>
+                                <th style={{ padding: "0.4rem" }}>Player</th>
+                                <th style={{ padding: "0.4rem", textAlign: "center" }}>Towers</th>
+                                <th style={{ padding: "0.4rem", textAlign: "center" }}>Inhibs</th>
+                                <th style={{ padding: "0.4rem", textAlign: "center" }}>FB</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[...blueParticipants, ...redParticipants].map((p, idx) => (
+                                <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                  <td style={{ padding: "0.4rem", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                                    <img src={getChampionIcon(p.champion)} alt={p.champion} style={{ width: "16px", height: "16px", borderRadius: "2px" }} />
+                                    <span style={{ fontWeight: "600", color: p.teamId === 100 ? "#4fa8ff" : "#ffd47f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80px" }}>{p.playerName}</span>
+                                  </td>
+                                  <td style={{ padding: "0.4rem", textAlign: "center" }}>{p.turretsKilled || 0}</td>
+                                  <td style={{ padding: "0.4rem", textAlign: "center" }}>{p.inhibitorsKilled || 0}</td>
+                                  <td style={{ padding: "0.4rem", textAlign: "center" }}>{p.firstBlood ? "🩸" : "-"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
             )}
 
