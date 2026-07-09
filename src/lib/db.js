@@ -2304,16 +2304,48 @@ export async function saveMatchDetails(matchId, details) {
     return details;
   }
 }
+function cleanFirstBloodData(data, isCollection = false) {
+  if (!data) return data;
+  const cleanGame = (game) => {
+    if (!game || !game.participants) return game;
+    let foundFirstBlood = false;
+    game.participants.forEach(p => {
+      if (p.firstBlood) {
+        if (foundFirstBlood) {
+          p.firstBlood = false;
+        } else {
+          foundFirstBlood = true;
+        }
+      }
+    });
+    return game;
+  };
+  const cleanSeries = (series) => {
+    if (!series) return series;
+    if (Array.isArray(series)) {
+      return series.map(cleanGame);
+    }
+    return cleanGame(series);
+  };
+  if (isCollection) {
+    const cleanedCollection = {};
+    Object.keys(data).forEach(matchId => {
+      cleanedCollection[matchId] = cleanSeries(data[matchId]);
+    });
+    return cleanedCollection;
+  }
+  return cleanSeries(data);
+}
 
 export async function fetchMatchDetails(matchId) {
   if (isMockMode) {
     const allDetails = getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
-    return allDetails[matchId] || null;
+    return cleanFirstBloodData(allDetails[matchId] || null);
   } else {
     try {
       const dbRef = ref(database, `matchDetails/${matchId}`);
       const snapshot = await get(dbRef);
-      return snapshot.exists() ? snapshot.val() : null;
+      return cleanFirstBloodData(snapshot.exists() ? snapshot.val() : null);
     } catch (e) {
       console.error(`Firebase fetch error for matchDetails/${matchId}:`, e);
       return null;
@@ -2431,10 +2463,10 @@ export async function submitCaptainGameScore(matchId, gameIndex, gameDetails) {
 export function subscribeToMatchDetails(matchId, callback) {
   if (isMockMode) {
     const allDetails = getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
-    callback(allDetails[matchId] || null);
+    callback(cleanFirstBloodData(allDetails[matchId] || null));
 
     const handler = (newAllDetails) => {
-      callback(newAllDetails[matchId] || null);
+      callback(cleanFirstBloodData(newAllDetails[matchId] || null));
     };
 
     subscribers.matchDetails.push(handler);
@@ -2444,7 +2476,7 @@ export function subscribeToMatchDetails(matchId, callback) {
   } else {
     const dbRef = ref(database, `matchDetails/${matchId}`);
     return onValue(dbRef, (snapshot) => {
-      callback(snapshot.val() || null);
+      callback(cleanFirstBloodData(snapshot.val() || null));
     }, (error) => {
       console.error(`Firebase subscription error for matchDetails/${matchId}:`, error);
     });
@@ -2453,12 +2485,12 @@ export function subscribeToMatchDetails(matchId, callback) {
 
 export async function fetchAllMatchDetails() {
   if (isMockMode) {
-    return getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS);
+    return cleanFirstBloodData(getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS), true);
   } else {
     try {
       const dbRef = ref(database, `matchDetails`);
       const snapshot = await get(dbRef);
-      return snapshot.exists() ? snapshot.val() : {};
+      return cleanFirstBloodData(snapshot.exists() ? snapshot.val() : {}, true);
     } catch (e) {
       console.error(`Firebase fetch error for all matchDetails:`, e);
       return {};
@@ -2468,10 +2500,10 @@ export async function fetchAllMatchDetails() {
 
 export function subscribeToAllMatchDetails(callback) {
   if (isMockMode) {
-    callback(getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS));
+    callback(cleanFirstBloodData(getMockStorage("matchDetails", DEFAULT_MATCH_DETAILS), true));
     
     const handler = (newAllDetails) => {
-      callback(newAllDetails || {});
+      callback(cleanFirstBloodData(newAllDetails || {}, true));
     };
     
     subscribers.matchDetails.push(handler);
@@ -2481,7 +2513,7 @@ export function subscribeToAllMatchDetails(callback) {
   } else {
     const dbRef = ref(database, `matchDetails`);
     return onValue(dbRef, (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : {});
+      callback(cleanFirstBloodData(snapshot.exists() ? snapshot.val() : {}, true));
     });
   }
 }

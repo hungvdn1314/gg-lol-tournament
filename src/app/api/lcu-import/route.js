@@ -65,7 +65,7 @@ export async function POST(request) {
         tripleKills: s.tripleKills || 0,
         quadraKills: s.quadraKills || 0,
         pentaKills: s.pentaKills || 0,
-        firstBlood: s.firstBloodKill || s.firstBloodAssist || false,
+        firstBlood: s.firstBloodKill || false,
         controlWards: s.visionWardsBoughtInGame || 0,
         wardsPlaced: s.wardsPlaced || 0,
         wardsKilled: s.wardsKilled || 0,
