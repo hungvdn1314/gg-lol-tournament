@@ -6,10 +6,10 @@ import { ref, get, set, update, remove, onValue } from "firebase/database";
 // ==========================================
 
 const DEFAULT_CONFIG = {
-  title: "Gear Games ARAM Mayhem 2026",
-  date: "June 25 - July 5, 2026",
+  title: "Gear Games League of Legend Championship",
+  date: "Jul 22 - Aug 3, 2026",
   venue: "Howling Abyss (Online)",
-  description: "The annual corporate showdown. Eight departments clash in the chaotic ARAM Mayhem for gold, glory, and the corporate trophy.",
+  description: "",
   finalized: false,
   captainPasscode: "aram2026"
 };
@@ -2013,8 +2013,8 @@ function setMockStorage(key, value) {
 // Initialise Local Storage defaults if not present
 if (typeof window !== "undefined") {
   const currentTitle = getMockStorage("config", DEFAULT_CONFIG)?.title;
-  if (currentTitle && !currentTitle.includes("ARAM")) {
-    console.log("Old database detected. Resetting to finalized ARAM Mayhem structure.");
+  if (currentTitle && (currentTitle.includes("ARAM") || !currentTitle.includes("Legend"))) {
+    console.log("Old database detected. Resetting to Gear Games League of Legend Championship version.");
     localStorage.removeItem("lol_tourney_config");
     localStorage.removeItem("lol_tourney_teams");
     localStorage.removeItem("lol_tourney_matches");

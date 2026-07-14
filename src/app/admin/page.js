@@ -746,12 +746,7 @@ export default function Admin() {
           >
             <HextechCrest size={18} /> Riot Tournament API
           </button>
-          <button 
-            onClick={() => { setActiveTab("news"); setScoreManagingMatch(null); }}
-            className={`admin-nav-item ${activeTab === "news" ? "active" : ""}`}
-          >
-            <Info size={18} /> News & Announcements
-          </button>
+
         </aside>
 
         {/* Content Pane */}

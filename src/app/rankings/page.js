@@ -11,56 +11,72 @@ import { getLatestDDragonVersion } from "@/lib/riot";
 const calculateGameMVP = (participants, gameDuration) => {
   if (!participants || participants.length === 0) return [];
 
-  // Calculate team-level statistics directly from participants
+  // Identify the winning team side
+  const winningParticipant = participants.find(p => p.win);
+  const winningTeamId = winningParticipant ? winningParticipant.teamId : null;
+
+  if (winningTeamId === null) return [];
+
+  // Calculate team-level statistics for the winning team
   const teamTotals = {
-    100: { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 },
-    200: { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 }
+    kills: 0,
+    dmgDealt: 0,
+    dmgTaken: 0,
+    healing: 0,
+    kdaSum: 0
   };
 
-  participants.forEach(p => {
-    const team = teamTotals[p.teamId];
-    if (team) {
-      team.kills += (p.kills || 0);
-      team.dmgDealt += (p.damageDealt || 0);
-      team.dmgTaken += (p.damageTaken || 0);
-      team.healing += (p.healing || 0);
+  const participantsWithKda = participants.map(p => {
+    const kda = (p.kills + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
+    return { ...p, kda };
+  });
+
+  participantsWithKda.forEach(p => {
+    if (p.teamId === winningTeamId) {
+      teamTotals.kills += (p.kills || 0);
+      teamTotals.dmgDealt += (p.damageDealt || 0);
+      teamTotals.dmgTaken += (p.damageTaken || 0);
+      teamTotals.healing += (p.healing || 0);
+      teamTotals.kdaSum += p.kda;
     }
   });
 
-  const scored = participants.map(p => {
-    const team = teamTotals[p.teamId] || { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 };
+  const scored = participantsWithKda.map(p => {
+    if (p.teamId !== winningTeamId) {
+      return {
+        ...p,
+        totalScore: 0,
+        mvpBreakdown: { kdaScore: 0, kpScore: 0, dmgScore: 0, defUtilScore: 0, hypeScore: 0, winBonus: 0, totalScore: 0 }
+      };
+    }
 
-    // 1. KDA (Max 1.5 pts) - capped at 6.0 KDA for full points, no 0-death multiplier
-    const kda = (p.kills + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
-    const kdaScore = Math.min(kda * 0.25, 1.5);
+    // 1. Kill Participation (45% -> max 450)
+    const kp = teamTotals.kills > 0 ? (p.kills + (p.assists || 0)) / teamTotals.kills : 0;
+    const kpScore = kp * 450;
 
-    // 2. Kill Participation (Max 2.5 pts)
-    const kp = team.kills > 0 ? (p.kills + (p.assists || 0)) / team.kills : 0;
-    const kpScore = kp * 2.5;
+    // 2. Damage Share (20% -> max 200)
+    const damageShare = teamTotals.dmgDealt > 0 ? (p.damageDealt || 0) / teamTotals.dmgDealt : 0;
+    const dmgScore = damageShare * 200;
 
-    // 3. Damage Share (Max 2.0 pts)
-    const damageShare = team.dmgDealt > 0 ? (p.damageDealt || 0) / team.dmgDealt : 0;
-    const dmgScore = damageShare * 2.0;
+    // 3. Damage Taken Share (15% -> max 150)
+    const dmgTakenShare = teamTotals.dmgTaken > 0 ? (p.damageTaken || 0) / teamTotals.dmgTaken : 0;
+    const defUtilScore = dmgTakenShare * 150;
 
-    // 4. Defense & Utility Share (Max 2.5 pts)
-    const dmgTakenShare = team.dmgTaken > 0 ? (p.damageTaken || 0) / team.dmgTaken : 0;
-    const healingShare = team.healing > 0 ? (p.healing || 0) / team.healing : 0;
-    const defUtilScore = Math.max(dmgTakenShare, healingShare) * 2.5;
+    // 4. Healing Share (10% -> max 100)
+    const healingShare = teamTotals.healing > 0 ? (p.healing || 0) / teamTotals.healing : 0;
+    const hypeScore = healingShare * 100;
 
-    // 5. Objective & Hype Events (Max 1.5 pts)
-    const firstBloodBonus = p.firstBlood ? 0.3 : 0;
-    const turretInhibBonus = ((p.turretsKilled || 0) + (p.inhibitorsKilled || 0)) * 0.2;
-    const tripleBonus = (p.tripleKills || 0) > 0 ? 0.2 : 0;
-    const quadraBonus = (p.quadraKills || 0) > 0 ? 0.4 : 0;
-    const pentaBonus = (p.pentaKills || 0) > 0 ? 0.6 : 0;
-    const hypeScore = Math.min(firstBloodBonus + turretInhibBonus + tripleBonus + quadraBonus + pentaBonus, 1.5);
+    // 5. KDA Share (10% -> max 100)
+    const kdaShare = teamTotals.kdaSum > 0 ? p.kda / teamTotals.kdaSum : 0;
+    const winBonus = kdaShare * 100;
 
-    // 6. Win Bonus (Max 1.0 pt)
-    const winBonus = p.win ? 1.0 : 0;
+    const totalScore = kpScore + dmgScore + defUtilScore + hypeScore + winBonus;
 
-    const totalScore = kdaScore + kpScore + dmgScore + defUtilScore + hypeScore + winBonus;
-
-    return { ...p, totalScore };
+    return {
+      ...p,
+      totalScore,
+      mvpBreakdown: { kdaScore: winBonus, kpScore, dmgScore, defUtilScore, hypeScore, winBonus: 0, totalScore }
+    };
   });
   
   return scored.sort((a, b) => b.totalScore - a.totalScore);
@@ -76,6 +92,7 @@ export default function PlayerRankings() {
   const metrics = [
     { id: "seriesMvpCount", label: "Series MVPs", icon: <SummonersCup size={14} /> },
     { id: "matchMvpCount", label: "Match MVPs", icon: <Award size={14} /> },
+    { id: "avgMvpScore", label: "Avg MVP Score", icon: <Award size={14} /> },
     { id: "kda", label: "KDA Ratio", icon: <Crosshair size={14} /> },
     { id: "dpm", label: "DMG / Min", icon: <Target size={14} /> },
     { id: "dmgShare", label: "DMG Share %", icon: <Target size={14} /> },
@@ -140,7 +157,9 @@ export default function PlayerRankings() {
             teamKills: 0, teamDamageDealt: 0, teamDamageTaken: 0,
             durationMins: 0,
             matchMvpCount: 0,
-            seriesMvpCount: 0
+            seriesMvpCount: 0,
+            totalMvpScore: 0,
+            avgMvpScore: 0
           };
         }
 
@@ -166,6 +185,7 @@ export default function PlayerRankings() {
         // Add to series scores
         const pScored = scored.find(s => s.playerName === p.playerName);
         if (pScored) {
+          stats.totalMvpScore = (stats.totalMvpScore || 0) + pScored.totalScore;
           seriesScores[p.playerName] = (seriesScores[p.playerName] || 0) + pScored.totalScore;
         }
       });
@@ -192,7 +212,8 @@ export default function PlayerRankings() {
       kp: p.teamKills > 0 ? ((p.kills + p.assists) / p.teamKills) * 100 : 0,
       gpm: p.gold / p.durationMins,
       dmgTakenShare: p.teamDamageTaken > 0 ? (p.damageTaken / p.teamDamageTaken) * 100 : 0,
-      cspm: p.cs / p.durationMins
+      cspm: p.cs / p.durationMins,
+      avgMvpScore: p.gamesPlayed > 0 ? p.totalMvpScore / p.gamesPlayed : 0
     };
   });
 

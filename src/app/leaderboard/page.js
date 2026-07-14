@@ -8,26 +8,49 @@ import { subscribeToData } from "@/lib/db";
 
 export default function Leaderboard() {
   const [teams, setTeams] = useState({});
+  const [matches, setMatches] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubTeams = subscribeToData("teams", (data) => {
       setTeams(data || {});
+    });
+    const unsubMatches = subscribeToData("matches", (data) => {
+      setMatches(data || {});
       setLoading(false);
     });
-    return unsubTeams;
+    return () => {
+      unsubTeams();
+      unsubMatches();
+    };
   }, []);
 
   const teamList = Object.values(teams);
 
+  // Helper to determine head-to-head winner between two teams
+  const getHeadToHead = (teamAId, teamBId) => {
+    const match = Object.values(matches).find(
+      (m) =>
+        m.status === "completed" &&
+        ((m.teamAId === teamAId && m.teamBId === teamBId) ||
+          (m.teamAId === teamBId && m.teamBId === teamAId))
+    );
+    if (!match) return 0;
+    return match.winnerId === teamAId ? 1 : -1;
+  };
+
   // Sorting function: 
   // 1. Points (descending)
-  // 2. Net game difference (gameWins - gameLosses) (descending)
-  // 3. Game wins (descending)
-  // 4. Name (alphabetical)
+  // 2. Head-to-Head winner
+  // 3. Net game difference (gameWins - gameLosses) (descending)
+  // 4. Game wins (descending)
+  // 5. Name (alphabetical)
   const sortTeams = (a, b) => {
     const ptsDiff = (b.stats?.points || 0) - (a.stats?.points || 0);
     if (ptsDiff !== 0) return ptsDiff;
+
+    const h2h = getHeadToHead(b.id, a.id);
+    if (h2h !== 0) return h2h;
 
     const aDiff = (a.stats?.gameWins || 0) - (a.stats?.gameLosses || 0);
     const bDiff = (b.stats?.gameWins || 0) - (b.stats?.gameLosses || 0);
@@ -107,7 +130,7 @@ export default function Leaderboard() {
                       <td>
                         <div className="leaderboard-team-cell">
                           <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} className="leaderboard-team-logo" />
-                          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "160px" }}>{team.name}</span>
+                          <span style={{ fontWeight: "600" }}>{team.name}</span>
                         </div>
                       </td>
                       <td style={{ textAlign: "center", fontWeight: "500" }}>{team.stats?.played || 0}</td>
@@ -162,7 +185,7 @@ export default function Leaderboard() {
                       <td>
                         <div className="leaderboard-team-cell">
                           <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} className="leaderboard-team-logo" />
-                          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "160px" }}>{team.name}</span>
+                          <span style={{ fontWeight: "600" }}>{team.name}</span>
                         </div>
                       </td>
                       <td style={{ textAlign: "center", fontWeight: "500" }}>{team.stats?.played || 0}</td>
@@ -217,7 +240,7 @@ export default function Leaderboard() {
                       <td>
                         <div className="leaderboard-team-cell">
                           <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} className="leaderboard-team-logo" />
-                          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "160px" }}>{team.name}</span>
+                          <span style={{ fontWeight: "600" }}>{team.name}</span>
                         </div>
                       </td>
                       <td style={{ textAlign: "center", fontWeight: "500" }}>{team.stats?.played || 0}</td>
@@ -244,7 +267,7 @@ export default function Leaderboard() {
       <div className="card" style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-dark)", padding: "1.25rem 1.5rem", marginBottom: "4rem" }}>
         <Info size={20} style={{ color: "var(--primary-gold)", flexShrink: 0, marginTop: "0.15rem" }} />
         <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: "1.5" }}>
-          <strong>Tie-breaker Rule Details:</strong> Teams are ordered by points. In the case of equal points, ranking is determined by game wins-losses differential, followed by total individual game wins, and finally the alphabetical order of team names. In playoffs, top 2 teams of each group advance.
+          <strong>Tie-breaker Rule Details:</strong> Standing order is determined by: 1. Higher points; 2. Head-to-head result; 3. Game difference (wins - losses); 4. Kill differential (kills - deaths); 5. Total game completion time. If a tie still persists, a random draw is conducted. In playoffs, the top 2 teams of each group advance.
         </div>
       </div>
     </div>

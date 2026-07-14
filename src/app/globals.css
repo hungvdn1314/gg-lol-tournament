@@ -1,42 +1,42 @@
 /* Gear Games Corporate LoL Cup 2026 - Global Styling */
 
 :root {
-  /* Colors - Red, Yellow & White Light Esports Redesign */
-  --bg-primary: #FFFFFF;      /* Pure White Background */
-  --bg-secondary: #F8FAFC;    /* Slate 50 Off-White */
-  --bg-tertiary: #F1F5F9;     /* Slate 100 Soft Gray */
+  /* Colors - Dark Esports Theme (Black background, Gold/Yellow & White text) */
+  --bg-primary: #0A0A0C;      /* Deep Black Background */
+  --bg-secondary: #121216;    /* Dark Card Background */
+  --bg-tertiary: #1A1A22;     /* Slightly lighter dark background */
   
-  --primary-red: #FF2E3B;     /* Esports Action Red */
-  --primary-red-bright: #FF5E6A;
-  --primary-red-dim: #D32F2F;
-  --primary-red-rgb: 255, 46, 59;
+  --primary-red: var(--primary-gold);
+  --primary-red-bright: var(--primary-gold-bright);
+  --primary-red-dim: var(--primary-gold-dim);
+  --primary-red-rgb: 245, 176, 65;
 
   --primary-gold: #F5B041;    /* Championship Yellow/Gold */
-  --primary-gold-bright: #F8C471;
+  --primary-gold-bright: #FFE082; /* Bright Yellow/Gold */
   --primary-gold-dim: #D68910;
   --primary-gold-rgb: 245, 176, 65;
   
-  --text-primary: #0F172A;    /* Slate 900 High-Contrast Primary Text */
-  --text-secondary: #334155;  /* Slate 700 Secondary Text */
-  --text-muted: #64748B;      /* Slate 500 Muted Text */
+  --text-primary: #FFFFFF;    /* High-Contrast White Text */
+  --text-secondary: #E2E8F0;  /* Off-White Secondary Text */
+  --text-muted: #94A3B8;      /* Muted Text */
   
   --color-success: #10B981;
-  --color-danger: #FF2E3B;    /* Tied to esports red */
-  --color-warning: #F5B041;   /* Tied to gold/yellow */
+  --color-danger: #D68910;
+  --color-warning: #F5B041;
   --color-info: #3B82F6;
 
-  --accent-purple: var(--primary-red);
-  --accent-purple-glow: rgba(255, 46, 59, 0.15);
+  --accent-purple: var(--primary-gold); /* Tie accent to gold instead of red/purple */
+  --accent-purple-glow: rgba(245, 176, 65, 0.15);
   
-  --border-gold: rgba(245, 176, 65, 0.35);
-  --border-gold-hover: rgba(245, 176, 65, 0.65);
-  --border-red: rgba(255, 46, 59, 0.3);
-  --border-red-hover: rgba(255, 46, 59, 0.6);
-  --border-dark: #E2E8F0;     /* Slate 200 light border */
+  --border-gold: rgba(245, 176, 65, 0.25);
+  --border-gold-hover: rgba(245, 176, 65, 0.5);
+  --border-red: rgba(245, 176, 65, 0.25);
+  --border-red-hover: rgba(245, 176, 65, 0.5);
+  --border-dark: #1E293B;     /* Slate 800 dark border */
   
   /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(226, 232, 240, 0.8);
+  --glass-bg: rgba(18, 18, 22, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
 
   /* Layout & Transitions */
   --font-family: var(--font-chakra-petch), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -56,8 +56,8 @@ html, body {
   background-color: var(--bg-primary);
   background-image: 
     radial-gradient(circle, transparent 20%, var(--bg-primary) 20%, var(--bg-primary) 80%, transparent 80%, transparent),
-    repeating-linear-gradient(0deg, rgba(226, 232, 240, 0.22) 0px, rgba(226, 232, 240, 0.22) 1px, transparent 1px, transparent 24px),
-    repeating-linear-gradient(90deg, rgba(226, 232, 240, 0.22) 0px, rgba(226, 232, 240, 0.22) 1px, transparent 1px, transparent 24px);
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 24px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 24px);
   background-size: 24px 24px, 24px 24px, 24px 24px;
   color: var(--text-secondary);
   font-family: var(--font-family);
@@ -117,10 +117,10 @@ a {
 
 /* Layout Parts */
 .app-header {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(18, 18, 22, 0.95);
   backdrop-filter: blur(12px);
-  border-bottom: 3px solid var(--primary-red);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border-bottom: 3px solid var(--primary-gold);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -140,15 +140,16 @@ a {
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  margin-right: 2.5rem;
 }
 
 .logo-section h1 {
   font-family: var(--font-header);
-  font-size: 1.25rem;
+  font-size: 0.95rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary-red) 100%);
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #FFFFFF 30%, var(--primary-gold) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: none;
@@ -235,8 +236,9 @@ a {
 
 /* Hero Section */
 .hero-banner {
-  background: linear-gradient(rgba(255, 255, 255, 0.88), var(--bg-primary)), url('/aram_banner.jpg') no-repeat center center;
-  background-size: cover;
+  background: radial-gradient(circle at 50% 30%, rgba(245, 176, 65, 0.1) 0%, transparent 60%), 
+              radial-gradient(circle at 10% 80%, rgba(245, 176, 65, 0.05) 0%, transparent 40%),
+              linear-gradient(135deg, #0A0A0C 0%, #15151A 100%);
   min-height: 400px;
   display: flex;
   flex-direction: column;
@@ -244,7 +246,7 @@ a {
   align-items: center;
   text-align: center;
   padding: 4rem 1rem;
-  border-bottom: 2px solid var(--primary-red);
+  border-bottom: 2px solid var(--primary-gold);
   position: relative;
 }
 
@@ -318,7 +320,8 @@ a {
 .btn-primary {
   background-color: var(--primary-red);
   border: 1px solid var(--primary-red);
-  color: #FFFFFF;
+  color: #0A0A0C;
+  font-weight: 700;
   box-shadow: 0 4px 12px rgba(var(--primary-red-rgb), 0.15);
   position: relative;
   overflow: hidden;
@@ -354,7 +357,8 @@ a {
 .btn-secondary {
   background-color: var(--primary-gold);
   border: 1px solid var(--primary-gold);
-  color: #0F172A;
+  color: #0A0A0C;
+  font-weight: 700;
   box-shadow: 0 4px 12px rgba(var(--primary-gold-rgb), 0.15);
 }
 
@@ -1215,4 +1219,224 @@ a {
 
 .footer-poro:hover .poro-tongue {
   transform: scaleY(1.1);
+}
+
+/* ==========================================================================
+   TOURNAMENT POSTER ALIGNMENT STYLES
+   ========================================================================== */
+
+/* Slanted Esports Badge */
+.poster-badge {
+  background-color: var(--primary-gold);
+  color: #000000;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-style: italic;
+  font-size: 0.9rem;
+  padding: 0.35rem 1.25rem;
+  display: inline-block;
+  letter-spacing: 0.1em;
+  transform: skewX(-15deg);
+  border-radius: 2px;
+  box-shadow: 0 0 15px rgba(245, 176, 65, 0.35);
+  margin-bottom: 1.5rem;
+}
+
+.poster-badge span {
+  display: inline-block;
+  transform: skewX(15deg); /* Un-skew the inner text so it's readable */
+}
+
+/* Massive Championship metallic font */
+.poster-title {
+  font-family: var(--font-family);
+  font-size: clamp(2.8rem, 8vw, 5.5rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 0.95;
+  letter-spacing: 0.05em;
+  background: linear-gradient(to bottom, #FFFFFF 30%, #FFE082 70%, var(--primary-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(245, 176, 65, 0.4);
+  margin-bottom: 2rem;
+  display: inline-block;
+  font-style: italic;
+}
+
+/* Interactive Timeline matching poster */
+.timeline-container {
+  position: relative;
+  max-width: 800px;
+  margin: 4rem auto;
+  padding: 2rem 0;
+  z-index: 5;
+}
+
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent 0%, var(--primary-gold) 15%, var(--primary-gold) 85%, transparent 100%);
+  box-shadow: 0 0 10px rgba(245, 176, 65, 0.5);
+  transform: translateX(-50%);
+}
+
+.timeline-item {
+  position: relative;
+  width: 50%;
+  margin-bottom: 4rem;
+}
+
+.timeline-item.left {
+  left: 0;
+  padding-right: 3rem;
+  text-align: right;
+}
+
+.timeline-item.right {
+  left: 50%;
+  padding-left: 3rem;
+  text-align: left;
+}
+
+.timeline-node {
+  position: absolute;
+  top: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--bg-primary);
+  border: 4px solid var(--primary-gold);
+  box-shadow: 0 0 12px var(--primary-gold);
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.timeline-item:hover .timeline-node {
+  background-color: var(--primary-gold);
+  transform: scale(1.2);
+  box-shadow: 0 0 20px var(--primary-gold);
+}
+
+.timeline-item.left .timeline-node {
+  right: -9px;
+}
+
+.timeline-item.right .timeline-node {
+  left: -9px;
+}
+
+.timeline-content {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.timeline-item:hover .timeline-content {
+  transform: translateY(-2px);
+}
+
+.timeline-item.left .timeline-content {
+  align-items: flex-end;
+}
+
+.timeline-item.right .timeline-content {
+  align-items: flex-start;
+}
+
+.timeline-date-badge {
+  background-color: var(--primary-gold);
+  color: #000000;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-style: italic;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+  display: inline-block;
+  letter-spacing: 0.05em;
+  transform: skewX(-15deg);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(245, 176, 65, 0.3);
+}
+
+.timeline-date-badge span {
+  display: inline-block;
+  transform: skewX(15deg);
+}
+
+.timeline-stage-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 0;
+  text-transform: uppercase;
+  font-style: italic;
+  transition: color 0.2s ease;
+}
+
+.timeline-item:hover .timeline-stage-title {
+  color: var(--primary-gold-bright);
+}
+
+.timeline-stage-title.final {
+  color: var(--primary-gold-bright);
+  text-shadow: 0 0 10px rgba(245, 176, 65, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Mobile responsive timeline */
+@media (max-width: 768px) {
+  .timeline-container::before {
+    left: 20px;
+  }
+  .timeline-item {
+    width: 100%;
+    left: 0 !important;
+    padding-left: 3rem !important;
+    padding-right: 0 !important;
+    text-align: left !important;
+    margin-bottom: 3rem;
+  }
+  .timeline-item.left .timeline-content, 
+  .timeline-item.right .timeline-content {
+    align-items: flex-start !important;
+  }
+  .timeline-node {
+    left: 11px !important;
+    right: auto !important;
+    top: 6px;
+  }
+}
+
+/* Side-view vertical timeline layout for desktop grid integration */
+.timeline-container.side-view::before {
+  left: 20px !important;
+  transform: none !important;
+}
+
+.timeline-container.side-view .timeline-item {
+  width: 100% !important;
+  left: 0 !important;
+  padding-left: 3rem !important;
+  padding-right: 0 !important;
+  text-align: left !important;
+  margin-bottom: 2rem !important;
+}
+
+.timeline-container.side-view .timeline-item .timeline-content {
+  align-items: flex-start !important;
+}
+
+.timeline-container.side-view .timeline-node {
+  left: 11px !important;
+  right: auto !important;
+  top: 6px !important;
 }

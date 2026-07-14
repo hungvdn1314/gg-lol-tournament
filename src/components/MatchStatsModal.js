@@ -86,58 +86,69 @@ export default function MatchStatsModal({ match, teams, onClose }) {
   const calculateMVP = (participants, gameDuration) => {
     if (!participants || participants.length === 0) return [];
 
-    // Calculate team-level statistics directly from participants
+    // Identify the winning team side
+    const winningParticipant = participants.find(p => p.win);
+    const winningTeamId = winningParticipant ? winningParticipant.teamId : null;
+
+    if (winningTeamId === null) return [];
+
+    // Calculate team-level statistics for the winning team
     const teamTotals = {
-      100: { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 },
-      200: { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 }
+      kills: 0,
+      dmgDealt: 0,
+      dmgTaken: 0,
+      healing: 0,
+      kdaSum: 0
     };
 
-    participants.forEach(p => {
-      const team = teamTotals[p.teamId];
-      if (team) {
-        team.kills += (p.kills || 0);
-        team.dmgDealt += (p.damageDealt || 0);
-        team.dmgTaken += (p.damageTaken || 0);
-        team.healing += (p.healing || 0);
+    const participantsWithKda = participants.map(p => {
+      const kda = (p.kills + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
+      return { ...p, kda };
+    });
+
+    participantsWithKda.forEach(p => {
+      if (p.teamId === winningTeamId) {
+        teamTotals.kills += (p.kills || 0);
+        teamTotals.dmgDealt += (p.damageDealt || 0);
+        teamTotals.dmgTaken += (p.damageTaken || 0);
+        teamTotals.healing += (p.healing || 0);
+        teamTotals.kdaSum += p.kda;
       }
     });
 
-    const scored = participants.map(p => {
-      const team = teamTotals[p.teamId] || { kills: 0, dmgDealt: 0, dmgTaken: 0, healing: 0 };
+    const scored = participantsWithKda.map(p => {
+      if (p.teamId !== winningTeamId) {
+        return {
+          ...p,
+          mvpBreakdown: { kdaScore: 0, kpScore: 0, dmgScore: 0, defUtilScore: 0, hypeScore: 0, winBonus: 0, totalScore: 0 }
+        };
+      }
 
-      // 1. KDA (Max 1.5 pts) - capped at 6.0 KDA for full points, no 0-death multiplier
-      const kda = (p.kills + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
-      const kdaScore = Math.min(kda * 0.25, 1.5);
+      // 1. Kill Participation (45% -> max 450)
+      const kp = teamTotals.kills > 0 ? (p.kills + (p.assists || 0)) / teamTotals.kills : 0;
+      const kpScore = kp * 450;
 
-      // 2. Kill Participation (Max 2.5 pts)
-      const kp = team.kills > 0 ? (p.kills + (p.assists || 0)) / team.kills : 0;
-      const kpScore = kp * 2.5;
+      // 2. Damage Share (20% -> max 200)
+      const damageShare = teamTotals.dmgDealt > 0 ? (p.damageDealt || 0) / teamTotals.dmgDealt : 0;
+      const dmgScore = damageShare * 200;
 
-      // 3. Damage Share (Max 2.0 pts)
-      const damageShare = team.dmgDealt > 0 ? (p.damageDealt || 0) / team.dmgDealt : 0;
-      const dmgScore = damageShare * 2.0;
+      // 3. Damage Taken Share (15% -> max 150)
+      const dmgTakenShare = teamTotals.dmgTaken > 0 ? (p.damageTaken || 0) / teamTotals.dmgTaken : 0;
+      const defUtilScore = dmgTakenShare * 150;
 
-      // 4. Defense & Utility Share (Max 2.5 pts)
-      const dmgTakenShare = team.dmgTaken > 0 ? (p.damageTaken || 0) / team.dmgTaken : 0;
-      const healingShare = team.healing > 0 ? (p.healing || 0) / team.healing : 0;
-      const defUtilScore = Math.max(dmgTakenShare, healingShare) * 2.5;
+      // 4. Healing Share (10% -> max 100)
+      const healingShare = teamTotals.healing > 0 ? (p.healing || 0) / teamTotals.healing : 0;
+      const hypeScore = healingShare * 100;
 
-      // 5. Objective & Hype Events (Max 1.5 pts)
-      const firstBloodBonus = p.firstBlood ? 0.3 : 0;
-      const turretInhibBonus = ((p.turretsKilled || 0) + (p.inhibitorsKilled || 0)) * 0.2;
-      const tripleBonus = (p.tripleKills || 0) > 0 ? 0.2 : 0;
-      const quadraBonus = (p.quadraKills || 0) > 0 ? 0.4 : 0;
-      const pentaBonus = (p.pentaKills || 0) > 0 ? 0.6 : 0;
-      const hypeScore = Math.min(firstBloodBonus + turretInhibBonus + tripleBonus + quadraBonus + pentaBonus, 1.5);
+      // 5. KDA Share (10% -> max 100)
+      const kdaShare = teamTotals.kdaSum > 0 ? p.kda / teamTotals.kdaSum : 0;
+      const winBonus = kdaShare * 100;
 
-      // 6. Win Bonus (Max 1.0 pt)
-      const winBonus = p.win ? 1.0 : 0;
-
-      const totalScore = kdaScore + kpScore + dmgScore + defUtilScore + hypeScore + winBonus;
+      const totalScore = kpScore + dmgScore + defUtilScore + hypeScore + winBonus;
 
       return {
         ...p,
-        mvpBreakdown: { kdaScore, kpScore, dmgScore, defUtilScore, hypeScore, winBonus, totalScore }
+        mvpBreakdown: { kdaScore: winBonus, kpScore, dmgScore, defUtilScore, hypeScore, winBonus: 0, totalScore }
       };
     });
     
@@ -759,14 +770,15 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                 <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", backgroundColor: "rgba(228,179,60,0.05)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "1rem", marginBottom: "0.5rem", fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
                   <Info size={18} style={{ color: "var(--primary-gold)", flexShrink: 0, marginTop: "0.1rem" }} />
                   <div>
-                    <strong>MVP Algorithm (ARAM Mayhem):</strong> Players are scored dynamically out of 11 possible points {mvpViewMode === "series" ? `per game (Max: ${11 * validGames.length} points for a BO${match.bestOf || 3})` : `(Max: 11 points)`}.<br />
-                    Breakdown: KDA (max 1.5), Kill Participation (max 2.5), Damage Share (max 2.0), Defense & Utility (max 2.5), Hype & Objectives (max 1.5), Win Bonus (+1.0).
+                    <strong>MVP Algorithm:</strong> Players are scored dynamically out of 1000 points {mvpViewMode === "series" ? `per game (Max: ${1000 * validGames.length} points for a BO${match.bestOf || 3})` : `(Max: 1000 points)`}. Only players from the winning team of each game are eligible.<br />
+                    Breakdown: Kill Participation (max 450), Damage Share (max 200), Damage Taken Share (max 150), Healing Share (max 100), KDA Share (max 100).
                   </div>
                 </div>
 
                 {(() => {
-                  const dataToRender = mvpViewMode === "game" ? scoredParticipants : seriesScoredParticipants;
-                  const maxPoints = mvpViewMode === "game" ? 11 : 11 * validGames.length;
+                  const rawData = mvpViewMode === "game" ? scoredParticipants : seriesScoredParticipants;
+                  const dataToRender = rawData.filter(p => p.mvpBreakdown.totalScore > 0);
+                  const maxPoints = mvpViewMode === "game" ? 1000 : 1000 * validGames.length;
                   if (dataToRender.length === 0) return <div style={{textAlign: "center", color: "var(--text-muted)"}}>No data available.</div>;
 
                   return (
@@ -798,20 +810,18 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                                 </div>
                               </div>
                               <div style={{ display: "flex", height: "12px", borderRadius: "2px", overflow: "hidden", backgroundColor: "rgba(0,0,0,0.2)" }}>
-                                <div title={`KDA: ${p.mvpBreakdown.kdaScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.kdaScore / maxPoints) * 100}%`, backgroundColor: "#4caf50" }}></div>
-                                <div title={`Kill Part: ${p.mvpBreakdown.kpScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.kpScore / maxPoints) * 100}%`, backgroundColor: "#2196f3" }}></div>
-                                <div title={`Dmg Share: ${p.mvpBreakdown.dmgScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.dmgScore / maxPoints) * 100}%`, backgroundColor: "#f44336" }}></div>
-                                <div title={`Defense/Utility: ${p.mvpBreakdown.defUtilScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.defUtilScore / maxPoints) * 100}%`, backgroundColor: "#00bcd4" }}></div>
-                                <div title={`Hype/Objectives: ${p.mvpBreakdown.hypeScore.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.hypeScore / maxPoints) * 100}%`, backgroundColor: "#9c27b0" }}></div>
-                                <div title={`Win Bonus: ${p.mvpBreakdown.winBonus.toFixed(2)}`} style={{ width: `${(p.mvpBreakdown.winBonus / maxPoints) * 100}%`, backgroundColor: "var(--primary-gold)" }}></div>
+                                <div title={`Kill Part: ${p.mvpBreakdown.kpScore.toFixed(1)}`} style={{ width: `${(p.mvpBreakdown.kpScore / maxPoints) * 100}%`, backgroundColor: "#2196f3" }}></div>
+                                <div title={`Dmg Share: ${p.mvpBreakdown.dmgScore.toFixed(1)}`} style={{ width: `${(p.mvpBreakdown.dmgScore / maxPoints) * 100}%`, backgroundColor: "#f44336" }}></div>
+                                <div title={`Dmg Taken Share: ${p.mvpBreakdown.defUtilScore.toFixed(1)}`} style={{ width: `${(p.mvpBreakdown.defUtilScore / maxPoints) * 100}%`, backgroundColor: "#00bcd4" }}></div>
+                                <div title={`Healing Share: ${p.mvpBreakdown.hypeScore.toFixed(1)}`} style={{ width: `${(p.mvpBreakdown.hypeScore / maxPoints) * 100}%`, backgroundColor: "#4caf50" }}></div>
+                                <div title={`KDA Share: ${p.mvpBreakdown.kdaScore.toFixed(1)}`} style={{ width: `${(p.mvpBreakdown.kdaScore / maxPoints) * 100}%`, backgroundColor: "var(--primary-gold)" }}></div>
                               </div>
                               <div className="mvp-kda-stats" style={{ justifyContent: "space-between", fontSize: "0.6rem", color: "var(--text-muted)", marginTop: "0.4rem", textTransform: "uppercase", overflowX: "auto", whiteSpace: "nowrap", paddingBottom: "0.2rem", scrollbarWidth: "none" }}>
-                                <span>KDA ({p.mvpBreakdown.kdaScore.toFixed(1)})</span>
                                 <span>KP ({p.mvpBreakdown.kpScore.toFixed(1)})</span>
                                 <span>DMG ({p.mvpBreakdown.dmgScore.toFixed(1)})</span>
-                                <span>DEF/UT ({p.mvpBreakdown.defUtilScore.toFixed(1)})</span>
-                                <span>HYPE ({p.mvpBreakdown.hypeScore.toFixed(1)})</span>
-                                {p.mvpBreakdown.winBonus > 0 && <span>WIN (+{p.mvpBreakdown.winBonus})</span>}
+                                <span>DMG TAKEN ({p.mvpBreakdown.defUtilScore.toFixed(1)})</span>
+                                <span>HEAL ({p.mvpBreakdown.hypeScore.toFixed(1)})</span>
+                                <span>KDA Share ({p.mvpBreakdown.kdaScore.toFixed(1)})</span>
                               </div>
                             </div>
                           </div>

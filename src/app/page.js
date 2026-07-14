@@ -87,9 +87,24 @@ export default function Home() {
   return (
     <div>
       <section className="hero-banner">
-        <span className="hero-badge" style={{ borderColor: "var(--accent-purple)", color: "var(--accent-purple)", background: "rgba(192, 132, 252, 0.08)" }}>ARAM Mayhem Edition</span>
-        <h1 className="hero-title">{config.title}</h1>
-        <p className="hero-subtitle">{config.description}</p>
+        {/* Company Logo at top */}
+        <div style={{ marginBottom: "1.25rem" }}>
+          <img 
+            src="/company_logo.png" 
+            alt="Gear Games Logo" 
+            style={{ height: "38px", objectFit: "contain", filter: "drop-shadow(0 0 10px rgba(255,255,255,0.15))" }}
+          />
+        </div>
+        
+        {/* Slanted LEAGUE OF LEGENDS badge */}
+        <div className="poster-badge">
+          <span>League of Legends</span>
+        </div>
+        
+        {/* Metallic gradient CHAMPIONSHIP title */}
+        <div>
+          <h1 className="poster-title" style={{ fontSize: "clamp(1.8rem, 5.5vw, 3.8rem)", letterSpacing: "0.03em" }}>Gear Games LoL Championship</h1>
+        </div>
         
         <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "2rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.95rem" }}>
@@ -104,11 +119,101 @@ export default function Home() {
 
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
           <Link href="/schedule" className="btn btn-primary">
-            <CrossedSwords size={18} fill="currentColor" /> View Schedule
+            View Schedule
           </Link>
           <Link href="/leaderboard" className="btn btn-secondary">
             View Standings
           </Link>
+        </div>
+      </section>
+
+      {/* Event Timeline & Next Match Countdown Section */}
+      <section style={{ padding: "4rem 0", backgroundColor: "#0A0A0C", borderBottom: "1px solid var(--border-dark)" }}>
+        <div className="container">
+          <div style={{ display: "grid", gridTemplateColumns: nextMatch ? "repeat(auto-fit, minmax(320px, 1fr))" : "1fr", gap: "3rem", alignItems: "center" }}>
+            
+            {/* Left Column: Timeline */}
+            <div>
+              <div style={{ marginBottom: "2rem" }}>
+                <span className="hero-badge" style={{ borderColor: "var(--primary-gold)", color: "var(--primary-gold)", background: "rgba(245, 176, 65, 0.08)", margin: 0 }}>Tournament Schedule</span>
+                <h2 style={{ fontSize: "1.75rem", color: "var(--text-primary)", margin: "0.5rem 0", textTransform: "uppercase" }}>Event Timeline</h2>
+              </div>
+              
+              <div className="timeline-container side-view" style={{ margin: "0", padding: "1rem 0" }}>
+                {/* Timeline Item 1: Group Stage */}
+                <div className="timeline-item">
+                  <div className="timeline-node"></div>
+                  <div className="timeline-content">
+                    <div className="timeline-date-badge">
+                      <span>Jul 22 - Jul 24</span>
+                    </div>
+                    <h3 className="timeline-stage-title">Group Stage</h3>
+                  </div>
+                </div>
+
+                {/* Timeline Item 2: Playoffs */}
+                <div className="timeline-item">
+                  <div className="timeline-node"></div>
+                  <div className="timeline-content">
+                    <div className="timeline-date-badge">
+                      <span>Jul 27 - Jul 30</span>
+                    </div>
+                    <h3 className="timeline-stage-title">Playoffs</h3>
+                  </div>
+                </div>
+
+                {/* Timeline Item 3: Grand Final */}
+                <div className="timeline-item">
+                  <div className="timeline-node"></div>
+                  <div className="timeline-content">
+                    <div className="timeline-date-badge">
+                      <span>Aug 3</span>
+                    </div>
+                    <h3 className="timeline-stage-title final">
+                      🏆 Grand Final
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Countdown */}
+            {nextMatch && (
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <div className="card card-hud" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "340px", width: "100%", margin: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
+                    <ZhonyaHourglass size={14} className="indicator-pulse" style={{ color: "var(--primary-gold)" }} /> Next Match Countdown
+                  </div>
+                  <h3 style={{ fontSize: "1.1rem", marginBottom: "1.5rem", textAlign: "center" }}>
+                    {teams[nextMatch.teamAId]?.name || "TBD"} vs {teams[nextMatch.teamBId]?.name || "TBD"}
+                  </h3>
+                  
+                  <div className="countdown-section">
+                    <div className="countdown-box">
+                      <div className="countdown-val">{String(countdown.days).padStart(2, "0")}</div>
+                      <div className="countdown-lbl">Days</div>
+                    </div>
+                    <div className="countdown-box">
+                      <div className="countdown-val">{String(countdown.hours).padStart(2, "0")}</div>
+                      <div className="countdown-lbl">Hrs</div>
+                    </div>
+                    <div className="countdown-box">
+                      <div className="countdown-val">{String(countdown.minutes).padStart(2, "0")}</div>
+                      <div className="countdown-lbl">Mins</div>
+                    </div>
+                    <div className="countdown-box">
+                      <div className="countdown-val">{String(countdown.seconds).padStart(2, "0")}</div>
+                      <div className="countdown-lbl">Secs</div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: "1.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                    Scheduled for: {new Date(nextMatch.scheduledTime).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
       </section>
 
@@ -157,61 +262,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        <div className="grid-2">
-          {/* Countdown Card */}
-          {nextMatch && (
-            <div className="card card-hud" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "320px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-red)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
-                <ZhonyaHourglass size={14} className="indicator-pulse" /> Next Match Countdown
-              </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "1.5rem", textAlign: "center" }}>
-                {teams[nextMatch.teamAId]?.name || "TBD"} vs {teams[nextMatch.teamBId]?.name || "TBD"}
-              </h3>
-              
-              <div className="countdown-section">
-                <div className="countdown-box">
-                  <div className="countdown-val">{String(countdown.days).padStart(2, "0")}</div>
-                  <div className="countdown-lbl">Days</div>
-                </div>
-                <div className="countdown-box">
-                  <div className="countdown-val">{String(countdown.hours).padStart(2, "0")}</div>
-                  <div className="countdown-lbl">Hrs</div>
-                </div>
-                <div className="countdown-box">
-                  <div className="countdown-val">{String(countdown.minutes).padStart(2, "0")}</div>
-                  <div className="countdown-lbl">Mins</div>
-                </div>
-                <div className="countdown-box">
-                  <div className="countdown-val">{String(countdown.seconds).padStart(2, "0")}</div>
-                  <div className="countdown-lbl">Secs</div>
-                </div>
-              </div>
-              <div style={{ marginTop: "1.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                Scheduled for: {new Date(nextMatch.scheduledTime).toLocaleString()}
-              </div>
-            </div>
-          )}
-
-          {/* Tournament Overview info */}
-          <div className="card card-hud" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "320px" }}>
-            <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", color: "var(--primary-red)", marginBottom: "1.25rem" }}>Rules & Format</h3>
-            <ul style={{ listStyleType: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-              <li style={{ display: "flex", gap: "0.5rem" }}>
-                <span style={{ color: "var(--primary-red)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>ARAM Format:</strong> All Random All Mid. Games take place on the Howling Abyss map with random champion selections.</span>
-              </li>
-              <li style={{ display: "flex", gap: "0.5rem" }}>
-                <span style={{ color: "var(--primary-red)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>Group & Playoffs:</strong> Group stages lead to single-elimination playoffs (Bo3 matches, Finals are Bo5).</span>
-              </li>
-              <li style={{ display: "flex", gap: "0.5rem" }}>
-                <span style={{ color: "var(--primary-red)", fontWeight: "bold" }}>&bull;</span>
-                <span><strong>Score Screenshots:</strong> Captains upload a screenshot after games to verify results and parse stats automatically.</span>
-              </li>
-            </ul>
-          </div>
-        </div>
 
         {/* Recent & Upcoming Matches Section */}
         <div className="grid-2" style={{ marginTop: "3rem" }}>

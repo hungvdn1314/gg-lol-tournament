@@ -47,7 +47,7 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/news", label: "News" },
+    { href: "/rules", label: "Rules" },
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/rankings", label: "Rankings" },
     { href: "/bracket", label: "Bracket" },
@@ -59,15 +59,14 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="header-container">
-        <Link href="/" className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Link href="/" className="logo-section">
           <Image 
             src="/company_logo.png" 
             alt="Company Logo" 
-            width={32} 
+            width={86} 
             height={32} 
             style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }} 
           />
-          <h1>GG LoL Cup</h1>
         </Link>
 
         {/* Navigation */}
@@ -83,7 +82,7 @@ export default function Header() {
             </Link>
           ))}
           {isAdminLoggedIn ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginLeft: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <Link href="/admin" className="btn btn-secondary" style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem" }}>
                 <HextechCrest size={14} /> Admin
               </Link>

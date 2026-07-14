@@ -15,10 +15,10 @@ const chakraPetch = Chakra_Petch({
 });
 
 export const metadata = {
-  title: "Gear Games LoL Cup 2026",
+  title: "Gear Games League of Legend Championship",
   description: "Web portal for the company League of Legends tournament - live brackets, team standings, and match schedules.",
   openGraph: {
-    title: "Gear Games LoL Cup 2026",
+    title: "Gear Games League of Legend Championship",
     description: "Web portal for the company League of Legends tournament - live brackets, team standings, and match schedules.",
     type: "website",
     images: [{ url: "/company_logo.png" }],
@@ -87,7 +87,7 @@ export default function RootLayout({ children }) {
             </p>
             <div className="footer-links">
               <a href="/">Home</a>
-              <a href="/news">News</a>
+              <a href="/rules">Rules</a>
               <a href="/leaderboard">Leaderboard</a>
               <a href="/rankings">Rankings</a>
               <a href="/bracket">Bracket</a>
