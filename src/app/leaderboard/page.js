@@ -77,7 +77,7 @@ export default function Leaderboard() {
     <div className="container">
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <span className="hero-badge">Tournament Standings</span>
-        <h1 style={{ fontSize: "2.5rem", textTransform: "uppercase", marginBottom: "1rem" }}>Leaderboard & Rankings</h1>
+        <h1 style={{ fontSize: "2.5rem", textTransform: "uppercase", marginBottom: "1rem" }}>Leaderboard Standings</h1>
         <p style={{ color: "var(--text-secondary)", maxWidth: "600px", margin: "0 auto" }}>
           Real-time group stage results. Ranks are dynamically updated as match outcomes are registered by coordinators.
         </p>

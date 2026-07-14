@@ -124,3 +124,121 @@ export function parseOcrText(rawText, teamA, teamB, champions) {
     playerStats: resultStats
   };
 }
+
+/**
+ * Fuzzy-matches players extracted from OCR against registered team rosters.
+ * Determines team side assignments and map extracted rows to player names.
+ */
+export function matchPlayersToRoster(extractedPlayers, teamA, teamB) {
+  if (!extractedPlayers || !Array.isArray(extractedPlayers)) {
+    return { allMatched: false, matches: [], blueSideTeamId: 100, redSideTeamId: 200 };
+  }
+
+  const teamAPlayers = teamA?.players || [];
+  const teamBPlayers = teamB?.players || [];
+
+  const normalize = (str) => {
+    if (!str) return "";
+    return str.toLowerCase().replace(/[^a-z0-9]/g, "");
+  };
+
+  const getPlayerAliases = (player) => {
+    const aliases = [];
+    if (player.name) aliases.push(player.name);
+    if (player.jerseyName) aliases.push(player.jerseyName);
+    if (player.riotId) {
+      const parts = player.riotId.split("#");
+      if (parts[0]) aliases.push(parts[0]);
+    }
+    return aliases.map(normalize).filter(Boolean);
+  };
+
+  const teamAWithAliases = teamAPlayers.map(p => ({
+    player: p,
+    aliases: getPlayerAliases(p)
+  }));
+  const teamBWithAliases = teamBPlayers.map(p => ({
+    player: p,
+    aliases: getPlayerAliases(p)
+  }));
+
+  const matches = [];
+  let matchedCount = 0;
+
+  extractedPlayers.forEach((ep, idx) => {
+    const normSummoner = normalize(ep.summonerName);
+    let matchedPlayer = null;
+    let detectedTeamId = null; // 100 for teamA, 200 for teamB
+
+    // Check team A
+    for (const p of teamAWithAliases) {
+      if (p.aliases.some(alias => normSummoner.includes(alias) || alias.includes(normSummoner))) {
+        matchedPlayer = p.player;
+        detectedTeamId = 100;
+        break;
+      }
+    }
+
+    // Check team B
+    if (!matchedPlayer) {
+      for (const p of teamBWithAliases) {
+        if (p.aliases.some(alias => normSummoner.includes(alias) || alias.includes(normSummoner))) {
+          matchedPlayer = p.player;
+          detectedTeamId = 200;
+          break;
+        }
+      }
+    }
+
+    if (matchedPlayer) {
+      matchedCount++;
+    }
+
+    matches.push({
+      extracted: ep,
+      matchedPlayerName: matchedPlayer ? matchedPlayer.name : null,
+      detectedTeamId,
+      originalIndex: idx
+    });
+  });
+
+  // Count majority matches for side assignment
+  // Scoreboard is split in 2: first 5 are side A, next 5 are side B
+  let side1TeamACount = 0;
+  let side1TeamBCount = 0;
+  let side2TeamACount = 0;
+  let side2TeamBCount = 0;
+
+  for (let i = 0; i < 10; i++) {
+    const m = matches[i];
+    if (m.detectedTeamId) {
+      if (i < 5) {
+        if (m.detectedTeamId === 100) side1TeamACount++;
+        else side1TeamBCount++;
+      } else {
+        if (m.detectedTeamId === 100) side2TeamACount++;
+        else side2TeamBCount++;
+      }
+    }
+  }
+
+  // Assign side colors
+  let blueSideTeamId = 100; // Default Team A
+  let redSideTeamId = 200;  // Default Team B
+
+  if (side1TeamBCount + side2TeamACount > side1TeamACount + side2TeamBCount) {
+    // If side 1 matches Team B players and side 2 matches Team A players
+    blueSideTeamId = 200; // Team B is on blue side
+    redSideTeamId = 100;  // Team A is on red side
+  }
+
+  const allMatched = matchedCount === 10;
+
+  return {
+    allMatched,
+    matches,
+    blueSideTeamId,
+    redSideTeamId
+  };
+}
+

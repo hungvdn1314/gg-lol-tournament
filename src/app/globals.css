@@ -1440,3 +1440,19 @@ a {
   right: auto !important;
   top: 6px !important;
 }
+
+/* Venue Links Hover Animations & Styling */
+.venue-link {
+  transition: all var(--transition-speed) ease;
+  cursor: pointer;
+}
+.venue-link:hover .venue-name {
+  color: var(--primary-gold-bright) !important;
+}
+.venue-external-icon {
+  transition: transform var(--transition-speed) ease, color var(--transition-speed) ease;
+}
+.venue-link:hover .venue-external-icon {
+  color: var(--primary-gold-bright) !important;
+  transform: translate(2px, -2px);
+}

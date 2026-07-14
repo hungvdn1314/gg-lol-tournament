@@ -47,13 +47,13 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/rules", label: "Rules" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/rankings", label: "Rankings" },
-    { href: "/bracket", label: "Bracket" },
-    { href: "/schedule", label: "Schedule" },
     { href: "/teams", label: "Teams" },
-    { href: "/submit-score", label: "Submit Score" }
+    { href: "/schedule", label: "Schedule" },
+    { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/bracket", label: "Bracket" },
+    { href: "/rankings", label: "Rankings" },
+    { href: "/rules", label: "Rules" },
+    ...(isAdminLoggedIn ? [{ href: "/submit-score", label: "Submit Score" }] : [])
   ];
 
   return (
