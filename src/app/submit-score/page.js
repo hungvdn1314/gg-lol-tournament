@@ -33,6 +33,7 @@ export default function SubmitScore() {
   const [matches, setMatches] = useState({});
   const [teams, setTeams] = useState({});
   const [champions, setChampions] = useState([]);
+  const [championMap, setChampionMap] = useState({}); // { normalizedName: ddId }
 
   // Wizard Steps: 1 = Selection, 2 = Upload, 3 = Mapping & Stats Review, 4 = Final Review & Submit
   const [step, setStep] = useState(1);
@@ -97,8 +98,21 @@ export default function SubmitScore() {
         const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
         if (res.ok) {
           const data = await res.json();
-          const list = Object.values(data.data).map(c => c.id).sort();
+          const champEntries = Object.values(data.data);
+          const list = champEntries.map(c => c.id).sort();
           setChampions(list);
+          // Build a lookup map: normalized display name -> DDragon ID
+          const map = {};
+          champEntries.forEach(c => {
+            // Map by id (e.g. "LeeSin" -> "LeeSin")
+            map[c.id.toLowerCase()] = c.id;
+            // Map by display name (e.g. "lee sin" -> "LeeSin")
+            if (c.name) map[c.name.toLowerCase()] = c.id;
+            // Map by stripped name (e.g. "leesin" -> "LeeSin")
+            map[c.id.toLowerCase().replace(/[^a-z0-9]/g, "")] = c.id;
+            if (c.name) map[c.name.toLowerCase().replace(/[^a-z0-9]/g, "")] = c.id;
+          });
+          setChampionMap(map);
         }
       } catch (e) {
         console.error("Error loading champions list:", e);
@@ -325,6 +339,24 @@ export default function SubmitScore() {
     setAllPlayersMatched(false);
   };
 
+  // Resolve an OCR champion name to a DDragon champion ID
+  const resolveChampionId = (rawName) => {
+    if (!rawName || rawName === "TBD") return "";
+    // Direct match
+    if (champions.includes(rawName)) return rawName;
+    // Lookup by lowercase
+    const lower = rawName.toLowerCase();
+    if (championMap[lower]) return championMap[lower];
+    // Lookup by stripped alphanumeric
+    const stripped = lower.replace(/[^a-z0-9]/g, "");
+    if (championMap[stripped]) return championMap[stripped];
+    // Fuzzy: find the closest match by checking if any key contains or is contained
+    for (const [key, id] of Object.entries(championMap)) {
+      if (key.includes(stripped) || stripped.includes(key)) return id;
+    }
+    return rawName; // Return raw as fallback
+  };
+
   // Move from Step 3 to Step 4 (Validation)
   const validateAndProceedToReview = () => {
     setErrorMsg("");
@@ -353,7 +385,7 @@ export default function SubmitScore() {
         playerName: assignedPlayerName,
         teamId: isBlueSide ? 100 : 200,
         win: sideWinner,
-        champion: stat.champion || "TBD",
+        champion: resolveChampionId(stat.champion) || "",
         kills: parseInt(stat.kills) || 0,
         deaths: parseInt(stat.deaths) || 0,
         assists: parseInt(stat.assists) || 0,
@@ -977,6 +1009,7 @@ export default function SubmitScore() {
                           value={stat.champion}
                           onChange={(e) => handleFinalStatChange(idx, "champion", e.target.value)}
                         >
+                          <option value="">-- Select Champion --</option>
                           {champions.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </td>
@@ -1090,6 +1123,7 @@ export default function SubmitScore() {
                             value={stat.champion}
                             onChange={(e) => handleFinalStatChange(actualIdx, "champion", e.target.value)}
                           >
+                            <option value="">-- Select Champion --</option>
                             {champions.map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
                         </td>
