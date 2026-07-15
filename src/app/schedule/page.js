@@ -141,9 +141,9 @@ export default function Schedule() {
             </div>
 
             {/* Da Nang Venue */}
-            <div className="card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div className="card card-gold" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.5rem" }}>
-                <span style={{ fontWeight: "700", color: "var(--text-primary)", textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.05em" }}>Đà Nẵng</span>
+                <span style={{ fontWeight: "700", color: "var(--primary-gold-bright)", textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.05em" }}>Đà Nẵng</span>
                 <span className="hero-badge" style={{ margin: 0, fontSize: "0.65rem", padding: "0.15rem 0.5rem", backgroundColor: "rgba(255,255,255,0.02)", borderColor: "var(--border-dark)", color: "var(--text-muted)" }}>1 Venue</span>
               </div>
               
