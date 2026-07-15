@@ -441,7 +441,7 @@ export default function SubmitScore() {
           damageTaken: parseInt(stat.damageTaken) || 0,
           healing: parseInt(stat.healing) || 0,
           items: resolveItemIds(stat.items),
-          firstBlood: !!stat.firstBlood,
+          firstBlood: false,
           summonerSpells: [0, 0],
           runes: { keystoneId: 0, primaryStyleId: 0 }
         };
@@ -459,8 +459,6 @@ export default function SubmitScore() {
         
         if (field === "champion") {
           finalVal = val;
-        } else if (field === "firstBlood") {
-          finalVal = !!val;
         } else if (field === "items") {
           finalVal = Array.isArray(val) ? val : [];
         } else {
@@ -494,15 +492,12 @@ export default function SubmitScore() {
     const blueWin = winnerSide === "Blue";
     const redWin = winnerSide === "Red";
 
-    const hasBlueFb = finalizedStats.some(p => p.teamId === 100 && p.firstBlood);
-    const hasRedFb = finalizedStats.some(p => p.teamId === 200 && p.firstBlood);
-
     const gameDetails = {
       gameDuration: durationSeconds,
       captainSubmission: true,
       teams: {
-        100: { winner: blueWin, firstBlood: hasBlueFb },
-        200: { winner: redWin, firstBlood: hasRedFb }
+        100: { winner: blueWin, firstBlood: false },
+        200: { winner: redWin, firstBlood: false }
       },
       participants: finalizedStats
     };
@@ -1058,7 +1053,6 @@ export default function SubmitScore() {
                     <th style={{ padding: "0.5rem", width: "90px" }}>Healing</th>
                     <th style={{ padding: "0.5rem", width: "90px" }}>Gold</th>
                     <th style={{ padding: "0.5rem", width: "70px" }}>CS</th>
-                    <th style={{ padding: "0.5rem", width: "50px", textAlign: "center" }}>FB</th>
                     <th style={{ padding: "0.5rem", width: "290px" }}>Items (IDs)</th>
                   </tr>
                 </thead>
@@ -1149,14 +1143,6 @@ export default function SubmitScore() {
                           onChange={(e) => handleFinalStatChange(idx, "cs", e.target.value)}
                         />
                       </td>
-                      <td style={{ padding: "0.25rem", textAlign: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={stat.firstBlood || false}
-                          onChange={(e) => handleFinalStatChange(idx, "firstBlood", e.target.checked)}
-                          style={{ cursor: "pointer", width: "16px", height: "16px" }}
-                        />
-                      </td>
                       <td style={{ padding: "0.25rem" }}>
                         <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
                           {Array.from({ length: 6 }).map((_, itemIdx) => {
@@ -1206,7 +1192,6 @@ export default function SubmitScore() {
                     <th style={{ padding: "0.5rem", width: "90px" }}>Healing</th>
                     <th style={{ padding: "0.5rem", width: "90px" }}>Gold</th>
                     <th style={{ padding: "0.5rem", width: "70px" }}>CS</th>
-                    <th style={{ padding: "0.5rem", width: "50px", textAlign: "center" }}>FB</th>
                     <th style={{ padding: "0.5rem", width: "290px" }}>Items (IDs)</th>
                   </tr>
                 </thead>
@@ -1297,14 +1282,6 @@ export default function SubmitScore() {
                             style={{ padding: "0.25rem", fontSize: "0.8rem" }}
                             value={stat.cs}
                             onChange={(e) => handleFinalStatChange(actualIdx, "cs", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem", textAlign: "center" }}>
-                          <input
-                            type="checkbox"
-                            checked={stat.firstBlood || false}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "firstBlood", e.target.checked)}
-                            style={{ cursor: "pointer", width: "16px", height: "16px" }}
                           />
                         </td>
                         <td style={{ padding: "0.25rem" }}>

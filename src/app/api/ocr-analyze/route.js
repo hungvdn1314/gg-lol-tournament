@@ -28,7 +28,7 @@ export async function POST(request) {
 
     const promptText = `
 Extract the post-game statistics for the 10 players from these screenshots of a League of Legends ARAM match.
-There are up to 3 screenshots provided. They show the scoreboard overview, damage stats, healing, gold, minion kills (CS), player items, first blood status, etc.
+There are up to 3 screenshots provided. They show the scoreboard overview, damage stats, healing, gold, minion kills (CS), player items, etc.
 Combine the data across all screenshots into exactly 10 player records.
 
 For each player, extract:
@@ -43,7 +43,6 @@ For each player, extract:
 9. "damageTaken": Integer total damage taken.
 10. "healing": Integer total healing done.
 11. "items": Array of strings representing names of items built by the player, up to 6 items (e.g., ["Infinity Edge", "Guardian Angel"]). Leave empty array if not visible or none.
-12. "firstBlood": Boolean representing whether this player got first blood (typically shown with a red drop icon or specified in match statistics).
 
 Format the response strictly as a JSON object with this exact structure:
 {
@@ -61,8 +60,7 @@ Format the response strictly as a JSON object with this exact structure:
       "damageDealt": 0,
       "damageTaken": 0,
       "healing": 0,
-      "items": ["Item1", "Item2"],
-      "firstBlood": false
+      "items": ["Item1", "Item2"]
     }
   ]
 }
@@ -105,10 +103,9 @@ Ensure there are exactly 10 players in "playerStats". Do not return any other te
                   items: {
                     type: "ARRAY",
                     items: { type: "STRING" }
-                  },
-                  firstBlood: { type: "BOOLEAN" }
+                  }
                 },
-                required: ["summonerName", "champion", "kills", "deaths", "assists", "gold", "cs", "damageDealt", "damageTaken", "healing", "items", "firstBlood"]
+                required: ["summonerName", "champion", "kills", "deaths", "assists", "gold", "cs", "damageDealt", "damageTaken", "healing", "items"]
               }
             }
           },

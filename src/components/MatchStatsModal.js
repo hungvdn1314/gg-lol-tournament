@@ -713,8 +713,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                         {[
                           { label: "Total Kills", blue: blueTotalKills, red: redTotalKills },
                           { label: "Towers Destroyed", blue: blueTowers, red: redTowers },
-                          { label: "Inhibitors Destroyed", blue: blueInhibs, red: redInhibs },
-                          { label: "First Blood", blue: currentGameDetails.teams[100]?.firstBlood ? "🩸 Yes" : "No", red: currentGameDetails.teams[200]?.firstBlood ? "🩸 Yes" : "No" }
+                          { label: "Inhibitors Destroyed", blue: blueInhibs, red: redInhibs }
                         ].map((row, idx) => (
                           <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "0.5rem" }}>
                             <span style={{ color: "#4fa8ff", fontWeight: "bold", width: "30%", textAlign: "left" }}>{row.blue}</span>
@@ -734,7 +733,6 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                                 <th style={{ padding: "0.4rem" }}>Player</th>
                                 <th style={{ padding: "0.4rem", textAlign: "center" }}>Towers</th>
                                 <th style={{ padding: "0.4rem", textAlign: "center" }}>Inhibs</th>
-                                <th style={{ padding: "0.4rem", textAlign: "center" }}>FB</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -746,7 +744,6 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                                   </td>
                                   <td style={{ padding: "0.4rem", textAlign: "center" }}>{p.turretsKilled || 0}</td>
                                   <td style={{ padding: "0.4rem", textAlign: "center" }}>{p.inhibitorsKilled || 0}</td>
-                                  <td style={{ padding: "0.4rem", textAlign: "center" }}>{p.firstBlood ? "🩸" : "-"}</td>
                                 </tr>
                               ))}
                             </tbody>
