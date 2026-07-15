@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { subscribeToData, submitCaptainGameScore } from "@/lib/db";
-import { getLatestDDragonVersion } from "@/lib/riot";
+import { getLatestDDragonVersion, useDDragon } from "@/lib/riot";
 import { matchPlayersToRoster } from "@/lib/ocr";
 import { 
   CheckCircle2, 
@@ -23,6 +23,7 @@ import {
 
 export default function SubmitScore() {
   const router = useRouter();
+  const { getItemIcon } = useDDragon();
   
   // Navigation / Auth Gate
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -34,6 +35,7 @@ export default function SubmitScore() {
   const [teams, setTeams] = useState({});
   const [champions, setChampions] = useState([]);
   const [championMap, setChampionMap] = useState({}); // { normalizedName: ddId }
+  const [itemsMap, setItemsMap] = useState({}); // { normalizedName: itemId }
 
   // Wizard Steps: 1 = Selection, 2 = Upload, 3 = Mapping & Stats Review, 4 = Final Review & Submit
   const [step, setStep] = useState(1);
@@ -116,6 +118,24 @@ export default function SubmitScore() {
         }
       } catch (e) {
         console.error("Error loading champions list:", e);
+      }
+
+      try {
+        const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/item.json`);
+        if (res.ok) {
+          const data = await res.json();
+          const itemMap = {};
+          Object.entries(data.data).forEach(([id, item]) => {
+            const numId = parseInt(id);
+            if (item.name) {
+              itemMap[item.name.toLowerCase()] = numId;
+              itemMap[item.name.toLowerCase().replace(/[^a-z0-9]/g, "")] = numId;
+            }
+          });
+          setItemsMap(itemMap);
+        }
+      } catch (e) {
+        console.error("Error loading items list:", e);
       }
     });
 
@@ -214,7 +234,9 @@ export default function SubmitScore() {
         cs: 70,
         damageDealt: 12000,
         damageTaken: 12000,
-        healing: 1500
+        healing: 1500,
+        items: [],
+        firstBlood: false
       });
     }
 
@@ -231,7 +253,9 @@ export default function SubmitScore() {
         cs: 60,
         damageDealt: 10000,
         damageTaken: 14000,
-        healing: 1000
+        healing: 1000,
+        items: [],
+        firstBlood: false
       });
     }
 
@@ -357,6 +381,28 @@ export default function SubmitScore() {
     return rawName; // Return raw as fallback
   };
 
+  // Resolve OCR item names to DDragon item IDs
+  const resolveItemIds = (rawItems) => {
+    const resolved = [0, 0, 0, 0, 0, 0];
+    if (!Array.isArray(rawItems)) return resolved;
+    
+    rawItems.slice(0, 6).forEach((itemName, index) => {
+      if (!itemName) return;
+      const lower = itemName.toLowerCase();
+      // Try direct match
+      if (itemsMap[lower]) {
+        resolved[index] = itemsMap[lower];
+      } else {
+        // Try stripped alphanumeric match
+        const stripped = lower.replace(/[^a-z0-9]/g, "");
+        if (itemsMap[stripped]) {
+          resolved[index] = itemsMap[stripped];
+        }
+      }
+    });
+    return resolved;
+  };
+
   // Move from Step 3 to Step 4 (Validation)
   const validateAndProceedToReview = () => {
     setErrorMsg("");
@@ -366,55 +412,68 @@ export default function SubmitScore() {
     if (assignedPlayers.length !== 10) {
       setErrorMsg("Please assign a player to all 10 rows before proceeding.");
       return;
-    }
-
-    // Validate unique selections
-    const uniqueAssignments = new Set(assignedPlayers);
-    if (uniqueAssignments.size !== 10) {
-      setErrorMsg("Each registered player can only be assigned to one row. Remove duplicates.");
-      return;
-    }
-
-    // Construct participant rows for review & database
-    const participants = ocrResults.playerStats.map((stat, idx) => {
-      const isBlueSide = idx < 5;
-      const sideWinner = winnerSide === (isBlueSide ? "Blue" : "Red");
-      const assignedPlayerName = playerAssignments[idx];
-
-      return {
-        playerName: assignedPlayerName,
-        teamId: isBlueSide ? 100 : 200,
-        win: sideWinner,
-        champion: resolveChampionId(stat.champion) || "",
-        kills: parseInt(stat.kills) || 0,
-        deaths: parseInt(stat.deaths) || 0,
-        assists: parseInt(stat.assists) || 0,
-        gold: parseInt(stat.gold) || 0,
-        cs: parseInt(stat.cs) || 0,
-        damageDealt: parseInt(stat.damageDealt) || 0,
-        damageTaken: parseInt(stat.damageTaken) || 0,
-        healing: parseInt(stat.healing) || 0,
-        items: [0, 0, 0, 0, 0, 0],
-        summonerSpells: [0, 0],
-        runes: { keystoneId: 0, primaryStyleId: 0 }
-      };
-    });
-
-    setFinalizedStats(participants);
-    setStep(4);
-  };
-
-  // Edit stat handler in Step 4
-  const handleFinalStatChange = (idx, field, val) => {
-    setFinalizedStats(prev => {
-      const copy = [...prev];
-      copy[idx] = {
-        ...copy[idx],
-        [field]: field === "champion" ? val : (val === "" ? 0 : parseInt(val) || 0)
-      };
-      return copy;
-    });
-  };
+      }
+  
+      // Validate unique selections
+      const uniqueAssignments = new Set(assignedPlayers);
+      if (uniqueAssignments.size !== 10) {
+        setErrorMsg("Each registered player can only be assigned to one row. Remove duplicates.");
+        return;
+      }
+  
+      // Construct participant rows for review & database
+      const participants = ocrResults.playerStats.map((stat, idx) => {
+        const isBlueSide = idx < 5;
+        const sideWinner = winnerSide === (isBlueSide ? "Blue" : "Red");
+        const assignedPlayerName = playerAssignments[idx];
+  
+        return {
+          playerName: assignedPlayerName,
+          teamId: isBlueSide ? 100 : 200,
+          win: sideWinner,
+          champion: resolveChampionId(stat.champion) || "",
+          kills: parseInt(stat.kills) || 0,
+          deaths: parseInt(stat.deaths) || 0,
+          assists: parseInt(stat.assists) || 0,
+          gold: parseInt(stat.gold) || 0,
+          cs: parseInt(stat.cs) || 0,
+          damageDealt: parseInt(stat.damageDealt) || 0,
+          damageTaken: parseInt(stat.damageTaken) || 0,
+          healing: parseInt(stat.healing) || 0,
+          items: resolveItemIds(stat.items),
+          firstBlood: !!stat.firstBlood,
+          summonerSpells: [0, 0],
+          runes: { keystoneId: 0, primaryStyleId: 0 }
+        };
+      });
+  
+      setFinalizedStats(participants);
+      setStep(4);
+    };
+  
+    // Edit stat handler in Step 4
+    const handleFinalStatChange = (idx, field, val) => {
+      setFinalizedStats(prev => {
+        const copy = [...prev];
+        let finalVal = val;
+        
+        if (field === "champion") {
+          finalVal = val;
+        } else if (field === "firstBlood") {
+          finalVal = !!val;
+        } else if (field === "items") {
+          finalVal = Array.isArray(val) ? val : [];
+        } else {
+          finalVal = val === "" ? 0 : parseInt(val) || 0;
+        }
+  
+        copy[idx] = {
+          ...copy[idx],
+          [field]: finalVal
+        };
+        return copy;
+      });
+    };
 
   // Submit scorecard to DB
   const handleFinalSubmit = async (e) => {
@@ -996,6 +1055,8 @@ export default function SubmitScore() {
                     <th style={{ padding: "0.5rem", width: "90px" }}>Healing</th>
                     <th style={{ padding: "0.5rem", width: "90px" }}>Gold</th>
                     <th style={{ padding: "0.5rem", width: "70px" }}>CS</th>
+                    <th style={{ padding: "0.5rem", width: "50px", textAlign: "center" }}>FB</th>
+                    <th style={{ padding: "0.5rem", width: "290px" }}>Items (IDs)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1085,6 +1146,40 @@ export default function SubmitScore() {
                           onChange={(e) => handleFinalStatChange(idx, "cs", e.target.value)}
                         />
                       </td>
+                      <td style={{ padding: "0.25rem", textAlign: "center" }}>
+                        <input
+                          type="checkbox"
+                          checked={stat.firstBlood || false}
+                          onChange={(e) => handleFinalStatChange(idx, "firstBlood", e.target.checked)}
+                          style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                        />
+                      </td>
+                      <td style={{ padding: "0.25rem" }}>
+                        <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
+                          {Array.from({ length: 6 }).map((_, itemIdx) => {
+                            const itemId = stat.items?.[itemIdx] || 0;
+                            const iconUrl = getItemIcon(itemId);
+                            return (
+                              <div key={itemIdx} style={{ display: "flex", flexDirection: "column", gap: "1px", alignItems: "center" }}>
+                                <div style={{ width: "20px", height: "20px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "2px", border: "1px solid var(--border-dark)", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden", marginBottom: "2px" }}>
+                                  {iconUrl ? <img src={iconUrl} alt="item" style={{ width: "100%", height: "100%" }} /> : <span style={{ fontSize: "0.6rem", color: "#555" }}>-</span>}
+                                </div>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  style={{ width: "42px", padding: "0.1rem", fontSize: "0.7rem", textAlign: "center", height: "20px" }}
+                                  value={itemId || ""}
+                                  onChange={(e) => {
+                                    const newItems = [...(stat.items || [0, 0, 0, 0, 0, 0])];
+                                    newItems[itemIdx] = parseInt(e.target.value) || 0;
+                                    handleFinalStatChange(idx, "items", newItems);
+                                  }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1108,6 +1203,8 @@ export default function SubmitScore() {
                     <th style={{ padding: "0.5rem", width: "90px" }}>Healing</th>
                     <th style={{ padding: "0.5rem", width: "90px" }}>Gold</th>
                     <th style={{ padding: "0.5rem", width: "70px" }}>CS</th>
+                    <th style={{ padding: "0.5rem", width: "50px", textAlign: "center" }}>FB</th>
+                    <th style={{ padding: "0.5rem", width: "290px" }}>Items (IDs)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1198,6 +1295,40 @@ export default function SubmitScore() {
                             value={stat.cs}
                             onChange={(e) => handleFinalStatChange(actualIdx, "cs", e.target.value)}
                           />
+                        </td>
+                        <td style={{ padding: "0.25rem", textAlign: "center" }}>
+                          <input
+                            type="checkbox"
+                            checked={stat.firstBlood || false}
+                            onChange={(e) => handleFinalStatChange(actualIdx, "firstBlood", e.target.checked)}
+                            style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                          />
+                        </td>
+                        <td style={{ padding: "0.25rem" }}>
+                          <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
+                            {Array.from({ length: 6 }).map((_, itemIdx) => {
+                              const itemId = stat.items?.[itemIdx] || 0;
+                              const iconUrl = getItemIcon(itemId);
+                              return (
+                                <div key={itemIdx} style={{ display: "flex", flexDirection: "column", gap: "1px", alignItems: "center" }}>
+                                  <div style={{ width: "20px", height: "20px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "2px", border: "1px solid var(--border-dark)", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden", marginBottom: "2px" }}>
+                                    {iconUrl ? <img src={iconUrl} alt="item" style={{ width: "100%", height: "100%" }} /> : <span style={{ fontSize: "0.6rem", color: "#555" }}>-</span>}
+                                  </div>
+                                  <input
+                                    type="number"
+                                    className="form-control"
+                                    style={{ width: "42px", padding: "0.1rem", fontSize: "0.7rem", textAlign: "center", height: "20px" }}
+                                    value={itemId || ""}
+                                    onChange={(e) => {
+                                      const newItems = [...(stat.items || [0, 0, 0, 0, 0, 0])];
+                                      newItems[itemIdx] = parseInt(e.target.value) || 0;
+                                      handleFinalStatChange(actualIdx, "items", newItems);
+                                    }}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
                         </td>
                       </tr>
                     );
