@@ -494,12 +494,15 @@ export default function SubmitScore() {
     const blueWin = winnerSide === "Blue";
     const redWin = winnerSide === "Red";
 
+    const hasBlueFb = finalizedStats.some(p => p.teamId === 100 && p.firstBlood);
+    const hasRedFb = finalizedStats.some(p => p.teamId === 200 && p.firstBlood);
+
     const gameDetails = {
       gameDuration: durationSeconds,
       captainSubmission: true,
       teams: {
-        100: { winner: blueWin },
-        200: { winner: redWin }
+        100: { winner: blueWin, firstBlood: hasBlueFb },
+        200: { winner: redWin, firstBlood: hasRedFb }
       },
       participants: finalizedStats
     };
