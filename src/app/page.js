@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Calendar, ChevronRight } from "lucide-react";
 import { LoLWard, ZhonyaHourglass, CrossedSwords } from "@/components/Icons";
 import { subscribeToData } from "@/lib/db";
+import { teamLogoPlaceholder } from "@/lib/placeholders";
 
 export default function Home() {
   const [config, setConfig] = useState(null);
@@ -239,7 +240,7 @@ export default function Home() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "1.5rem 0", flexWrap: "wrap", gap: "1.5rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1, justifyContent: "flex-end", textAlign: "right" }}>
                         <h3 className="match-team-name">{teamA?.name || "TBD"}</h3>
-                        <img src={teamA?.logo || "https://placehold.co/100x100"} alt={teamA?.name} className="match-team-logo" />
+                        <img src={teamA?.logo || teamLogoPlaceholder(teamA?.name, 100)} alt={teamA?.name} className="match-team-logo" />
                       </div>
                       <div className="match-scores" style={{ margin: "0 2rem", scale: "1.2" }}>
                         <span className="score-digit">{match.scoreA}</span>
@@ -247,7 +248,7 @@ export default function Home() {
                         <span className="score-digit">{match.scoreB}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1, justifyContent: "flex-start", textAlign: "left" }}>
-                        <img src={teamB?.logo || "https://placehold.co/100x100"} alt={teamB?.name} className="match-team-logo" />
+                        <img src={teamB?.logo || teamLogoPlaceholder(teamB?.name, 100)} alt={teamB?.name} className="match-team-logo" />
                         <h3 className="match-team-name">{teamB?.name || "TBD"}</h3>
                       </div>
                     </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { championPlaceholder, genericPlaceholder } from "@/lib/placeholders";
 
 const FALLBACK_VERSION = "16.13.1";
 
@@ -121,14 +122,14 @@ export function useDDragon() {
   }, []);
 
   const getChampionIcon = (championName) => {
-    if (!championName) return "https://placehold.co/40x40";
+    if (!championName) return championPlaceholder(40);
     const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
     return `https://ddragon.leagueoflegends.com/cdn/${data.version}/img/champion/${cleanName}.png`;
   };
 
   const getChampionIconById = (championId) => {
     const name = data.championMap[championId];
-    return name ? getChampionIcon(name) : "https://placehold.co/40x40";
+    return name ? getChampionIcon(name) : championPlaceholder(40);
   };
 
   const getItemIcon = (itemId) => {
@@ -138,13 +139,13 @@ export function useDDragon() {
 
   const getSummonerSpellIcon = (spellId) => {
     const filename = data.summonerMap[spellId];
-    if (!filename) return "https://placehold.co/18x18";
+    if (!filename) return genericPlaceholder(18);
     return `https://ddragon.leagueoflegends.com/cdn/${data.version}/img/spell/${filename}`;
   };
 
   const getRuneIcon = (runeOrStyleId) => {
     const iconPath = data.runeMap[runeOrStyleId];
-    if (!iconPath) return "https://placehold.co/18x18";
+    if (!iconPath) return genericPlaceholder(18);
     return `https://ddragon.leagueoflegends.com/cdn/img/${iconPath}`;
   };
 

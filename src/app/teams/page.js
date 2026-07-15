@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { subscribeToData } from "@/lib/db";
 import { LoLMinion, CrossedSwords, SummonersCup, RoleTop, RoleJungle, RoleMid, RoleADC, RoleSupport } from "@/components/Icons";
+import { teamLogoPlaceholder } from "@/lib/placeholders";
 
 export default function Teams() {
   const [teams, setTeams] = useState({});
@@ -107,7 +108,7 @@ export default function Teams() {
             style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "1rem", padding: "1rem", transition: "all 0.2s" }}
           >
             <img
-              src={team.logo || "https://placehold.co/48x48"}
+              src={team.logo || teamLogoPlaceholder(team.name, 48)}
               alt={team.name}
               style={{ width: "48px", height: "48px", borderRadius: "8px", objectFit: "cover", border: "1px solid var(--border-dark)", backgroundColor: "var(--bg-tertiary)" }}
             />
@@ -130,7 +131,7 @@ export default function Teams() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "2rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "1.5rem", marginBottom: "2rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
               <img
-                src={selectedTeam.logo || "https://placehold.co/150x150"}
+                src={selectedTeam.logo || teamLogoPlaceholder(selectedTeam.name, 150)}
                 alt={selectedTeam.name}
                 style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "2px solid var(--primary-gold)" }}
               />

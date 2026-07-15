@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Award, Info } from "lucide-react";
 import { SummonersCup } from "@/components/Icons";
 import { subscribeToData } from "@/lib/db";
+import { teamLogoPlaceholder } from "@/lib/placeholders";
 
 export default function Leaderboard() {
   const [teams, setTeams] = useState({});
@@ -129,7 +130,7 @@ export default function Leaderboard() {
                       <td className="leaderboard-rank">#{index + 1}</td>
                       <td>
                         <div className="leaderboard-team-cell">
-                          <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} className="leaderboard-team-logo" />
+                          <img src={team.logo || teamLogoPlaceholder(team.name, 50)} alt={team.name} className="leaderboard-team-logo" />
                           <span style={{ fontWeight: "600" }}>{team.name}</span>
                         </div>
                       </td>
@@ -184,7 +185,7 @@ export default function Leaderboard() {
                       <td className="leaderboard-rank">#{index + 1}</td>
                       <td>
                         <div className="leaderboard-team-cell">
-                          <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} className="leaderboard-team-logo" />
+                          <img src={team.logo || teamLogoPlaceholder(team.name, 50)} alt={team.name} className="leaderboard-team-logo" />
                           <span style={{ fontWeight: "600" }}>{team.name}</span>
                         </div>
                       </td>
@@ -239,7 +240,7 @@ export default function Leaderboard() {
                       <td className="leaderboard-rank">#{index + 1}</td>
                       <td>
                         <div className="leaderboard-team-cell">
-                          <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} className="leaderboard-team-logo" />
+                          <img src={team.logo || teamLogoPlaceholder(team.name, 50)} alt={team.name} className="leaderboard-team-logo" />
                           <span style={{ fontWeight: "600" }}>{team.name}</span>
                         </div>
                       </td>

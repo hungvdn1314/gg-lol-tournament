@@ -5,6 +5,7 @@ import { Calendar, Info, Copy, Check, Search, X, MapPin, ExternalLink } from "lu
 import { subscribeToData } from "@/lib/db";
 import { ZhonyaHourglass, CrossedSwords } from "@/components/Icons";
 import MatchStatsModal from "@/components/MatchStatsModal";
+import { teamLogoPlaceholder } from "@/lib/placeholders";
 
 export default function Schedule() {
   const [matches, setMatches] = useState({});
@@ -271,7 +272,7 @@ export default function Schedule() {
                   {/* Team A */}
                   <div className="schedule-team" style={{ display: "flex", alignItems: "center", gap: "1rem", width: "40%", justifyContent: "flex-end", textAlign: "right", opacity: isCompleted && match.winnerId !== match.teamAId ? 0.5 : 1 }}>
                     <h3 className="match-team-name schedule-team-name" style={{ fontSize: "1.1rem", fontWeight: isCompleted && match.winnerId === match.teamAId ? "800" : "500", margin: 0, flex: 1 }}>{teamA?.name || "TBD"}</h3>
-                    <img src={teamA?.logo || "https://placehold.co/40x40"} alt={teamA?.name} className="match-team-logo" style={{ flexShrink: 0 }} />
+                    <img src={teamA?.logo || teamLogoPlaceholder(teamA?.name, 40)} alt={teamA?.name} className="match-team-logo" style={{ flexShrink: 0 }} />
                   </div>
 
                   {/* Score center */}
@@ -287,7 +288,7 @@ export default function Schedule() {
 
                   {/* Team B */}
                   <div className="schedule-team" style={{ display: "flex", alignItems: "center", gap: "1rem", width: "40%", justifyContent: "flex-start", textAlign: "left", opacity: isCompleted && match.winnerId !== match.teamBId ? 0.5 : 1 }}>
-                    <img src={teamB?.logo || "https://placehold.co/40x40"} alt={teamB?.name} className="match-team-logo" style={{ flexShrink: 0 }} />
+                    <img src={teamB?.logo || teamLogoPlaceholder(teamB?.name, 40)} alt={teamB?.name} className="match-team-logo" style={{ flexShrink: 0 }} />
                     <h3 className="match-team-name schedule-team-name" style={{ fontSize: "1.1rem", fontWeight: isCompleted && match.winnerId === match.teamBId ? "800" : "500", margin: 0, flex: 1 }}>{teamB?.name || "TBD"}</h3>
                   </div>
                 </div>

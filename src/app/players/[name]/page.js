@@ -6,6 +6,7 @@ import Link from "next/link";
 import { subscribeToData } from "@/lib/db";
 import { ArrowLeft, Target, Shield, Eye, Sword, Award, Activity } from "lucide-react";
 import { getLatestDDragonVersion } from "@/lib/riot";
+import { championPlaceholder } from "@/lib/placeholders";
 import { SummonersCup, CrossedSwords } from "@/components/Icons";
 
 export default function PlayerProfile() {
@@ -88,7 +89,7 @@ export default function PlayerProfile() {
   }, [loading, playerDetails]);
 
   const getChampionIcon = (championName) => {
-    if (!championName) return "https://placehold.co/40x40";
+    if (!championName) return championPlaceholder(40);
     const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
     return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${cleanName}.png`;
   };

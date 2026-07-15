@@ -6,6 +6,7 @@ import { subscribeToAllMatchDetails } from "@/lib/db";
 import { SummonersCup, HextechCrest } from "@/components/Icons";
 import { Award, Eye, Crosshair, Shield, Coins, Target } from "lucide-react";
 import { getLatestDDragonVersion } from "@/lib/riot";
+import { championPlaceholder } from "@/lib/placeholders";
 
 // Helper MVP calculator copied to use for aggregated logic
 const calculateGameMVP = (participants, gameDuration) => {
@@ -114,7 +115,7 @@ export default function PlayerRankings() {
   }, []);
 
   const getChampionIcon = (championName) => {
-    if (!championName) return "https://placehold.co/40x40";
+    if (!championName) return championPlaceholder(40);
     const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
     return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${cleanName}.png`;
   };

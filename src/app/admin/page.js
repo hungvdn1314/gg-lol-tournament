@@ -12,6 +12,7 @@ import {
   subscribeToNews, saveNews, deleteNews
 } from "@/lib/db";
 import { getLatestDDragonVersion } from "@/lib/riot";
+import { teamLogoPlaceholder, championPlaceholder } from "@/lib/placeholders";
 
 export default function Admin() {
   // Authentication State
@@ -916,7 +917,7 @@ export default function Admin() {
                 {Object.values(teams).map((team) => (
                   <div key={team.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-tertiary)", padding: "1rem 1.5rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                      <img src={team.logo || "https://placehold.co/50x50"} alt={team.name} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} />
+                      <img src={team.logo || teamLogoPlaceholder(team.name, 50)} alt={team.name} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} />
                       <div>
                         <strong style={{ color: "var(--text-primary)" }}>{team.name}</strong>
                         <span className="hero-badge" style={{ margin: "0 0 0 0.5rem", fontSize: "0.6rem", padding: "0.1rem 0.4rem" }}>Group {team.group}</span>
@@ -1339,7 +1340,7 @@ export default function Admin() {
                                                   src={`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${rm.champion.replace(/[^a-zA-Z0-9]/g, "")}.png`} 
                                                   alt={rm.champion} 
                                                   style={{ width: "32px", height: "32px", borderRadius: "4px" }} 
-                                                  onError={(e) => { e.target.src = "https://placehold.co/32x32" }}
+                                                  onError={(e) => { e.target.src = championPlaceholder(32) }}
                                                 />
                                                 <div>
                                                   <div style={{ fontWeight: "bold", color: rm.win ? "var(--primary-gold-bright)" : "var(--text-secondary)" }}>
