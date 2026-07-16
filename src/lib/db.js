@@ -1697,12 +1697,12 @@ const DEFAULT_MATCHES = {
     "group": "A",
     "teamAId": "team-u40",
     "teamBId": "team-gapvibe",
-    "scoreA": 1,
-    "scoreB": 2,
-    "status": "completed",
+    "scoreA": 0,
+    "scoreB": 0,
+    "status": "scheduled",
     "bestOf": 3,
     "scheduledTime": "2026-07-22T12:00:00.000Z",
-    "winnerId": "team-gapvibe"
+    "winnerId": null
   },
   "match-g-a2": {
     "id": "match-g-a2",
@@ -1919,6 +1919,239 @@ const DEFAULT_MATCHES = {
     "bestOf": 5,
     "scheduledTime": "2026-08-03T12:00:00.000Z",
     "winnerId": null
+  }
+};
+
+const FAKED_MATCHES = {
+  "match-g-a1": {
+    "id": "match-g-a1",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "A",
+    "teamAId": "team-u40",
+    "teamBId": "team-gapvibe",
+    "scoreA": 1,
+    "scoreB": 2,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-22T12:00:00.000Z",
+    "winnerId": "team-gapvibe"
+  },
+  "match-g-a2": {
+    "id": "match-g-a2",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "A",
+    "teamAId": "team-u40",
+    "teamBId": "team-4dtl",
+    "scoreA": 2,
+    "scoreB": 0,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-23T12:00:00.000Z",
+    "winnerId": "team-u40"
+  },
+  "match-g-a3": {
+    "id": "match-g-a3",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "A",
+    "teamAId": "team-gapvibe",
+    "teamBId": "team-4dtl",
+    "scoreA": 2,
+    "scoreB": 1,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-24T12:00:00.000Z",
+    "winnerId": "team-gapvibe"
+  },
+  "match-g-b1": {
+    "id": "match-g-b1",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "B",
+    "teamAId": "team-lienminh",
+    "teamBId": "team-bodoi",
+    "scoreA": 2,
+    "scoreB": 0,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-22T12:00:00.000Z",
+    "winnerId": "team-lienminh"
+  },
+  "match-g-b2": {
+    "id": "match-g-b2",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "B",
+    "teamAId": "team-bodoi",
+    "teamBId": "team-kylan",
+    "scoreA": 1,
+    "scoreB": 2,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-23T12:00:00.000Z",
+    "winnerId": "team-kylan"
+  },
+  "match-g-b3": {
+    "id": "match-g-b3",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "B",
+    "teamAId": "team-lienminh",
+    "teamBId": "team-kylan",
+    "scoreA": 2,
+    "scoreB": 1,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-24T12:00:00.000Z",
+    "winnerId": "team-lienminh"
+  },
+  "match-g-c1": {
+    "id": "match-g-c1",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "C",
+    "teamAId": "team-siuu",
+    "teamBId": "team-36loi",
+    "scoreA": 2,
+    "scoreB": 1,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-22T12:00:00.000Z",
+    "winnerId": "team-siuu"
+  },
+  "match-g-c2": {
+    "id": "match-g-c2",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "C",
+    "teamAId": "team-36loi",
+    "teamBId": "team-pickme",
+    "scoreA": 2,
+    "scoreB": 0,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-23T12:00:00.000Z",
+    "winnerId": "team-36loi"
+  },
+  "match-g-c3": {
+    "id": "match-g-c3",
+    "type": "group",
+    "stage": "Group Stage",
+    "group": "C",
+    "teamAId": "team-siuu",
+    "teamBId": "team-pickme",
+    "scoreA": 2,
+    "scoreB": 0,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-24T12:00:00.000Z",
+    "winnerId": "team-siuu"
+  },
+  "match-playoff-1": {
+    "id": "match-playoff-1",
+    "type": "knockout",
+    "stage": "Upper Semifinals #1",
+    "teamAId": "team-gapvibe",
+    "teamBId": "team-kylan",
+    "scoreA": 2,
+    "scoreB": 1,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-27T12:00:00.000Z",
+    "winnerId": "team-gapvibe"
+  },
+  "match-playoff-2": {
+    "id": "match-playoff-2",
+    "type": "knockout",
+    "stage": "Upper Semifinals #2",
+    "teamAId": "team-lienminh",
+    "teamBId": "team-36loi",
+    "scoreA": 2,
+    "scoreB": 0,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-27T12:00:00.000Z",
+    "winnerId": "team-lienminh"
+  },
+  "match-playoff-3": {
+    "id": "match-playoff-3",
+    "type": "knockout",
+    "stage": "Lower Quarterfinals #1",
+    "teamAId": "team-siuu",
+    "teamBId": "team-kylan",
+    "scoreA": 2,
+    "scoreB": 1,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-28T12:00:00.000Z",
+    "winnerId": "team-siuu"
+  },
+  "match-playoff-4": {
+    "id": "match-playoff-4",
+    "type": "knockout",
+    "stage": "Lower Quarterfinals #2",
+    "teamAId": "team-u40",
+    "teamBId": "team-36loi",
+    "scoreA": 1,
+    "scoreB": 2,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-28T12:00:00.000Z",
+    "winnerId": "team-36loi"
+  },
+  "match-playoff-5": {
+    "id": "match-playoff-5",
+    "type": "knockout",
+    "stage": "Upper Finals",
+    "teamAId": "team-gapvibe",
+    "teamBId": "team-lienminh",
+    "scoreA": 2,
+    "scoreB": 1,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-29T12:00:00.000Z",
+    "winnerId": "team-gapvibe"
+  },
+  "match-playoff-6": {
+    "id": "match-playoff-6",
+    "type": "knockout",
+    "stage": "Lower Semifinals",
+    "teamAId": "team-siuu",
+    "teamBId": "team-36loi",
+    "scoreA": 2,
+    "scoreB": 0,
+    "status": "completed",
+    "bestOf": 3,
+    "scheduledTime": "2026-07-29T12:00:00.000Z",
+    "winnerId": "team-siuu"
+  },
+  "match-playoff-7": {
+    "id": "match-playoff-7",
+    "type": "knockout",
+    "stage": "Losers Bracket Final",
+    "teamAId": "team-lienminh",
+    "teamBId": "team-siuu",
+    "scoreA": 2,
+    "scoreB": 3,
+    "status": "completed",
+    "bestOf": 5,
+    "scheduledTime": "2026-07-30T12:00:00.000Z",
+    "winnerId": "team-siuu"
+  },
+  "match-playoff-8": {
+    "id": "match-playoff-8",
+    "type": "knockout",
+    "stage": "Grand Final",
+    "teamAId": "team-gapvibe",
+    "teamBId": "team-siuu",
+    "scoreA": 3,
+    "scoreB": 2,
+    "status": "completed",
+    "bestOf": 5,
+    "scheduledTime": "2026-08-03T12:00:00.000Z",
+    "winnerId": "team-gapvibe"
   }
 };
 
@@ -2214,6 +2447,169 @@ export async function resetToDefaultData() {
     await set(ref(database, "bracket"), DEFAULT_BRACKET);
     await set(ref(database, "matchDetails"), {});
     await set(ref(database, "news"), {});
+    await recalculateLeaderboard();
+  }
+}
+
+function generateFakedMatchDetails() {
+  const fakedDetails = {};
+  const ARAM_CHAMPS = [
+    "Ezreal", "Lux", "Jhin", "Kaisa", "Nidalee", "Graves", "Jinx", "Veigar", "Pyke", "Malphite",
+    "Teemo", "Ashe", "Jayce", "Varus", "Ziggs", "Caitlyn", "Karthus", "Morgana", "MissFortune",
+    "Brand", "Xerath", "Velkoz", "Syndra", "Karma", "Lulu", "Orianna", "Viktor", "Sylas", "Leona",
+    "Ahri", "Akali", "Amumu", "Anivia", "Blitzcrank", "Darius", "Diana", "Ekko", "Fizz", "Garen"
+  ];
+
+  const ITEM_POOL = [3006, 3009, 3111, 3158, 3089, 3157, 6655, 3001, 3116, 3031, 3046, 6672, 3814, 6676, 3068, 3075, 3109, 3190];
+  const SPELL_POOL = [4, 6, 7, 14, 32];
+  const KEYSTONES = [8008, 8021, 8112, 8128, 8214, 8229, 8351, 8437, 8439];
+  const PRIMARY_STYLES = [8000, 8100, 8200, 8300, 8400];
+
+  // Helper to shuffle array
+  const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+  const getFakedItems = () => {
+    const items = shuffle(ITEM_POOL).slice(0, 4 + Math.floor(Math.random() * 2));
+    while (items.length < 6) items.push(0);
+    return items;
+  };
+
+  const getFakedRunes = () => {
+    const keystoneId = KEYSTONES[Math.floor(Math.random() * KEYSTONES.length)];
+    const primaryStyleId = PRIMARY_STYLES[Math.floor(Math.random() * PRIMARY_STYLES.length)];
+    return { keystoneId, primaryStyleId };
+  };
+
+  Object.entries(FAKED_MATCHES).forEach(([matchId, match]) => {
+    if (match.status !== "completed") return;
+
+    const teamA = DEFAULT_TEAMS[match.teamAId];
+    const teamB = DEFAULT_TEAMS[match.teamBId];
+    if (!teamA || !teamB) return;
+
+    const teamAPlayers = teamA.players || [];
+    const teamBPlayers = teamB.players || [];
+
+    const scoreA = match.scoreA;
+    const scoreB = match.scoreB;
+    const totalGames = scoreA + scoreB;
+
+    const gamesDetails = [];
+
+    const gameWinners = [];
+    if (scoreA > scoreB) {
+      if (totalGames === 2) gameWinners.push("A", "A");
+      else if (totalGames === 3) gameWinners.push("A", "B", "A");
+      else if (totalGames === 5) gameWinners.push("A", "B", "A", "B", "A");
+    } else {
+      if (totalGames === 2) gameWinners.push("B", "B");
+      else if (totalGames === 3) gameWinners.push("B", "A", "B");
+      else if (totalGames === 5) gameWinners.push("B", "A", "B", "A", "B");
+    }
+
+    for (let gameIdx = 0; gameIdx < totalGames; gameIdx++) {
+      const winnerTeam = gameWinners[gameIdx];
+      const winnerSide = winnerTeam === "A" ? 100 : 200;
+      
+      const gameChamps = shuffle(ARAM_CHAMPS);
+      const participants = [];
+
+      // Team A (Side 100)
+      for (let i = 0; i < 5; i++) {
+        const player = teamAPlayers[i] || { name: `PlayerA-${i}` };
+        const win = winnerSide === 100;
+        
+        participants.push({
+          playerName: player.name,
+          teamId: 100,
+          win: win,
+          champion: gameChamps[i],
+          kills: win ? Math.floor(Math.random() * 12) + 6 : Math.floor(Math.random() * 8) + 3,
+          deaths: win ? Math.floor(Math.random() * 6) + 3 : Math.floor(Math.random() * 12) + 6,
+          assists: win ? Math.floor(Math.random() * 18) + 12 : Math.floor(Math.random() * 14) + 6,
+          gold: win ? Math.floor(Math.random() * 5000) + 11000 : Math.floor(Math.random() * 4000) + 7000,
+          cs: Math.floor(Math.random() * 70) + 30,
+          vision: 0,
+          damageDealt: win ? Math.floor(Math.random() * 25000) + 20000 : Math.floor(Math.random() * 20000) + 10000,
+          damageTaken: win ? Math.floor(Math.random() * 15000) + 15000 : Math.floor(Math.random() * 20000) + 10000,
+          healing: Math.floor(Math.random() * 5000) + 500,
+          tripleKills: Math.random() > 0.8 ? 1 : 0,
+          quadraKills: 0,
+          pentaKills: Math.random() > 0.95 ? 1 : 0,
+          firstBlood: i === 0 && win,
+          controlWards: 0,
+          wardsPlaced: 0,
+          wardsKilled: 0,
+          turretsKilled: win ? (i === 1 ? 2 : 1) : 0,
+          inhibitorsKilled: win ? (i === 2 ? 1 : 0) : 0,
+          ccDuration: Math.floor(Math.random() * 30),
+          items: getFakedItems(),
+          summonerSpells: [4, shuffle(SPELL_POOL)[0]],
+          runes: getFakedRunes()
+        });
+      }
+
+      // Team B (Side 200)
+      for (let i = 0; i < 5; i++) {
+        const player = teamBPlayers[i] || { name: `PlayerB-${i}` };
+        const win = winnerSide === 200;
+
+        participants.push({
+          playerName: player.name,
+          teamId: 200,
+          win: win,
+          champion: gameChamps[i + 5],
+          kills: win ? Math.floor(Math.random() * 12) + 6 : Math.floor(Math.random() * 8) + 3,
+          deaths: win ? Math.floor(Math.random() * 6) + 3 : Math.floor(Math.random() * 12) + 6,
+          assists: win ? Math.floor(Math.random() * 18) + 12 : Math.floor(Math.random() * 14) + 6,
+          gold: win ? Math.floor(Math.random() * 5000) + 11000 : Math.floor(Math.random() * 4000) + 7000,
+          cs: Math.floor(Math.random() * 70) + 30,
+          vision: 0,
+          damageDealt: win ? Math.floor(Math.random() * 25000) + 20000 : Math.floor(Math.random() * 20000) + 10000,
+          damageTaken: win ? Math.floor(Math.random() * 15000) + 15000 : Math.floor(Math.random() * 20000) + 10000,
+          healing: Math.floor(Math.random() * 5000) + 500,
+          tripleKills: Math.random() > 0.8 ? 1 : 0,
+          quadraKills: 0,
+          pentaKills: Math.random() > 0.95 ? 1 : 0,
+          firstBlood: i === 0 && win,
+          controlWards: 0,
+          wardsPlaced: 0,
+          wardsKilled: 0,
+          turretsKilled: win ? (i === 1 ? 2 : 1) : 0,
+          inhibitorsKilled: win ? (i === 2 ? 1 : 0) : 0,
+          ccDuration: Math.floor(Math.random() * 30),
+          items: getFakedItems(),
+          summonerSpells: [4, shuffle(SPELL_POOL)[0]],
+          runes: getFakedRunes()
+        });
+      }
+
+      gamesDetails.push({
+        gameDuration: Math.floor(Math.random() * 600) + 900,
+        teams: {
+          100: { winner: winnerSide === 100, bans: [], barons: 0, dragons: 0, firstBlood: winnerSide === 100 },
+          200: { winner: winnerSide === 200, bans: [], barons: 0, dragons: 0, firstBlood: winnerSide === 200 }
+        },
+        participants: participants
+      });
+    }
+
+    fakedDetails[matchId] = gamesDetails;
+  });
+
+  return fakedDetails;
+}
+
+export async function seedFakedTournamentData() {
+  const fakedDetails = generateFakedMatchDetails();
+
+  if (isMockMode) {
+    setMockStorage("matches", FAKED_MATCHES);
+    setMockStorage("matchDetails", fakedDetails);
+    await recalculateLeaderboard();
+  } else {
+    await set(ref(database, "matches"), FAKED_MATCHES);
+    await set(ref(database, "matchDetails"), fakedDetails);
     await recalculateLeaderboard();
   }
 }

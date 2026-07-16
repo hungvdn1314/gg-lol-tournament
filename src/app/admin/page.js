@@ -8,7 +8,7 @@ import { HextechCrest, LoLMinion, CrossedSwords } from "@/components/Icons";
 import { isMockMode, auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { 
-  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard,
+  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard, seedFakedTournamentData,
   subscribeToNews, saveNews, deleteNews
 } from "@/lib/db";
 import { getLatestDDragonVersion } from "@/lib/riot";
@@ -634,6 +634,17 @@ export default function Admin() {
     }
   };
 
+  const handleSeedFakeData = async () => {
+    if (confirm("WARNING: This will overwrite current matches with faked completed match data for all group stage and playoff rounds. Proceed?")) {
+      try {
+        await seedFakedTournamentData();
+        alert("Faked tournament statistics seeded successfully!");
+      } catch (err) {
+        alert("Error seeding faked statistics: " + err.message);
+      }
+    }
+  };
+
   // Login Form Gate
   if (!isLoggedIn) {
     return (
@@ -703,9 +714,14 @@ export default function Admin() {
           <span className="hero-badge">Coordinator Access</span>
           <h1 style={{ fontSize: "2rem", textTransform: "uppercase" }}>Tournament Control Panel</h1>
         </div>
-        <button onClick={handleResetDatabase} className="btn btn-outline" style={{ display: "flex", gap: "0.5rem", color: "var(--color-danger)", borderColor: "rgba(220,53,69,0.3)" }}>
-          <RotateCcw size={16} /> Reset Default Data
-        </button>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <button onClick={handleSeedFakeData} className="btn btn-outline" style={{ display: "flex", gap: "0.5rem", color: "var(--primary-gold)", borderColor: "rgba(245,176,65,0.3)" }}>
+            <Activity size={16} /> Fake Data
+          </button>
+          <button onClick={handleResetDatabase} className="btn btn-outline" style={{ display: "flex", gap: "0.5rem", color: "var(--color-danger)", borderColor: "rgba(220,53,69,0.3)" }}>
+            <RotateCcw size={16} /> Reset Default Data
+          </button>
+        </div>
       </div>
 
       <div className="admin-grid">

@@ -441,6 +441,7 @@ export default function SubmitScore() {
           damageTaken: parseInt(stat.damageTaken) || 0,
           healing: parseInt(stat.healing) || 0,
           items: resolveItemIds(stat.items),
+          pentaKills: 0,
           firstBlood: false,
           summonerSpells: [0, 0],
           runes: { keystoneId: 0, primaryStyleId: 0 }
@@ -578,10 +579,10 @@ export default function SubmitScore() {
 
   return (
     <div className="container" style={{ maxWidth: "1000px" }}>
-      <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-        <span className="hero-badge" style={{ borderColor: "var(--primary-gold)", color: "var(--primary-gold)" }}>Tournament Control Room</span>
-        <h1 style={{ fontSize: "2.25rem", textTransform: "uppercase", marginBottom: "0.5rem" }}>Submit Match Score</h1>
-        <p style={{ color: "var(--text-secondary)", maxWidth: "600px", margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: "2.5rem", position: "relative", paddingTop: "1.5rem" }}>
+        <span className="hero-badge" style={{ backgroundColor: "rgba(245,176,65,0.08)", border: "1px solid var(--border-gold)", color: "var(--primary-gold)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", padding: "0.3rem 1rem", borderRadius: "20px", display: "inline-block", marginBottom: "1rem" }}>Tournament Control Room</span>
+        <h1 style={{ fontSize: "2.8rem", fontWeight: "900", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem", background: "linear-gradient(to bottom, #FFFFFF, var(--primary-gold-bright))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Submit Match Score</h1>
+        <p style={{ color: "var(--text-muted)", maxWidth: "600px", margin: "0 auto", fontSize: "0.95rem", lineHeight: "1.6" }}>
           Redesigned multi-stage scoring wizard utilizing Gemini Flash screenshot OCR mapping.
         </p>
       </div>
@@ -1053,6 +1054,7 @@ export default function SubmitScore() {
                     <th style={{ padding: "0.5rem", width: "90px" }}>Healing</th>
                     <th style={{ padding: "0.5rem", width: "90px" }}>Gold</th>
                     <th style={{ padding: "0.5rem", width: "70px" }}>CS</th>
+                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>Penta</th>
                     <th style={{ padding: "0.5rem", width: "290px" }}>Items (IDs)</th>
                   </tr>
                 </thead>
@@ -1144,6 +1146,15 @@ export default function SubmitScore() {
                         />
                       </td>
                       <td style={{ padding: "0.25rem" }}>
+                        <input
+                          type="number"
+                          className="form-control"
+                          style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
+                          value={stat.pentaKills || 0}
+                          onChange={(e) => handleFinalStatChange(idx, "pentaKills", e.target.value)}
+                        />
+                      </td>
+                      <td style={{ padding: "0.25rem" }}>
                         <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
                           {Array.from({ length: 6 }).map((_, itemIdx) => {
                             const itemId = stat.items?.[itemIdx] || 0;
@@ -1192,6 +1203,7 @@ export default function SubmitScore() {
                     <th style={{ padding: "0.5rem", width: "90px" }}>Healing</th>
                     <th style={{ padding: "0.5rem", width: "90px" }}>Gold</th>
                     <th style={{ padding: "0.5rem", width: "70px" }}>CS</th>
+                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>Penta</th>
                     <th style={{ padding: "0.5rem", width: "290px" }}>Items (IDs)</th>
                   </tr>
                 </thead>
@@ -1282,6 +1294,15 @@ export default function SubmitScore() {
                             style={{ padding: "0.25rem", fontSize: "0.8rem" }}
                             value={stat.cs}
                             onChange={(e) => handleFinalStatChange(actualIdx, "cs", e.target.value)}
+                          />
+                        </td>
+                        <td style={{ padding: "0.25rem" }}>
+                          <input
+                            type="number"
+                            className="form-control"
+                            style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
+                            value={stat.pentaKills || 0}
+                            onChange={(e) => handleFinalStatChange(actualIdx, "pentaKills", e.target.value)}
                           />
                         </td>
                         <td style={{ padding: "0.25rem" }}>

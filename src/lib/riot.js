@@ -123,7 +123,8 @@ export function useDDragon() {
 
   const getChampionIcon = (championName) => {
     if (!championName) return championPlaceholder(40);
-    const cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
+    let cleanName = championName.replace(/[^a-zA-Z0-9]/g, "");
+    if (cleanName.toLowerCase() === "velkoz") cleanName = "Velkoz";
     return `https://ddragon.leagueoflegends.com/cdn/${data.version}/img/champion/${cleanName}.png`;
   };
 

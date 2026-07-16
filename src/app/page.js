@@ -131,7 +131,7 @@ export default function Home() {
       {/* Event Timeline & Next Match Countdown Section */}
       <section style={{ padding: "4rem 0", backgroundColor: "#0A0A0C", borderBottom: "1px solid var(--border-dark)" }}>
         <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: nextMatch ? "repeat(auto-fit, minmax(320px, 1fr))" : "1fr", gap: "3rem", alignItems: "center" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "3rem", alignItems: "center" }}>
             
             {/* Left Column: Timeline */}
             <div>
@@ -178,8 +178,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column: Countdown */}
-            {nextMatch && (
+            {/* Right Column: Countdown or Dynamic Status Card */}
+            {nextMatch ? (
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <div className="card card-hud" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "340px", width: "100%", margin: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
@@ -212,7 +212,66 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            )}
+            ) : (() => {
+              const grandFinalMatch = matches["match-playoff-8"];
+              const championTeam = grandFinalMatch?.status === "completed" && grandFinalMatch?.winnerId ? teams[grandFinalMatch.winnerId] : null;
+
+              if (championTeam) {
+                return (
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    <div className="card card-gold" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "340px", width: "100%", margin: 0, padding: "2rem", position: "relative", overflow: "hidden", textAlign: "center", background: "radial-gradient(circle at center, rgba(245, 176, 65, 0.08) 0%, rgba(10, 10, 12, 0.95) 100%)" }}>
+                      <div style={{ fontSize: "3.5rem", marginBottom: "0.75rem", animation: "bounce 2s infinite" }}>🏆</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "800", letterSpacing: "0.15em", marginBottom: "0.5rem" }}>
+                        Tournament Champion
+                      </div>
+                      <h3 style={{ fontSize: "1.6rem", fontWeight: "900", textTransform: "uppercase", marginBottom: "1rem", color: "#FFF", background: "linear-gradient(to bottom, #FFFFFF, var(--primary-gold-bright))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                        {championTeam.name}
+                      </h3>
+                      {championTeam.logo ? (
+                        <img src={championTeam.logo} alt={championTeam.name} style={{ width: "80px", height: "80px", borderRadius: "50%", border: "2px solid var(--primary-gold)", boxShadow: "0 0 20px rgba(245, 176, 65, 0.3)", marginBottom: "1.25rem", objectFit: "cover" }} onError={(e) => { e.target.src = teamLogoPlaceholder(championTeam.name, 80); }} />
+                      ) : (
+                        <div style={{ width: "80px", height: "80px", borderRadius: "50%", border: "2px solid var(--primary-gold)", boxShadow: "0 0 20px rgba(245, 176, 65, 0.3)", marginBottom: "1.25rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", fontWeight: "bold", backgroundColor: "var(--bg-tertiary)" }}>
+                          {championTeam.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", maxWidth: "320px", lineHeight: "1.5", margin: 0 }}>
+                        Congratulations to {championTeam.name} for winning the Gear Games LoL Championship 2026!
+                      </p>
+                      <div style={{ marginTop: "1.25rem" }}>
+                        <Link href="/rankings" className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "0.4rem 1.2rem" }}>
+                          View Hall of Fame
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "340px", width: "100%", margin: 0, padding: "2rem", border: "1px solid var(--border-dark)", textAlign: "center", backgroundColor: "var(--bg-secondary)" }}>
+                    <div style={{ fontSize: "3rem", marginBottom: "0.75rem", opacity: 0.8 }}>⚔️</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
+                      Tournament Status
+                    </div>
+                    <h3 style={{ fontSize: "1.2rem", fontWeight: "800", marginBottom: "0.5rem", color: "var(--text-primary)" }}>
+                      All Matches Completed
+                    </h3>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", maxWidth: "300px", lineHeight: "1.5", margin: "0 0 1.25rem 0" }}>
+                      The tournament matches have concluded. Check the final brackets, match summaries, and individual player rankings!
+                    </p>
+                    <div style={{ display: "flex", gap: "0.75rem" }}>
+                      <Link href="/bracket" className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "0.4rem 1.2rem" }}>
+                        Brackets
+                      </Link>
+                      <Link href="/rankings" className="btn btn-secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 1.2rem" }}>
+                        Rankings
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
           </div>
         </div>

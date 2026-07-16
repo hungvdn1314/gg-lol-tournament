@@ -69,10 +69,10 @@ export default function Schedule() {
 
   return (
     <div className="container">
-      <div style={{ textAlign: "center", marginBottom: "3rem" }}>
-        <span className="hero-badge">Tournament Schedule</span>
-        <h1 style={{ fontSize: "2.5rem", textTransform: "uppercase", marginBottom: "1rem" }}>Matches & Results</h1>
-        <p style={{ color: "var(--text-secondary)", maxWidth: "600px", margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: "3rem", position: "relative", paddingTop: "1.5rem" }}>
+        <span className="hero-badge" style={{ backgroundColor: "rgba(245,176,65,0.08)", border: "1px solid var(--border-gold)", color: "var(--primary-gold)", textTransform: "uppercase", fontSize: "0.8rem", fontWeight: "700", padding: "0.3rem 1rem", borderRadius: "20px", display: "inline-block", marginBottom: "1rem" }}>Tournament Schedule</span>
+        <h1 style={{ fontSize: "2.8rem", fontWeight: "900", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem", background: "linear-gradient(to bottom, #FFFFFF, var(--primary-gold-bright))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Matches &amp; Results</h1>
+        <p style={{ color: "var(--text-muted)", maxWidth: "600px", margin: "0 auto", fontSize: "0.95rem", lineHeight: "1.6" }}>
           Track live match progression, review post-game scoreboard analytics, and view upcoming match draft codes.
         </p>
 
@@ -205,28 +205,21 @@ export default function Schedule() {
           </div>
 
           {/* Stage Filters */}
-          <div className="scrollable-tabs" style={{ display: "flex", gap: "0.5rem" }}>
-            <button
-              onClick={() => setStageFilter("all")}
-              className={`btn ${stageFilter === "all" ? "btn-primary" : "btn-outline"}`}
-              style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}
-            >
-              All Stages
-            </button>
-            <button
-              onClick={() => setStageFilter("group")}
-              className={`btn ${stageFilter === "group" ? "btn-primary" : "btn-outline"}`}
-              style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}
-            >
-              Group Stage
-            </button>
-            <button
-              onClick={() => setStageFilter("knockout")}
-              className={`btn ${stageFilter === "knockout" ? "btn-primary" : "btn-outline"}`}
-              style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}
-            >
-              Playoffs
-            </button>
+          <div style={{ display: "inline-flex", backgroundColor: "var(--bg-secondary)", padding: "4px", borderRadius: "30px", border: "1px solid var(--border-dark)", flexShrink: 0 }}>
+            {[
+              { id: "all", label: "All Stages" },
+              { id: "group", label: "Group Stage" },
+              { id: "knockout", label: "Playoffs" },
+            ].map((f) => (
+              <button
+                key={f.id}
+                className={`btn ${stageFilter === f.id ? "btn-primary" : ""}`}
+                onClick={() => setStageFilter(f.id)}
+                style={{ borderRadius: "20px", padding: "0.4rem 1.2rem", fontSize: "0.8rem", background: stageFilter === f.id ? "" : "transparent", border: "none", color: stageFilter === f.id ? "#000" : "var(--text-muted)", fontWeight: "bold" }}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
