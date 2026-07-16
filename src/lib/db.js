@@ -8,7 +8,7 @@ import { ref, get, set, update, remove, onValue } from "firebase/database";
 const DEFAULT_CONFIG = {
   title: "Gear Games League of Legend Championship",
   date: "Jul 22 - Aug 3, 2026",
-  venue: "Hà Nội & Đà Nẵng",
+  venue: "Ha Noi & Da Nang",
   description: "",
   finalized: false,
   captainPasscode: "aram2026"

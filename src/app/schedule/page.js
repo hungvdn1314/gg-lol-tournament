@@ -87,13 +87,13 @@ export default function Schedule() {
             {/* Hanoi Venue */}
             <div className="card card-gold" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.5rem" }}>
-                <span style={{ fontWeight: "700", color: "var(--primary-gold-bright)", textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.05em" }}>Hà Nội</span>
+                <span style={{ fontWeight: "700", color: "var(--primary-gold-bright)", textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.05em" }}>Ha Noi</span>
                 <span className="hero-badge" style={{ margin: 0, fontSize: "0.65rem", padding: "0.15rem 0.5rem", backgroundColor: "rgba(255,255,255,0.02)", borderColor: "var(--border-dark)", color: "var(--text-muted)" }}>2 Venues</span>
               </div>
               
               <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
                 <a 
-                  href="https://www.google.com/maps/search/?api=1&query=Net+Vikings+15+Đoàn+Trần+Nghiệp+Hà+Nội"
+                  href="https://www.google.com/maps/search/?api=1&query=Net+Vikings+15+Doan+Tran+Nghiep+Ha+Noi"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="venue-link"
@@ -101,13 +101,13 @@ export default function Schedule() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
                     <div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Vòng bảng & playoffs</div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Group Stage & Playoffs</div>
                       <div style={{ fontWeight: "700", fontSize: "1rem", color: "var(--text-primary)", marginTop: "0.1rem", display: "flex", alignItems: "center", gap: "0.25rem" }} className="venue-name">
                         Net Vikings
                       </div>
                       <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.2rem" }}>
                         <MapPin size={12} style={{ color: "var(--primary-gold)", flexShrink: 0 }} />
-                        <span>15 Đoàn Trần Nghiệp, Hai Bà Trưng</span>
+                        <span>15 Doan Tran Nghiep, Hai Ba Trung</span>
                       </div>
                     </div>
                     <ExternalLink size={12} style={{ color: "var(--text-muted)", marginTop: "0.25rem" }} className="venue-external-icon" />
@@ -116,7 +116,7 @@ export default function Schedule() {
                 
                 <div style={{ borderTop: "1px dashed var(--border-dark)", paddingTop: "0.85rem" }}>
                   <a 
-                    href="https://www.google.com/maps/search/?api=1&query=Vikings+Cyber+697+Giải+Phóng+Hà+Nội"
+                    href="https://www.google.com/maps/search/?api=1&query=Vikings+Cyber+697+Giai+Phong+Ha+Noi"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="venue-link"
@@ -124,13 +124,13 @@ export default function Schedule() {
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
                       <div>
-                        <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Vòng chung kết</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Grand Final</div>
                         <div style={{ fontWeight: "700", fontSize: "1rem", color: "var(--text-primary)", marginTop: "0.1rem", display: "flex", alignItems: "center", gap: "0.25rem" }} className="venue-name">
                           Vikings Cyber
                         </div>
                         <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.2rem" }}>
                           <MapPin size={12} style={{ color: "var(--primary-gold)", flexShrink: 0 }} />
-                          <span>697 Giải Phóng, Hoàng Mai</span>
+                          <span>697 Giai Phong, Hoang Mai</span>
                         </div>
                       </div>
                       <ExternalLink size={12} style={{ color: "var(--text-muted)", marginTop: "0.25rem" }} className="venue-external-icon" />
@@ -143,13 +143,13 @@ export default function Schedule() {
             {/* Da Nang Venue */}
             <div className="card card-gold" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.5rem" }}>
-                <span style={{ fontWeight: "700", color: "var(--primary-gold-bright)", textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.05em" }}>Đà Nẵng</span>
+                <span style={{ fontWeight: "700", color: "var(--primary-gold-bright)", textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.05em" }}>Da Nang</span>
                 <span className="hero-badge" style={{ margin: 0, fontSize: "0.65rem", padding: "0.15rem 0.5rem", backgroundColor: "rgba(255,255,255,0.02)", borderColor: "var(--border-dark)", color: "var(--text-muted)" }}>1 Venue</span>
               </div>
               
               <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", justifyContent: "center", flex: 1 }}>
                 <a 
-                  href="https://www.google.com/maps/search/?api=1&query=Gen+Z+Arena+49+Phan+Đăng+Lưu+Đà+Nẵng"
+                  href="https://www.google.com/maps/search/?api=1&query=Gen+Z+Arena+49+Phan+Dang+Luu+Da+Nang"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="venue-link"
@@ -157,13 +157,13 @@ export default function Schedule() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
                     <div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Tất cả các vòng</div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>All Rounds</div>
                       <div style={{ fontWeight: "700", fontSize: "1rem", color: "var(--text-primary)", marginTop: "0.1rem", display: "flex", alignItems: "center", gap: "0.25rem" }} className="venue-name">
                         Gen Z Arena
                       </div>
                       <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.2rem" }}>
                         <MapPin size={12} style={{ color: "var(--primary-gold)", flexShrink: 0 }} />
-                        <span>49 Phan Đăng Lưu, Hải Châu</span>
+                        <span>49 Phan Dang Luu, Hai Chau</span>
                       </div>
                     </div>
                     <ExternalLink size={12} style={{ color: "var(--text-muted)", marginTop: "0.25rem" }} className="venue-external-icon" />
