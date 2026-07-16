@@ -11,6 +11,7 @@ export default function Teams() {
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [groupFilter, setGroupFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [showIgn, setShowIgn] = useState(false);
 
   useEffect(() => {
     const unsubTeams = subscribeToData("teams", (data) => {
@@ -155,13 +156,59 @@ export default function Teams() {
           <div className="grid-2">
             {/* Active Roster */}
             <div>
-              <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", marginBottom: "1.5rem", color: "var(--primary-gold)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <LoLMinion size={18} /> Active Roster
-              </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+                <h3 style={{ textTransform: "uppercase", fontSize: "1.1rem", margin: 0, color: "var(--primary-gold)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <LoLMinion size={18} /> Active Roster
+                </h3>
+                
+                {/* Toggle Real Name / IGN */}
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)" }}>Display:</span>
+                  <div style={{ display: "flex", backgroundColor: "var(--bg-primary)", padding: "3px", borderRadius: "20px", border: "1px solid var(--border-dark)" }}>
+                    <button
+                      onClick={() => setShowIgn(false)}
+                      style={{
+                        padding: "0.3rem 0.8rem",
+                        fontSize: "0.7rem",
+                        fontWeight: "700",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        borderRadius: "15px",
+                        border: "none",
+                        cursor: "pointer",
+                        backgroundColor: !showIgn ? "var(--primary-gold)" : "transparent",
+                        color: !showIgn ? "#0A0A0C" : "var(--text-secondary)",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      Real Name
+                    </button>
+                    <button
+                      onClick={() => setShowIgn(true)}
+                      style={{
+                        padding: "0.3rem 0.8rem",
+                        fontSize: "0.7rem",
+                        fontWeight: "700",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        borderRadius: "15px",
+                        border: "none",
+                        cursor: "pointer",
+                        backgroundColor: showIgn ? "var(--primary-gold)" : "transparent",
+                        color: showIgn ? "#0A0A0C" : "var(--text-secondary)",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      IGN
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 {selectedTeam.players && selectedTeam.players.length > 0 ? (
                   [...selectedTeam.players]
-                    .sort((a, b) => (ROLE_ORDER[a.role] || 99) - (ROLE_ORDER[b.role] || 99))
+                    .sort((a, b) => a.name.localeCompare(b.name))
                     .map((player, idx) => (
                     <div
                       key={idx}
@@ -173,11 +220,26 @@ export default function Teams() {
                         onMouseEnter={(e) => { e.target.style.color = 'var(--primary-gold)'; e.target.style.borderBottom = '1px solid var(--primary-gold)'; }}
                         onMouseLeave={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.borderBottom = '1px dashed var(--border-dark)'; }}
                       >
-                        {player.name}
+                        {showIgn ? (
+                          (() => {
+                            const riotId = player.riotId || `${player.name}#vn1`;
+                            const parts = riotId.split("#");
+                            const name = parts[0];
+                            const tag = parts[1] ? `#${parts[1]}` : "";
+                            return (
+                              <span>
+                                {name}
+                                {tag && <span style={{ fontSize: "0.8em", color: "var(--text-muted)", fontWeight: "normal", marginLeft: "0.2rem" }}>{tag}</span>}
+                              </span>
+                            );
+                          })()
+                        ) : (
+                          player.name
+                        )}
                       </Link>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "var(--primary-red)", fontWeight: "600", backgroundColor: "rgba(var(--primary-red-rgb), 0.05)", padding: "0.25rem 0.75rem", borderRadius: "20px", border: "1px solid rgba(var(--primary-red-rgb), 0.15)" }}>
-                        <CrossedSwords size={14} />
-                        <span>ARAM Combatant</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "var(--primary-gold)", fontWeight: "600", backgroundColor: "rgba(var(--primary-gold-rgb), 0.05)", padding: "0.25rem 0.75rem", borderRadius: "20px", border: "1px solid rgba(var(--primary-gold-rgb), 0.15)" }}>
+                        <RoleMid size={14} />
+                        <span>All Mid</span>
                       </div>
                     </div>
                   ))
