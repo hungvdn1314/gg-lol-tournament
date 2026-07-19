@@ -59,7 +59,7 @@ export async function POST(request) {
       vision: p.visionScore,
       damageDealt: p.totalDamageDealtToChampions,
       damageTaken: p.totalDamageTaken,
-      healing: p.totalHeal,
+      healing: (p.totalHealsOnTeammates || 0) + (p.totalDamageShieldedOnTeammates || 0),
       tripleKills: p.tripleKills || 0,
       quadraKills: p.quadraKills || 0,
       pentaKills: p.pentaKills || 0,

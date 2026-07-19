@@ -72,7 +72,7 @@ async function fetchAndMapGames() {
         vision: p.visionScore || 0,
         damageDealt: p.totalDamageDealtToChampions || 0,
         damageTaken: p.totalDamageTaken || 0,
-        healing: p.totalHeal || 0,
+        healing: (p.totalHealsOnTeammates || 0) + (p.totalDamageShieldedOnTeammates || 0),
         tripleKills: p.tripleKills || 0,
         quadraKills: p.quadraKills || 0,
         pentaKills: p.pentaKills || 0,

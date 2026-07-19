@@ -49,7 +49,7 @@ For each player, extract:
 7. "cs": Integer Creep Score (minions/monsters killed).
 8. "damageDealt": Integer total damage dealt to champions.
 9. "damageTaken": Integer total damage taken.
-10. "healing": Integer total healing done.
+10. "healing": Integer representing the total ally heal/shield value. This MUST be the sum of "Ally Healing" and "Ally Shielding" shown in the screenshots under the 'DAMAGE TAKEN AND HEALED' section (DO NOT include 'Damage Healed'; if a row is missing or has no value, treat it as 0). For example, if a player has 22474 Damage Healed, 17157 Ally Healing, and 11013 Ally Shielding, the "healing" value should be 17157 + 11013 = 28170.
 
 Format the response strictly as a JSON object with this exact structure:
 {
