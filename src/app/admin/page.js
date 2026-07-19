@@ -421,7 +421,45 @@ export default function Admin() {
       while (existingDetails.length <= gameIndex) {
         existingDetails.push(null);
       }
-      existingDetails[gameIndex] = data.matchDetails;
+      // Map participant in-game names to registered player names (employee IDs)
+      const mappedParticipants = data.matchDetails.participants.map(p => {
+        let matchedName = p.playerName;
+        
+        // Find player in teams roster
+        Object.values(teams).forEach(team => {
+          if (team && Array.isArray(team.players)) {
+            const found = team.players.find(tp => {
+              const aliases = [];
+              if (tp.name) aliases.push(tp.name);
+              if (tp.jerseyName) aliases.push(tp.jerseyName);
+              if (tp.riotId) {
+                const parts = tp.riotId.split("#");
+                if (parts[0]) aliases.push(parts[0]);
+              }
+              const normPlayer = p.playerName.toLowerCase().replace(/[^a-z0-9]/g, "");
+              return aliases.some(alias => {
+                const normAlias = alias.toLowerCase().replace(/[^a-z0-9]/g, "");
+                return normPlayer.includes(normAlias) || normAlias.includes(normPlayer);
+              });
+            });
+            if (found) {
+              matchedName = found.name;
+            }
+          }
+        });
+        
+        return {
+          ...p,
+          playerName: matchedName
+        };
+      });
+      
+      const matchDetailsData = {
+        ...data.matchDetails,
+        participants: mappedParticipants
+      };
+      
+      existingDetails[gameIndex] = matchDetailsData;
       
       await saveMatchDetails(matchId, existingDetails);
       setCurrentSyncDetails(existingDetails);

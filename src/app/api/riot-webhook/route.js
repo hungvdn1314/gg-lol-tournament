@@ -156,6 +156,39 @@ export async function POST(request) {
       const { ref, get, set } = await import("firebase/database");
       const { recalculateLeaderboard } = await import("@/lib/db");
 
+      // Fetch teams to map player names
+      const teamsRef = ref(db, "teams");
+      const teamsSnapshot = await get(teamsRef);
+      const teams = teamsSnapshot.exists() ? teamsSnapshot.val() : {};
+
+      if (matchDetailsData && Array.isArray(matchDetailsData.participants)) {
+        matchDetailsData.participants = matchDetailsData.participants.map(p => {
+          let matchedName = p.playerName;
+          Object.values(teams).forEach(team => {
+            if (team && Array.isArray(team.players)) {
+              const found = team.players.find(tp => {
+                const aliases = [];
+                if (tp.name) aliases.push(tp.name);
+                if (tp.jerseyName) aliases.push(tp.jerseyName);
+                if (tp.riotId) {
+                  const parts = tp.riotId.split("#");
+                  if (parts[0]) aliases.push(parts[0]);
+                }
+                const normPlayer = p.playerName.toLowerCase().replace(/[^a-z0-9]/g, "");
+                return aliases.some(alias => {
+                  const normAlias = alias.toLowerCase().replace(/[^a-z0-9]/g, "");
+                  return normPlayer.includes(normAlias) || normAlias.includes(normPlayer);
+                });
+              });
+              if (found) {
+                matchedName = found.name;
+              }
+            }
+          });
+          return { ...p, playerName: matchedName };
+        });
+      }
+
       // 1. Fetch current match configuration
       const matchRef = ref(db, `matches/${internalMatchId}`);
       const matchSnapshot = await get(matchRef);

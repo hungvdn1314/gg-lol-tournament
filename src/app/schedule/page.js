@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Info, Copy, Check, Search, X, MapPin, ExternalLink } from "lucide-react";
+import { Calendar, Info, Copy, Check, Search, X, MapPin, ExternalLink, Utensils, Coffee, Trophy } from "lucide-react";
 import { subscribeToData } from "@/lib/db";
 import { ZhonyaHourglass, CrossedSwords } from "@/components/Icons";
 import MatchStatsModal from "@/components/MatchStatsModal";
@@ -174,6 +174,98 @@ export default function Schedule() {
           </div>
         </div>
 
+        {/* Food & Drink Orders */}
+        <div style={{ maxWidth: "800px", margin: "2rem auto 0 auto", textAlign: "left" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", justifyContent: "center" }}>
+            <Utensils size={18} style={{ color: "var(--primary-gold)" }} />
+            <h2 style={{ fontSize: "1.1rem", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "700" }}>Food &amp; Drink Orders</h2>
+          </div>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.25rem" }}>
+            {/* Hanoi Office Order */}
+            <div className="card card-gold" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "700", color: "var(--primary-gold-bright)", textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.05em" }}>HN Office</span>
+                <span className="hero-badge" style={{ margin: 0, fontSize: "0.65rem", padding: "0.15rem 0.5rem", backgroundColor: "rgba(255,255,255,0.02)", borderColor: "var(--border-dark)", color: "var(--text-muted)" }}>Hanoi</span>
+              </div>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", justifyContent: "space-between", flex: 1 }}>
+                <div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Pre-order Catering</div>
+                  <div style={{ fontWeight: "700", fontSize: "1rem", color: "var(--text-primary)", marginTop: "0.1rem" }}>
+                    HN Office Food &amp; Beverage
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "0.5rem", lineHeight: "1.4" }}>
+                    Place your orders before matches begin. Food and drinks will be prepared and delivered directly to the gaming zone at the Hanoi office.
+                  </div>
+                </div>
+                
+                <a 
+                  href="https://docs.google.com/spreadsheets/d/1AqTLc6oc9_ymPbV8xn66bp_NYuKMTrR4HxvgqJv2D6g/edit?usp=sharing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                  style={{ 
+                    display: "flex", 
+                    justifyContent: "center", 
+                    alignItems: "center", 
+                    gap: "0.5rem", 
+                    fontSize: "0.85rem", 
+                    padding: "0.6rem 1rem", 
+                    marginTop: "0.5rem",
+                    textDecoration: "none"
+                  }}
+                >
+                  <Coffee size={14} />
+                  <span>Order at HN Office</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+
+            {/* Da Nang Office Order */}
+            <div className="card card-gold" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "700", color: "var(--primary-gold-bright)", textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.05em" }}>DN Office</span>
+                <span className="hero-badge" style={{ margin: 0, fontSize: "0.65rem", padding: "0.15rem 0.5rem", backgroundColor: "rgba(255,255,255,0.02)", borderColor: "var(--border-dark)", color: "var(--text-muted)" }}>Da Nang</span>
+              </div>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", justifyContent: "space-between", flex: 1 }}>
+                <div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Pre-order Catering</div>
+                  <div style={{ fontWeight: "700", fontSize: "1rem", color: "var(--text-primary)", marginTop: "0.1rem" }}>
+                    DN Office Food &amp; Beverage
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "0.5rem", lineHeight: "1.4" }}>
+                    Place your orders before matches begin. Food and drinks will be prepared and delivered directly to the gaming zone at the Da Nang office.
+                  </div>
+                </div>
+                
+                <a 
+                  href="https://docs.google.com/spreadsheets/d/1Rsm9Z6ptriChYKY_DBh_gcT_F-1wfOIo_Z0Ar48YX1M/edit?usp=sharing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                  style={{ 
+                    display: "flex", 
+                    justifyContent: "center", 
+                    alignItems: "center", 
+                    gap: "0.5rem", 
+                    fontSize: "0.85rem", 
+                    padding: "0.6rem 1rem", 
+                    marginTop: "0.5rem",
+                    textDecoration: "none"
+                  }}
+                >
+                  <Coffee size={14} />
+                  <span>Order at DN Office</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Search & Filter Toolbar */}
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", flexWrap: "wrap", margin: "2.5rem auto 0 auto", maxWidth: "800px" }}>
           {/* Search Bar */}
@@ -300,7 +392,7 @@ export default function Schedule() {
                 {match.tournamentCode && !isCompleted && (
                   <div style={{ marginTop: "1rem", padding: "0.75rem 1rem", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border-dark)", borderRadius: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", fontSize: "0.85rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ color: "var(--primary-gold)" }}>🏆</span>
+                      <Trophy size={14} style={{ color: "var(--primary-gold)" }} />
                       <span style={{ color: "var(--text-secondary)" }}>
                         Draft Code: <code style={{ color: "var(--primary-gold-bright)", backgroundColor: "rgba(0,0,0,0.2)", padding: "0.15rem 0.4rem", borderRadius: "2px", border: "1px solid var(--border-dark)" }}>{match.tournamentCode}</code>
                       </span>

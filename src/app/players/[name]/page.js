@@ -103,12 +103,26 @@ export default function PlayerProfile() {
     return match.name || id;
   };
 
-  // Build player to team mapping
+  // Build player alias maps
   const playerToTeamMap = {};
+  const playerAliasToNameMap = {};
+  
   Object.entries(teams).forEach(([teamId, team]) => {
     if (team && Array.isArray(team.players)) {
       team.players.forEach((p) => {
-        playerToTeamMap[p.name.trim().toLowerCase()] = teamId;
+        const aliases = [];
+        if (p.name) aliases.push(p.name);
+        if (p.jerseyName) aliases.push(p.jerseyName);
+        if (p.riotId) {
+          const parts = p.riotId.split("#");
+          if (parts[0]) aliases.push(parts[0]);
+        }
+        
+        aliases.forEach(alias => {
+          const normalized = alias.trim().toLowerCase();
+          playerToTeamMap[normalized] = teamId;
+          playerAliasToNameMap[normalized] = p.name.trim().toLowerCase();
+        });
       });
     }
   });
@@ -132,7 +146,11 @@ export default function PlayerProfile() {
       gamesArray.forEach((game, gIdx) => {
         if (!game || !game.participants) return;
         const stat = game.participants.find(
-          (p) => p.playerName?.trim().toLowerCase() === playerName.trim().toLowerCase()
+          (p) => {
+            if (!p.playerName) return false;
+            const normP = p.playerName.trim().toLowerCase();
+            return playerAliasToNameMap[normP] === playerName.trim().toLowerCase();
+          }
         );
         if (!stat) return;
 
@@ -164,11 +182,13 @@ export default function PlayerProfile() {
         // Resolve opponent team name
         const opponentParticipant = game.participants.find(
           (p) => {
-            const pTeamId = playerToTeamMap[p.playerName?.trim().toLowerCase()];
+            if (!p.playerName) return false;
+            const normP = p.playerName.trim().toLowerCase();
+            const pTeamId = playerToTeamMap[normP];
             return pTeamId && pTeamId !== myTeamId;
           }
         );
-        const opponentTeamId = opponentParticipant ? playerToTeamMap[opponentParticipant.playerName?.trim().toLowerCase()] : null;
+        const opponentTeamId = opponentParticipant ? playerToTeamMap[opponentParticipant.playerName.trim().toLowerCase()] : null;
         const opponentTeamName = opponentTeamId ? (teams[opponentTeamId]?.name || "Opponent") : "Opponent";
 
         matchHistory.push({

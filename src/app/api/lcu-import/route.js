@@ -133,6 +133,39 @@ export async function POST(request) {
 
       const match = matchSnapshot.val();
 
+      // A1. Fetch teams to map player names
+      const teamsRef = ref(db, "teams");
+      const teamsSnapshot = await get(teamsRef);
+      const teams = teamsSnapshot.exists() ? teamsSnapshot.val() : {};
+
+      // Map participant in-game names to registered player names
+      const mappedParticipants = matchDetailsData.participants.map(p => {
+        let matchedName = p.playerName;
+        Object.values(teams).forEach(team => {
+          if (team && Array.isArray(team.players)) {
+            const found = team.players.find(tp => {
+              const aliases = [];
+              if (tp.name) aliases.push(tp.name);
+              if (tp.jerseyName) aliases.push(tp.jerseyName);
+              if (tp.riotId) {
+                const parts = tp.riotId.split("#");
+                if (parts[0]) aliases.push(parts[0]);
+              }
+              const normPlayer = p.playerName.toLowerCase().replace(/[^a-z0-9]/g, "");
+              return aliases.some(alias => {
+                const normAlias = alias.toLowerCase().replace(/[^a-z0-9]/g, "");
+                return normPlayer.includes(normAlias) || normAlias.includes(normPlayer);
+              });
+            });
+            if (found) {
+              matchedName = found.name;
+            }
+          }
+        });
+        return { ...p, playerName: matchedName };
+      });
+      matchDetailsData.participants = mappedParticipants;
+
       // B. Fetch existing match details list to update specific game index
       const detailsRef = ref(db, `matchDetails/${matchId}`);
       const detailsSnapshot = await get(detailsRef);

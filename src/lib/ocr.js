@@ -142,51 +142,54 @@ export function matchPlayersToRoster(extractedPlayers, teamA, teamB) {
     return str.toLowerCase().replace(/[^a-z0-9]/g, "");
   };
 
-  const getPlayerAliases = (player) => {
-    const aliases = [];
-    if (player.name) aliases.push(player.name);
-    if (player.jerseyName) aliases.push(player.jerseyName);
-    if (player.riotId) {
-      const parts = player.riotId.split("#");
-      if (parts[0]) aliases.push(parts[0]);
-    }
-    return aliases.map(normalize).filter(Boolean);
-  };
-
-  const teamAWithAliases = teamAPlayers.map(p => ({
-    player: p,
-    aliases: getPlayerAliases(p)
-  }));
-  const teamBWithAliases = teamBPlayers.map(p => ({
-    player: p,
-    aliases: getPlayerAliases(p)
-  }));
-
   const matches = [];
   let matchedCount = 0;
 
   extractedPlayers.forEach((ep, idx) => {
     const normSummoner = normalize(ep.summonerName);
     let matchedPlayer = null;
-    let detectedTeamId = null; // 100 for teamA, 200 for teamB
+    let detectedTeamId = null;
+
+    const findInRoster = (players) => {
+      // Pass 1: Match against riotId prefix (in-game name)
+      for (const p of players) {
+        if (p.riotId) {
+          const prefix = normalize(p.riotId.split("#")[0]);
+          if (prefix && (normSummoner.includes(prefix) || prefix.includes(normSummoner))) {
+            return p;
+          }
+        }
+      }
+      // Pass 2: Match against jerseyName
+      for (const p of players) {
+        if (p.jerseyName) {
+          const jName = normalize(p.jerseyName);
+          if (jName && (normSummoner.includes(jName) || jName.includes(normSummoner))) {
+            return p;
+          }
+        }
+      }
+      // Pass 3: Match against name (Employee ID)
+      for (const p of players) {
+        if (p.name) {
+          const pName = normalize(p.name);
+          if (pName && (normSummoner.includes(pName) || pName.includes(normSummoner))) {
+            return p;
+          }
+        }
+      }
+      return null;
+    };
 
     // Check team A
-    for (const p of teamAWithAliases) {
-      if (p.aliases.some(alias => normSummoner.includes(alias) || alias.includes(normSummoner))) {
-        matchedPlayer = p.player;
-        detectedTeamId = 100;
-        break;
-      }
-    }
-
-    // Check team B
-    if (!matchedPlayer) {
-      for (const p of teamBWithAliases) {
-        if (p.aliases.some(alias => normSummoner.includes(alias) || alias.includes(normSummoner))) {
-          matchedPlayer = p.player;
-          detectedTeamId = 200;
-          break;
-        }
+    matchedPlayer = findInRoster(teamAPlayers);
+    if (matchedPlayer) {
+      detectedTeamId = 100;
+    } else {
+      // Check team B
+      matchedPlayer = findInRoster(teamBPlayers);
+      if (matchedPlayer) {
+        detectedTeamId = 200;
       }
     }
 

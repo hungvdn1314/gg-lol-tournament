@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
-    const { images } = await request.json();
+    const { images, champions, teamPlayers } = await request.json();
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -26,14 +26,22 @@ export async function POST(request) {
       };
     });
 
+    const validChampsText = champions && Array.isArray(champions) && champions.length > 0
+      ? `\nVALID CHAMPIONS LIST:\nUse this list to map the champion played. You MUST select/map the champion name EXACTLY from this list:\n${champions.join(", ")}\n`
+      : "";
+
+    const registeredPlayersText = teamPlayers && Array.isArray(teamPlayers) && teamPlayers.length > 0
+      ? `\nREGISTERED MATCH PLAYERS LIST:\nThis match consists of these players. Use their registered names, jersey names, or Riot IDs to help you map their extracted in-game summoner names (which are shown in the screenshots):\n${teamPlayers.map(p => `- Name: ${p.name}, Jersey: ${p.jerseyName || "None"}, RiotID: ${p.riotId || "None"}`).join("\n")}\n`
+      : "";
+
     const promptText = `
 Extract the post-game statistics for the 10 players from these screenshots of a League of Legends ARAM match.
-There are up to 3 screenshots provided. They show the scoreboard overview, damage stats, healing, gold, minion kills (CS), player items, etc.
+There are up to 3 screenshots provided. They show the scoreboard overview, damage stats, healing, gold, minion kills (CS), etc.
 Combine the data across all screenshots into exactly 10 player records.
-
+${validChampsText}${registeredPlayersText}
 For each player, extract:
-1. "summonerName": The in-game name/Riot ID (e.g., 'TuanDV', 'TriTM-1529').
-2. "champion": The name of the champion played (e.g., 'Jhin', 'Ryze', 'Akali').
+1. "summonerName": The in-game name/Riot ID shown in the screenshot. Do not guess jersey name/employee ID if not present in the screenshot, just extract the name literally shown.
+2. "champion": The name of the champion played. Map this to the exact spelling in the VALID CHAMPIONS LIST. For example, if you see the champion 'Yunara', select 'Yunara'.
 3. "kills": Integer number of kills.
 4. "deaths": Integer number of deaths.
 5. "assists": Integer number of assists.
@@ -42,7 +50,6 @@ For each player, extract:
 8. "damageDealt": Integer total damage dealt to champions.
 9. "damageTaken": Integer total damage taken.
 10. "healing": Integer total healing done.
-11. "items": Array of strings representing names of items built by the player, up to 6 items (e.g., ["Infinity Edge", "Guardian Angel"]). Leave empty array if not visible or none.
 
 Format the response strictly as a JSON object with this exact structure:
 {
@@ -59,8 +66,7 @@ Format the response strictly as a JSON object with this exact structure:
       "cs": 0,
       "damageDealt": 0,
       "damageTaken": 0,
-      "healing": 0,
-      "items": ["Item1", "Item2"]
+      "healing": 0
     }
   ]
 }
@@ -99,13 +105,9 @@ Ensure there are exactly 10 players in "playerStats". Do not return any other te
                   cs: { type: "INTEGER" },
                   damageDealt: { type: "INTEGER" },
                   damageTaken: { type: "INTEGER" },
-                  healing: { type: "INTEGER" },
-                  items: {
-                    type: "ARRAY",
-                    items: { type: "STRING" }
-                  }
+                  healing: { type: "INTEGER" }
                 },
-                required: ["summonerName", "champion", "kills", "deaths", "assists", "gold", "cs", "damageDealt", "damageTaken", "healing", "items"]
+                required: ["summonerName", "champion", "kills", "deaths", "assists", "gold", "cs", "damageDealt", "damageTaken", "healing"]
               }
             }
           },

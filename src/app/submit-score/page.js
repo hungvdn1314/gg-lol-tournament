@@ -18,12 +18,14 @@ import {
   User, 
   RotateCcw,
   Sliders,
-  FileCheck
+  FileCheck,
+  X,
+  Pencil
 } from "lucide-react";
 
 export default function SubmitScore() {
   const router = useRouter();
-  const { getItemIcon } = useDDragon();
+  const { getChampionIcon } = useDDragon();
   
   // Navigation / Auth Gate
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -35,7 +37,7 @@ export default function SubmitScore() {
   const [teams, setTeams] = useState({});
   const [champions, setChampions] = useState([]);
   const [championMap, setChampionMap] = useState({}); // { normalizedName: ddId }
-  const [itemsMap, setItemsMap] = useState({}); // { normalizedName: itemId }
+  const [gameDuration, setGameDuration] = useState("20:00");
 
   // Wizard Steps: 1 = Selection, 2 = Upload, 3 = Mapping & Stats Review, 4 = Final Review & Submit
   const [step, setStep] = useState(1);
@@ -55,7 +57,6 @@ export default function SubmitScore() {
   const [allPlayersMatched, setAllPlayersMatched] = useState(false);
 
   // Match configurations deduced from OCR & User modifications
-  const [gameDuration, setGameDuration] = useState("20:00");
   const [winnerSide, setWinnerSide] = useState("Blue"); // Blue or Red
   const [blueTeamId, setBlueTeamId] = useState(""); // Team ID on Blue Side
   const [redTeamId, setRedTeamId] = useState("");  // Team ID on Red Side
@@ -63,6 +64,7 @@ export default function SubmitScore() {
 
   // Step 4: Finalized stats to submit (array of 10 participants)
   const [finalizedStats, setFinalizedStats] = useState([]);
+  const [editingPlayerStatsIdx, setEditingPlayerStatsIdx] = useState(null);
 
   // Submission Status
   const [loading, setLoading] = useState(false);
@@ -119,24 +121,6 @@ export default function SubmitScore() {
       } catch (e) {
         console.error("Error loading champions list:", e);
       }
-
-      try {
-        const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/item.json`);
-        if (res.ok) {
-          const data = await res.json();
-          const itemMap = {};
-          Object.entries(data.data).forEach(([id, item]) => {
-            const numId = parseInt(id);
-            if (item.name) {
-              itemMap[item.name.toLowerCase()] = numId;
-              itemMap[item.name.toLowerCase().replace(/[^a-z0-9]/g, "")] = numId;
-            }
-          });
-          setItemsMap(itemMap);
-        }
-      } catch (e) {
-        console.error("Error loading items list:", e);
-      }
     });
 
     return () => {
@@ -151,6 +135,10 @@ export default function SubmitScore() {
   const selectedMatch = selectedMatchId ? matches[selectedMatchId] : null;
   const teamA = selectedMatch ? teams[selectedMatch.teamAId] : null;
   const teamB = selectedMatch ? teams[selectedMatch.teamBId] : null;
+  const allMatchPlayers = selectedMatch ? [
+    ...(teamA?.players || []),
+    ...(teamB?.players || [])
+  ] : [];
 
   useEffect(() => {
     setGameIndex(0);
@@ -298,7 +286,14 @@ export default function SubmitScore() {
       const response = await fetch("/api/ocr-analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images })
+        body: JSON.stringify({ 
+          images,
+          champions,
+          teamPlayers: [
+            ...(teamA?.players || []).map(p => ({ name: p.name, riotId: p.riotId, jerseyName: p.jerseyName })),
+            ...(teamB?.players || []).map(p => ({ name: p.name, riotId: p.riotId, jerseyName: p.jerseyName }))
+          ]
+        })
       });
 
       if (!response.ok) {
@@ -381,26 +376,9 @@ export default function SubmitScore() {
     return rawName; // Return raw as fallback
   };
 
-  // Resolve OCR item names to DDragon item IDs
-  const resolveItemIds = (rawItems) => {
-    const resolved = [0, 0, 0, 0, 0, 0];
-    if (!Array.isArray(rawItems)) return resolved;
-    
-    rawItems.slice(0, 6).forEach((itemName, index) => {
-      if (!itemName) return;
-      const lower = itemName.toLowerCase();
-      // Try direct match
-      if (itemsMap[lower]) {
-        resolved[index] = itemsMap[lower];
-      } else {
-        // Try stripped alphanumeric match
-        const stripped = lower.replace(/[^a-z0-9]/g, "");
-        if (itemsMap[stripped]) {
-          resolved[index] = itemsMap[stripped];
-        }
-      }
-    });
-    return resolved;
+  // Resolve OCR item names to DDragon item IDs (Always return empty array for stats-only manual review)
+  const resolveItemIds = () => {
+    return [0, 0, 0, 0, 0, 0];
   };
 
   // Move from Step 3 to Step 4 (Validation)
@@ -1045,143 +1023,81 @@ export default function SubmitScore() {
                 <thead>
                   <tr style={{ color: "var(--text-muted)", borderBottom: "1px solid var(--border-dark)" }}>
                     <th style={{ padding: "0.5rem" }}>Player</th>
-                    <th style={{ padding: "0.5rem", width: "130px" }}>Champion</th>
-                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>K</th>
-                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>D</th>
-                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>A</th>
-                    <th style={{ padding: "0.5rem", width: "90px" }}>Dmg Dealt</th>
-                    <th style={{ padding: "0.5rem", width: "90px" }}>Dmg Taken</th>
-                    <th style={{ padding: "0.5rem", width: "90px" }}>Healing</th>
-                    <th style={{ padding: "0.5rem", width: "90px" }}>Gold</th>
-                    <th style={{ padding: "0.5rem", width: "70px" }}>CS</th>
-                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>Penta</th>
-                    <th style={{ padding: "0.5rem", width: "290px" }}>Items (IDs)</th>
+                    <th style={{ padding: "0.5rem" }}>Champion</th>
+                    <th style={{ padding: "0.5rem", textAlign: "center" }}>KDA</th>
+                    <th style={{ padding: "0.5rem", textAlign: "right" }}>Dmg Dealt</th>
+                    <th style={{ padding: "0.5rem", textAlign: "right" }}>Dmg Taken</th>
+                    <th style={{ padding: "0.5rem", textAlign: "right" }}>Healing</th>
+                    <th style={{ padding: "0.5rem", textAlign: "right" }}>Gold</th>
+                    <th style={{ padding: "0.5rem", textAlign: "center" }}>CS</th>
+                    <th style={{ padding: "0.5rem", textAlign: "center" }}>Penta</th>
+                    <th style={{ padding: "0.5rem", textAlign: "center", width: "100px" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {finalizedStats.slice(0, 5).map((stat, idx) => (
-                    <tr key={idx} style={{ borderBottom: "1px solid var(--border-dark)" }}>
-                      <td style={{ padding: "0.5rem", fontWeight: "bold" }}>{stat.playerName}</td>
-                      <td style={{ padding: "0.5rem" }}>
-                        <select
-                          className="form-control"
-                          style={{ padding: "0.25rem", fontSize: "0.8rem", width: "100%" }}
-                          value={stat.champion}
-                          onChange={(e) => handleFinalStatChange(idx, "champion", e.target.value)}
-                        >
-                          <option value="">-- Select Champion --</option>
-                          {champions.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
-                          value={stat.kills}
-                          onChange={(e) => handleFinalStatChange(idx, "kills", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
-                          value={stat.deaths}
-                          onChange={(e) => handleFinalStatChange(idx, "deaths", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
-                          value={stat.assists}
-                          onChange={(e) => handleFinalStatChange(idx, "assists", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                          value={stat.damageDealt}
-                          onChange={(e) => handleFinalStatChange(idx, "damageDealt", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                          value={stat.damageTaken}
-                          onChange={(e) => handleFinalStatChange(idx, "damageTaken", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                          value={stat.healing}
-                          onChange={(e) => handleFinalStatChange(idx, "healing", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                          value={stat.gold}
-                          onChange={(e) => handleFinalStatChange(idx, "gold", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                          value={stat.cs}
-                          onChange={(e) => handleFinalStatChange(idx, "cs", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
-                          value={stat.pentaKills || 0}
-                          onChange={(e) => handleFinalStatChange(idx, "pentaKills", e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "0.25rem" }}>
-                        <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
-                          {Array.from({ length: 6 }).map((_, itemIdx) => {
-                            const itemId = stat.items?.[itemIdx] || 0;
-                            const iconUrl = getItemIcon(itemId);
-                            return (
-                              <div key={itemIdx} style={{ display: "flex", flexDirection: "column", gap: "1px", alignItems: "center" }}>
-                                <div style={{ width: "20px", height: "20px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "2px", border: "1px solid var(--border-dark)", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden", marginBottom: "2px" }}>
-                                  {iconUrl ? <img src={iconUrl} alt="item" style={{ width: "100%", height: "100%" }} /> : <span style={{ fontSize: "0.6rem", color: "#555" }}>-</span>}
-                                </div>
-                                <input
-                                  type="number"
-                                  className="form-control"
-                                  style={{ width: "42px", padding: "0.1rem", fontSize: "0.7rem", textAlign: "center", height: "20px" }}
-                                  value={itemId || ""}
-                                  onChange={(e) => {
-                                    const newItems = [...(stat.items || [0, 0, 0, 0, 0, 0])];
-                                    newItems[itemIdx] = parseInt(e.target.value) || 0;
-                                    handleFinalStatChange(idx, "items", newItems);
-                                  }}
-                                />
+                  {finalizedStats.slice(0, 5).map((stat, idx) => {
+                    const matchedRiotId = allMatchPlayers.find(p => p.name === stat.playerName)?.riotId || "";
+                    return (
+                      <tr key={idx} style={{ borderBottom: "1px solid var(--border-dark)" }}>
+                        <td style={{ padding: "0.5rem", whiteSpace: "nowrap" }}>
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontWeight: "600", fontSize: "0.95rem", color: "var(--text-primary)" }}>
+                              {stat.playerName || "Unassigned"}
+                            </span>
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                              {matchedRiotId}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "0.5rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {stat.champion && (
+                              <div style={{ width: "24px", height: "24px", borderRadius: "50%", overflow: "hidden", border: "1px solid var(--border-gold)", display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+                                <img src={getChampionIcon(stat.champion)} alt={stat.champion} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               </div>
-                            );
-                          })}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            )}
+                            <span style={{ fontSize: "0.9rem", fontWeight: "500", color: "var(--text-primary)" }}>{stat.champion || "Unknown"}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.9rem", fontWeight: "500" }}>
+                          {stat.kills} / <span style={{ color: "var(--text-muted)" }}>{stat.deaths}</span> / {stat.assists}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {(stat.damageDealt || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {(stat.damageTaken || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {(stat.healing || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {(stat.gold || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.9rem" }}>
+                          {stat.cs}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.9rem" }}>
+                          {stat.pentaKills > 0 ? (
+                            <span style={{ color: "var(--primary-gold)", fontWeight: "bold" }}>{stat.pentaKills}</span>
+                          ) : (
+                            "0"
+                          )}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "center" }}>
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={() => setEditingPlayerStatsIdx(idx)}
+                            style={{ padding: "0 0.4rem", height: "24px", fontSize: "0.7rem", display: "inline-flex", alignItems: "center", gap: "0.2rem", borderRadius: "3px" }}
+                          >
+                            <Pencil size={10} />
+                            <span>Edit Stats</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1194,142 +1110,78 @@ export default function SubmitScore() {
                 <thead>
                   <tr style={{ color: "var(--text-muted)", borderBottom: "1px solid var(--border-dark)" }}>
                     <th style={{ padding: "0.5rem" }}>Player</th>
-                    <th style={{ padding: "0.5rem", width: "130px" }}>Champion</th>
-                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>K</th>
-                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>D</th>
-                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>A</th>
-                    <th style={{ padding: "0.5rem", width: "90px" }}>Dmg Dealt</th>
-                    <th style={{ padding: "0.5rem", width: "90px" }}>Dmg Taken</th>
-                    <th style={{ padding: "0.5rem", width: "90px" }}>Healing</th>
-                    <th style={{ padding: "0.5rem", width: "90px" }}>Gold</th>
-                    <th style={{ padding: "0.5rem", width: "70px" }}>CS</th>
-                    <th style={{ padding: "0.5rem", width: "70px", textAlign: "center" }}>Penta</th>
-                    <th style={{ padding: "0.5rem", width: "290px" }}>Items (IDs)</th>
+                    <th style={{ padding: "0.5rem" }}>Champion</th>
+                    <th style={{ padding: "0.5rem", textAlign: "center" }}>KDA</th>
+                    <th style={{ padding: "0.5rem", textAlign: "right" }}>Dmg Dealt</th>
+                    <th style={{ padding: "0.5rem", textAlign: "right" }}>Dmg Taken</th>
+                    <th style={{ padding: "0.5rem", textAlign: "right" }}>Healing</th>
+                    <th style={{ padding: "0.5rem", textAlign: "right" }}>Gold</th>
+                    <th style={{ padding: "0.5rem", textAlign: "center" }}>CS</th>
+                    <th style={{ padding: "0.5rem", textAlign: "center" }}>Penta</th>
+                    <th style={{ padding: "0.5rem", textAlign: "center", width: "100px" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {finalizedStats.slice(5, 10).map((stat, idx) => {
                     const actualIdx = idx + 5;
+                    const matchedRiotId = allMatchPlayers.find(p => p.name === stat.playerName)?.riotId || "";
                     return (
                       <tr key={actualIdx} style={{ borderBottom: "1px solid var(--border-dark)" }}>
-                        <td style={{ padding: "0.5rem", fontWeight: "bold" }}>{stat.playerName}</td>
-                        <td style={{ padding: "0.5rem" }}>
-                          <select
-                            className="form-control"
-                            style={{ padding: "0.25rem", fontSize: "0.8rem", width: "100%" }}
-                            value={stat.champion}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "champion", e.target.value)}
-                          >
-                            <option value="">-- Select Champion --</option>
-                            {champions.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
-                            value={stat.kills}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "kills", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
-                            value={stat.deaths}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "deaths", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
-                            value={stat.assists}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "assists", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                            value={stat.damageDealt}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "damageDealt", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                            value={stat.damageTaken}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "damageTaken", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                            value={stat.healing}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "healing", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                            value={stat.gold}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "gold", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", fontSize: "0.8rem" }}
-                            value={stat.cs}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "cs", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            style={{ padding: "0.25rem", textAlign: "center", fontSize: "0.8rem" }}
-                            value={stat.pentaKills || 0}
-                            onChange={(e) => handleFinalStatChange(actualIdx, "pentaKills", e.target.value)}
-                          />
-                        </td>
-                        <td style={{ padding: "0.25rem" }}>
-                          <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
-                            {Array.from({ length: 6 }).map((_, itemIdx) => {
-                              const itemId = stat.items?.[itemIdx] || 0;
-                              const iconUrl = getItemIcon(itemId);
-                              return (
-                                <div key={itemIdx} style={{ display: "flex", flexDirection: "column", gap: "1px", alignItems: "center" }}>
-                                  <div style={{ width: "20px", height: "20px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "2px", border: "1px solid var(--border-dark)", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden", marginBottom: "2px" }}>
-                                    {iconUrl ? <img src={iconUrl} alt="item" style={{ width: "100%", height: "100%" }} /> : <span style={{ fontSize: "0.6rem", color: "#555" }}>-</span>}
-                                  </div>
-                                  <input
-                                    type="number"
-                                    className="form-control"
-                                    style={{ width: "42px", padding: "0.1rem", fontSize: "0.7rem", textAlign: "center", height: "20px" }}
-                                    value={itemId || ""}
-                                    onChange={(e) => {
-                                      const newItems = [...(stat.items || [0, 0, 0, 0, 0, 0])];
-                                      newItems[itemIdx] = parseInt(e.target.value) || 0;
-                                      handleFinalStatChange(actualIdx, "items", newItems);
-                                    }}
-                                  />
-                                </div>
-                              );
-                            })}
+                        <td style={{ padding: "0.5rem", whiteSpace: "nowrap" }}>
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontWeight: "600", fontSize: "0.95rem", color: "var(--text-primary)" }}>
+                              {stat.playerName || "Unassigned"}
+                            </span>
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                              {matchedRiotId}
+                            </span>
                           </div>
+                        </td>
+                        <td style={{ padding: "0.5rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {stat.champion && (
+                              <div style={{ width: "24px", height: "24px", borderRadius: "50%", overflow: "hidden", border: "1px solid var(--border-gold)", display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+                                <img src={getChampionIcon(stat.champion)} alt={stat.champion} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              </div>
+                            )}
+                            <span style={{ fontSize: "0.9rem", fontWeight: "500", color: "var(--text-primary)" }}>{stat.champion || "Unknown"}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.9rem", fontWeight: "500" }}>
+                          {stat.kills} / <span style={{ color: "var(--text-muted)" }}>{stat.deaths}</span> / {stat.assists}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {(stat.damageDealt || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {(stat.damageTaken || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {(stat.healing || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {(stat.gold || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.9rem" }}>
+                          {stat.cs}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.9rem" }}>
+                          {stat.pentaKills > 0 ? (
+                            <span style={{ color: "var(--primary-gold)", fontWeight: "bold" }}>{stat.pentaKills}</span>
+                          ) : (
+                            "0"
+                          )}
+                        </td>
+                        <td style={{ padding: "0.5rem", textAlign: "center" }}>
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={() => setEditingPlayerStatsIdx(actualIdx)}
+                            style={{ padding: "0 0.4rem", height: "24px", fontSize: "0.7rem", display: "inline-flex", alignItems: "center", gap: "0.2rem", borderRadius: "3px" }}
+                          >
+                            <Pencil size={10} />
+                            <span>Edit Stats</span>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -1362,6 +1214,185 @@ export default function SubmitScore() {
             </button>
           </div>
         </form>
+      )}
+
+      {/* Edit Player Stats Modal */}
+      {editingPlayerStatsIdx !== null && finalizedStats[editingPlayerStatsIdx] && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(5, 9, 19, 0.95)",
+          backdropFilter: "blur(12px)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 9999,
+        }}>
+          <div className="card" style={{
+            maxWidth: "500px",
+            width: "90%",
+            padding: "2rem",
+            border: "1px solid var(--border-gold)",
+            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.25)",
+            background: "var(--bg-secondary)",
+            maxHeight: "90vh",
+            display: "flex",
+            flexDirection: "column"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-dark)", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
+              <h3 style={{ margin: 0, color: "var(--primary-gold-bright)", fontSize: "1.25rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Edit Stats - {finalizedStats[editingPlayerStatsIdx].playerName}
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setEditingPlayerStatsIdx(null)}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ overflowY: "auto", flex: 1, paddingRight: "0.5rem", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                
+                {/* Champion Select */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-secondary)" }}>Champion</label>
+                  <select
+                    className="form-control"
+                    style={{ fontSize: "0.9rem", padding: "0.5rem" }}
+                    value={finalizedStats[editingPlayerStatsIdx].champion}
+                    onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "champion", e.target.value)}
+                  >
+                    <option value="">-- Select Champion --</option>
+                    {champions.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* KDA Inputs */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>Kills</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      style={{ padding: "0.5rem", fontSize: "0.9rem", textAlign: "center" }}
+                      value={finalizedStats[editingPlayerStatsIdx].kills}
+                      onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "kills", e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>Deaths</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      style={{ padding: "0.5rem", fontSize: "0.9rem", textAlign: "center" }}
+                      value={finalizedStats[editingPlayerStatsIdx].deaths}
+                      onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "deaths", e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>Assists</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      style={{ padding: "0.5rem", fontSize: "0.9rem", textAlign: "center" }}
+                      value={finalizedStats[editingPlayerStatsIdx].assists}
+                      onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "assists", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Damage Inputs */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>Damage Dealt</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      style={{ padding: "0.5rem", fontSize: "0.9rem" }}
+                      value={finalizedStats[editingPlayerStatsIdx].damageDealt}
+                      onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "damageDealt", e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>Damage Taken</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      style={{ padding: "0.5rem", fontSize: "0.9rem" }}
+                      value={finalizedStats[editingPlayerStatsIdx].damageTaken}
+                      onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "damageTaken", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Healing & Gold & CS */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>Healing</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      style={{ padding: "0.5rem", fontSize: "0.9rem" }}
+                      value={finalizedStats[editingPlayerStatsIdx].healing}
+                      onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "healing", e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>Gold</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      style={{ padding: "0.5rem", fontSize: "0.9rem" }}
+                      value={finalizedStats[editingPlayerStatsIdx].gold}
+                      onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "gold", e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>CS (Creeps)</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      style={{ padding: "0.5rem", fontSize: "0.9rem", textAlign: "center" }}
+                      value={finalizedStats[editingPlayerStatsIdx].cs}
+                      onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "cs", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Penta Kills */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-secondary)" }}>Penta Kills</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    style={{ padding: "0.5rem", fontSize: "0.9rem", maxWidth: "150px" }}
+                    value={finalizedStats[editingPlayerStatsIdx].pentaKills || 0}
+                    onChange={(e) => handleFinalStatChange(editingPlayerStatsIdx, "pentaKills", e.target.value)}
+                  />
+                </div>
+
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setEditingPlayerStatsIdx(null)}
+                style={{ padding: "0.6rem 2rem", fontSize: "0.9rem", fontWeight: "600" }}
+              >
+                Save & Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* OCR processing overlay spinner */}
