@@ -288,14 +288,7 @@ export default function PlayerProfile() {
         className="card"
         style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "2rem", backgroundImage: "linear-gradient(to right, var(--bg-tertiary), var(--bg-primary))", flexWrap: "wrap", padding: "2rem", border: "1px solid var(--border-gold)" }}
       >
-        <div style={{ position: "relative", width: "100px", height: "100px" }}>
-          <img
-            src={profileIconUrl}
-            alt="Profile Icon"
-            style={{ width: "100%", height: "100%", borderRadius: "50%", border: "3px solid var(--border-gold)", boxShadow: "0 0 15px rgba(245,176,65,0.2)" }}
-            onError={(e) => { e.target.src = "https://ddragon.leagueoflegends.com/cdn/14.3.1/img/profileicon/29.png"; }}
-          />
-        </div>
+        <PlayerSignature name={playerName} size={100} />
 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
@@ -317,10 +310,6 @@ export default function PlayerProfile() {
           </div>
         </div>
 
-        {/* Dynamic Player Signature */}
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-          <PlayerSignature name={playerName} size={110} />
-        </div>
 
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: winRate >= 50 ? "var(--primary-gold-bright)" : "var(--text-primary)" }}>
