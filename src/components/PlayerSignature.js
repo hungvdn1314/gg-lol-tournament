@@ -21,7 +21,7 @@ const getSignatureStyle = (playerName) => {
   ];
   const font = fonts[hash % fonts.length];
 
-  // Pick a rotation (-8deg to 4deg) - slightly reduced to keep long names inside the circle
+  // Pick a rotation (-8deg to 4deg)
   const rotation = -8 + (hash % 12);
 
   // Decide if we add a doodle (Heart or Star)
@@ -55,9 +55,10 @@ export default function PlayerSignature({ name, size = 120 }) {
     width: `${size}px`,
     height: `${size}px`,
     borderRadius: "50%",
-    backgroundColor: "#08080a",
-    border: "2.5px solid #1a1a24",
-    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.7), inset 0 2px 10px rgba(255,255,255,0.02)",
+    backgroundColor: "#0d0d11",
+    // Clean gold matching the website border system
+    border: "2px solid rgba(245, 176, 65, 0.2)",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.8), inset 0 2px 10px rgba(255,255,255,0.02)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -71,8 +72,8 @@ export default function PlayerSignature({ name, size = 120 }) {
   const textStyle = {
     fontFamily: font,
     fontSize: `${size * fontSizeScale}px`,
-    // Matching the exact vibrant green-to-cyan-to-purple gradient of the Keria/Faker references
-    background: "linear-gradient(135deg, #a6ff3d 0%, #00f0ff 50%, #905cf5 100%)",
+    // Web theme gold gradient: from bright gold to default championship yellow to darker amber gold
+    background: "linear-gradient(135deg, #FFE082 0%, #F5B041 50%, #D68910 100%)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
     transform: `rotate(${rotation}deg)`,
@@ -81,7 +82,7 @@ export default function PlayerSignature({ name, size = 120 }) {
     justifyContent: "center",
     whiteSpace: "nowrap",
     padding: "0 8px",
-    filter: "drop-shadow(0 2px 6px rgba(0,240,255,0.2))",
+    filter: "drop-shadow(0 2px 6px rgba(245,176,65,0.3))",
     textAlign: "center",
     maxWidth: "92%",
   };
@@ -91,14 +92,14 @@ export default function PlayerSignature({ name, size = 120 }) {
       <div style={textStyle}>
         {cleanName}
         
-        {/* Heart Doodle (like Keria) */}
+        {/* Heart Doodle (styled in gold to match) */}
         {hasHeart && (
           <span style={{ 
             fontSize: `${size * 0.08}px`, 
             display: "inline-block", 
             marginLeft: "1px", 
             verticalAlign: "super",
-            background: "linear-gradient(135deg, #00f0ff, #905cf5)",
+            background: "linear-gradient(135deg, #FFE082, #F5B041)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             transform: "rotate(15deg) translateY(-4px)"
@@ -107,14 +108,14 @@ export default function PlayerSignature({ name, size = 120 }) {
           </span>
         )}
 
-        {/* Star/Sparkle Doodle (like Faker) */}
+        {/* Star/Sparkle Doodle (styled in gold to match) */}
         {hasStar && (
           <span style={{ 
             fontSize: `${size * 0.08}px`, 
             display: "inline-block", 
             marginLeft: "1px", 
             verticalAlign: "super",
-            background: "linear-gradient(135deg, #a6ff3d, #00f0ff)",
+            background: "linear-gradient(135deg, #FFE082, #D68910)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             transform: "scale(1.1) translateY(-3px)"
@@ -124,13 +125,13 @@ export default function PlayerSignature({ name, size = 120 }) {
         )}
       </div>
 
-      {/* Internal overlay gradient ring for a premium look */}
+      {/* Internal overlay gradient ring for a premium gold look */}
       <div style={{
         position: "absolute",
         top: 0, left: 0, right: 0, bottom: 0,
         borderRadius: "50%",
         border: "1.5px solid transparent",
-        background: "linear-gradient(135deg, rgba(166,255,61,0.2), rgba(0,240,255,0.15), rgba(144,92,245,0.12)) border-box",
+        background: "linear-gradient(135deg, rgba(255,224,130,0.18), rgba(245,176,65,0.12), rgba(214,137,16,0.08)) border-box",
         WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
         WebkitMaskComposite: "xor",
         maskComposite: "exclude",
