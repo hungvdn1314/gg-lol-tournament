@@ -1,6 +1,8 @@
 import { Russo_One, Chakra_Petch, Alex_Brush, Mr_De_Haviland, Caveat, Cedarville_Cursive } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import ImageZoomOverlay from "@/components/ImageZoomOverlay";
+import Link from "next/link";
 
 const russoOne = Russo_One({
   subsets: ["latin"],
@@ -64,6 +66,8 @@ export default function RootLayout({ children }) {
           {children}
         </main>
         
+        <ImageZoomOverlay />
+        
         <footer className="app-footer">
           <div className="container footer-content" style={{ textAlign: "center" }}>
             <p style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.25rem", color: "var(--text-muted)" }}>
@@ -110,13 +114,13 @@ export default function RootLayout({ children }) {
               Gear Games LoL Cup Portal is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
             </p>
             <div className="footer-links">
-              <a href="/">Home</a>
-              <a href="/rules">Rules</a>
-              <a href="/leaderboard">Leaderboard</a>
-              <a href="/rankings">Rankings</a>
-              <a href="/bracket">Bracket</a>
-              <a href="/schedule">Schedule</a>
-              <a href="/teams">Teams</a>
+              <Link href="/">Home</Link>
+              <Link href="/rules">Rules</Link>
+              <Link href="/leaderboard">Leaderboard</Link>
+              <Link href="/rankings">Rankings</Link>
+              <Link href="/bracket">Bracket</Link>
+              <Link href="/schedule">Schedule</Link>
+              <Link href="/teams">Teams</Link>
             </div>
           </div>
         </footer>

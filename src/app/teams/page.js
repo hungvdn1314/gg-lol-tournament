@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { subscribeToData, subscribeToAllMatchDetails } from "@/lib/db";
 import { LoLMinion, CrossedSwords, SummonersCup, RoleMid } from "@/components/Icons";
@@ -24,8 +24,19 @@ function TeamsContent() {
   const [loading, setLoading] = useState(true);
   const [showIgn, setShowIgn] = useState(false);
 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const queryTeamId = searchParams.get("teamId");
+
+  const handleClose = () => {
+    setSelectedTeamId(null);
+    const backUrl = searchParams.get("backUrl");
+    if (backUrl) {
+      router.push(backUrl);
+    } else {
+      router.push("/teams");
+    }
+  };
 
   useEffect(() => {
     let teamsLoaded = false;
@@ -164,8 +175,10 @@ function TeamsContent() {
 
   useEffect(() => {
     if (queryTeamId && decoratedTeams[queryTeamId]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTeamId(queryTeamId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryTeamId, teams]);
 
   const teamList = Object.values(decoratedTeams);
@@ -374,7 +387,7 @@ function TeamsContent() {
       {selectedTeam && (
         <div 
           className="modal-overlay" 
-          onClick={() => setSelectedTeamId(null)} 
+          onClick={handleClose} 
           style={{ 
             position: "fixed", 
             top: 0, 
@@ -422,7 +435,7 @@ function TeamsContent() {
               </div>
               
               <button 
-                onClick={() => setSelectedTeamId(null)} 
+                onClick={handleClose} 
                 className="btn btn-outline" 
                 style={{ padding: "0.4rem 1.2rem", fontSize: "0.8rem", textTransform: "uppercase", fontWeight: "bold" }}
               >
@@ -531,7 +544,7 @@ function TeamsContent() {
                         style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(255,255,255,0.01)", padding: "1rem 1.25rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}
                       >
                         <Link 
-                          href={`/players/${encodeURIComponent(player.name)}`} 
+                          href={`/players/${encodeURIComponent(player.name)}?backUrl=${encodeURIComponent(`/teams?teamId=${selectedTeamId}`)}`} 
                           style={{ fontWeight: "700", color: "var(--text-primary)", textDecoration: "none", borderBottom: "1px dashed var(--border-dark)", fontSize: "0.95rem" }}
                           onMouseEnter={(e) => { e.target.style.color = 'var(--primary-gold)'; e.target.style.borderBottom = '1px solid var(--primary-gold)'; }}
                           onMouseLeave={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.borderBottom = '1px dashed var(--border-dark)'; }}

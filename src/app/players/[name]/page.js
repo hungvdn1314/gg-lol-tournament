@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { subscribeToData, subscribeToAllMatchDetails } from "@/lib/db";
 import { ArrowLeft, Target, Shield, Sword, Award, Activity, Zap } from "lucide-react";
@@ -11,8 +11,18 @@ import { SummonersCup, CrossedSwords } from "@/components/Icons";
 import PlayerSignature from "@/components/PlayerSignature";
 
 export default function PlayerProfile() {
+  return (
+    <Suspense fallback={<div className="container" style={{ textAlign: "center", padding: "4rem" }}>Loading player profile...</div>}>
+      <PlayerProfileContent />
+    </Suspense>
+  );
+}
+
+function PlayerProfileContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const backUrl = searchParams.get("backUrl");
   const playerName = decodeURIComponent(params.name);
 
   const [teams, setTeams] = useState({});
@@ -20,6 +30,14 @@ export default function PlayerProfile() {
   const [allMatches, setAllMatches] = useState({});
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState("16.13.1");
+
+  const handleBack = () => {
+    if (backUrl) {
+      router.push(backUrl);
+    } else {
+      router.back();
+    }
+  };
 
   useEffect(() => {
     let teamsLoaded = false;
@@ -211,14 +229,57 @@ export default function PlayerProfile() {
     });
   }
 
-  // Count series MVPs from match metadata
-  if (!loading && matches) {
-    Object.values(matches).forEach((match) => {
-      if (match.mvpPlayer?.trim().toLowerCase() === playerName.trim().toLowerCase()) {
-        seriesMvpCount++;
+  // Count series MVPs by computing per-series scores (same algorithm as rankings page)
+  if (!loading && allMatches) {
+    Object.entries(allMatches).forEach(([matchId, gamesArray]) => {
+      if (!Array.isArray(gamesArray)) return;
+      const seriesScores = {};
+
+      gamesArray.forEach((game) => {
+        if (!game || !game.participants) return;
+        const participants = game.participants;
+
+        // Find winning team
+        const winningParticipant = participants.find(p => p.win);
+        const winningTeamId = winningParticipant?.teamId ?? null;
+        if (winningTeamId === null) return;
+
+        // Compute team totals for winning side
+        const teamKills = participants.filter(p => p.teamId === winningTeamId).reduce((s, p) => s + (p.kills || 0), 0);
+        const teamDmg = participants.filter(p => p.teamId === winningTeamId).reduce((s, p) => s + (p.damageDealt || 0), 0);
+        const teamDmgTaken = participants.filter(p => p.teamId === winningTeamId).reduce((s, p) => s + (p.damageTaken || 0), 0);
+        const teamHealing = participants.filter(p => p.teamId === winningTeamId).reduce((s, p) => s + (p.healing || 0), 0);
+        const teamKdaSum = participants.filter(p => p.teamId === winningTeamId).reduce((s, p) => {
+          const kda = (p.kills + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
+          return s + kda;
+        }, 0);
+
+        participants.forEach(p => {
+          if (p.teamId !== winningTeamId) return;
+          const kda = (p.kills + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
+          const kp = teamKills > 0 ? ((p.kills + (p.assists || 0)) / teamKills) * 450 : 0;
+          const dmg = teamDmg > 0 ? ((p.damageDealt || 0) / teamDmg) * 200 : 0;
+          const def = teamDmgTaken > 0 ? ((p.damageTaken || 0) / teamDmgTaken) * 150 : 0;
+          const heal = teamHealing > 0 ? ((p.healing || 0) / teamHealing) * 100 : 0;
+          const kdaS = teamKdaSum > 0 ? (kda / teamKdaSum) * 100 : 0;
+          const score = kp + dmg + def + heal + kdaS;
+          const name = p.playerName;
+          if (name) seriesScores[name] = (seriesScores[name] || 0) + score;
+        });
+      });
+
+      // The player with the highest total score in this series wins Series MVP
+      const seriesMvp = Object.entries(seriesScores).sort((a, b) => b[1] - a[1])[0]?.[0];
+      if (seriesMvp) {
+        // Resolve alias → canonical name
+        const canonical = playerAliasToNameMap[seriesMvp.trim().toLowerCase()];
+        if (canonical === playerName.trim().toLowerCase()) {
+          seriesMvpCount++;
+        }
       }
     });
   }
+
 
   // Sort history newest first by matchId
   matchHistory.sort((a, b) => b.matchId.localeCompare(a.matchId) || b.gameNumber - a.gameNumber);
@@ -252,7 +313,7 @@ export default function PlayerProfile() {
     return (
       <div className="container" style={{ textAlign: "center", padding: "4rem" }}>
         <h2>Player &ldquo;{playerName}&rdquo; not found in any team roster.</h2>
-        <button onClick={() => router.back()} className="btn btn-secondary" style={{ marginTop: "1rem" }}>
+        <button onClick={handleBack} className="btn btn-secondary" style={{ marginTop: "1rem" }}>
           Go Back
         </button>
       </div>
@@ -276,7 +337,7 @@ export default function PlayerProfile() {
   return (
     <div className="container">
       <button
-        onClick={() => router.back()}
+        onClick={handleBack}
         className="btn"
         style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "2rem", background: "none", border: "none", color: "var(--primary-gold)", cursor: "pointer", padding: 0 }}
       >
@@ -300,7 +361,10 @@ export default function PlayerProfile() {
           </div>
           <div style={{ fontSize: "1rem", color: "var(--text-secondary)", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
             {playerTeam ? (
-              <Link href={`/teams?teamId=${playerTeam.id}`} style={{ color: "var(--primary-gold-bright)", textDecoration: "none", fontWeight: "600" }}>
+              <Link 
+                href={`/teams?teamId=${playerTeam.id}&backUrl=${encodeURIComponent(`/players/${encodeURIComponent(playerName)}?backUrl=${backUrl || ""}`)}`} 
+                style={{ color: "var(--primary-gold-bright)", textDecoration: "none", fontWeight: "600" }}
+              >
                 {playerTeam.name}
               </Link>
             ) : "Free Agent"}

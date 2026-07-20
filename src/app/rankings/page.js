@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { subscribeToAllMatchDetails, subscribeToData } from "@/lib/db";
 import { SummonersCup, HextechCrest } from "@/components/Icons";
@@ -186,15 +187,29 @@ const calculateGameMVP = (participants, gameDuration) => {
 };
 
 export default function PlayerRankings() {
+  return (
+    <Suspense fallback={<div className="container" style={{ textAlign: "center", padding: "4rem" }}>Loading rankings...</div>}>
+      <RankingsContent />
+    </Suspense>
+  );
+}
+
+function RankingsContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const queryTab = searchParams.get("tab") || "awards";
+
   const [allMatches, setAllMatches] = useState({});
   const [teams, setTeams] = useState({});
   const [matches, setMatches] = useState({});
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("awards"); // awards, players, teams
-  const [rankingType, setRankingType] = useState("player"); // player, team
-  const [sortBy, setSortBy] = useState("seriesMvpCount");
+  const [activeTab, setActiveTab] = useState(queryTab); // awards, players, teams
+  const [rankingType, setRankingType] = useState(queryTab === "teams" ? "team" : "player"); // player, team
+  const [sortBy, setSortBy] = useState(queryTab === "teams" ? "positionScore" : "seriesMvpCount");
   const [version, setVersion] = useState("16.13.1");
-  
+
+
+
   // Sort options
   const playerMetrics = [
     { id: "seriesMvpCount", label: "Series MVPs", icon: <SummonersCup size={14} /> },
@@ -680,14 +695,65 @@ export default function PlayerRankings() {
     const gf = matches?.["match-playoff-8"];
     const lbf = matches?.["match-playoff-7"];
     
-    const champ = gf && gf.status === "completed" ? teams[gf.winnerId] : null;
-    const runner = gf && gf.status === "completed" ? teams[gf.winnerId === gf.teamAId ? gf.teamBId : gf.teamAId] : null;
-    const third = lbf && lbf.status === "completed" ? teams[lbf.winnerId === lbf.teamAId ? lbf.teamBId : lbf.teamAId] : null;
+    const champId = gf && gf.status === "completed" ? gf.winnerId : null;
+    const runnerId = gf && gf.status === "completed" ? (gf.winnerId === gf.teamAId ? gf.teamBId : gf.teamAId) : null;
+    const thirdId = lbf && lbf.status === "completed" ? (lbf.winnerId === lbf.teamAId ? lbf.teamBId : lbf.teamAId) : null;
 
-    const renderRoster = (teamObj) => {
-      if (!teamObj || !Array.isArray(teamObj.players)) return "No roster registered";
-      return teamObj.players.map(p => p.name).join(", ");
+    const champ = champId ? teams[champId] : null;
+    const runner = runnerId ? teams[runnerId] : null;
+    const third = thirdId ? teams[thirdId] : null;
+
+    const renderRosterChips = (teamObj) => {
+      if (!teamObj || !Array.isArray(teamObj.players) || teamObj.players.length === 0) {
+        return <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>No roster registered</span>;
+      }
+      return (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", marginTop: "0.5rem" }}>
+          {teamObj.players.map(p => (
+            <Link
+              key={p.name}
+              href={`/players/${encodeURIComponent(p.name)}?backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`}
+              style={{ display: "flex", alignItems: "center", gap: "0.3rem", backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid var(--border-dark)", borderRadius: "20px", padding: "0.15rem 0.5rem 0.15rem 0.25rem", textDecoration: "none", transition: "border-color 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(212,175,55,0.4)"}
+              onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border-dark)"}
+            >
+              <PlayerSignature name={p.name} size={20} />
+              <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)", whiteSpace: "nowrap", fontWeight: "600" }}>{p.name}</span>
+            </Link>
+          ))}
+        </div>
+      );
     };
+
+    const renderTeamRow = (teamObj, teamId, rankLabel, accentColor, borderColor) => (
+      <div style={{ backgroundColor: `rgba(${accentColor}, 0.04)`, padding: "0.9rem 1rem", borderRadius: "10px", border: `1px solid rgba(${accentColor}, 0.2)` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: teamObj ? "0.5rem" : "0" }}>
+          <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>{rankLabel}</span>
+          {teamObj ? (
+            <Link href={`/teams?teamId=${teamId}&backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} className="no-zoom">
+              <img
+                src={teamObj.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(teamObj.name, 36) : "")}
+                alt={teamObj.name}
+                className="no-zoom"
+                style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "6px", backgroundColor: "rgba(255,255,255,0.03)", padding: "2px", flexShrink: 0 }}
+              />
+            </Link>
+          ) : (
+            <div style={{ width: "36px", height: "36px", borderRadius: "6px", backgroundColor: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>?</div>
+          )}
+          <div style={{ minWidth: 0 }}>
+            {teamObj ? (
+              <Link href={`/teams?teamId=${teamId}&backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} style={{ fontWeight: "700", color: `rgb(${accentColor})`, textDecoration: "none", fontSize: "1rem", display: "block" }}>
+                {teamObj.name}
+              </Link>
+            ) : (
+              <em style={{ color: "var(--text-muted)", fontWeight: "normal", fontSize: "0.9rem" }}>TBD – Playoffs in progress</em>
+            )}
+          </div>
+        </div>
+        {teamObj && renderRosterChips(teamObj)}
+      </div>
+    );
 
     return (
       <div className="card" style={{
@@ -697,76 +763,22 @@ export default function PlayerRankings() {
         padding: "2rem",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
         minHeight: "420px",
         transition: "transform 0.3s ease, border-color 0.3s ease",
         borderRadius: "12px"
       }}>
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-            <span style={{ color: "var(--primary-gold)", fontWeight: "bold", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>🏆 Reward Category</span>
-            <span style={{ color: "var(--primary-gold-bright)", fontWeight: "900", fontSize: "1.2rem" }}>🥇 🥈 🥉</span>
-          </div>
-          <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em" }}>Championship Standings</h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "2rem" }}>
-            Awarded to the top placing teams in the tournament playoffs.
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-            {/* Champion */}
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", backgroundColor: "rgba(212,175,55,0.05)", padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(212,175,55,0.2)" }}>
-              <div style={{ fontSize: "1.8rem" }}>🥇</div>
-              <img 
-                src={champ?.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(champ?.name || "?", 40) : "")} 
-                alt="Champion" 
-                style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.03)", padding: "2px" }}
-              />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: "bold", color: "var(--primary-gold-bright)", fontSize: "1.05rem" }}>
-                  {champ ? champ.name : <em style={{ color: "var(--text-muted)", fontWeight: "normal" }}>TBD (Playoffs in progress)</em>}
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                  {champ ? renderRoster(champ) : "Roster will appear here"}
-                </div>
-              </div>
-            </div>
-
-            {/* Runner-up */}
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", backgroundColor: "rgba(255,255,255,0.02)", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
-              <div style={{ fontSize: "1.8rem" }}>🥈</div>
-              <img 
-                src={runner?.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(runner?.name || "?", 40) : "")} 
-                alt="Runner-up" 
-                style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.03)", padding: "2px" }}
-              />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: "bold", color: "var(--text-primary)", fontSize: "1rem" }}>
-                  {runner ? runner.name : <em style={{ color: "var(--text-muted)", fontWeight: "normal" }}>TBD</em>}
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                  {runner ? renderRoster(runner) : "Roster will appear here"}
-                </div>
-              </div>
-            </div>
-
-            {/* 3rd Place */}
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", backgroundColor: "rgba(255,255,255,0.01)", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
-              <div style={{ fontSize: "1.8rem" }}>🥉</div>
-              <img 
-                src={third?.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(third?.name || "?", 40) : "")} 
-                alt="3rd Place" 
-                style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.03)", padding: "2px" }}
-              />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: "bold", color: "var(--text-secondary)", fontSize: "0.95rem" }}>
-                  {third ? third.name : <em style={{ color: "var(--text-muted)", fontWeight: "normal" }}>TBD</em>}
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                  {third ? renderRoster(third) : "Roster will appear here"}
-                </div>
-              </div>
-            </div>
-          </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+          <span style={{ color: "var(--primary-gold)", fontWeight: "bold", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>🏆 Reward Category</span>
+          <span style={{ color: "var(--primary-gold-bright)", fontWeight: "900", fontSize: "1.2rem" }}>🥇 🥈 🥉</span>
+        </div>
+        <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em", color: "var(--primary-gold-bright)" }}>Championship Standings</h3>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+          Awarded to the top placing teams in the tournament playoffs.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {renderTeamRow(champ, champId, "🥇", "212,175,55", "gold")}
+          {renderTeamRow(runner, runnerId, "🥈", "192,192,192", "silver")}
+          {renderTeamRow(third, thirdId, "🥉", "205,127,50", "bronze")}
         </div>
       </div>
     );
@@ -794,43 +806,64 @@ export default function PlayerRankings() {
     const topGfMvp = sortedGfPlayers[0];
     const hasGfMvp = topGfMvp && topGfMvp.grandFinalMvpCount > 0;
 
-    const renderMvpRow = (player, hasMvp, countKey, stageBadge) => {
+    const stageColors = {
+      GP: { bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.3)", text: "#60a5fa", label: "Group Stage MVP" },
+      PO: { bg: "rgba(192,132,252,0.12)", border: "rgba(192,132,252,0.3)", text: "#c084fc", label: "Playoff MVP" },
+      GF: { bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.35)", text: "#fbbf24", label: "Grand Final MVP" },
+    };
+
+    const renderMvpRow = (player, hasMvp, countKey, stage) => {
+      const sc = stageColors[stage];
       return (
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem", backgroundColor: "rgba(255,255,255,0.02)", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-dark)" }}>
-          <div style={{ fontSize: "1.2rem", fontWeight: "bold", minWidth: "40px", color: "#c084fc", textTransform: "uppercase" }}>{stageBadge}</div>
+        <div style={{ backgroundColor: sc.bg, padding: "0.9rem 1rem", borderRadius: "10px", border: `1px solid ${sc.border}` }}>
+          {/* Stage label */}
+          <div style={{ marginBottom: hasMvp ? "0.65rem" : "0" }}>
+            <span style={{ fontSize: "0.7rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.1em", color: sc.text }}>{sc.label}</span>
+          </div>
           {hasMvp ? (
-            <>
-              <img 
-                src={getChampionIcon(player.topChamp)} 
-                alt={player.topChamp} 
-                style={{ width: "40px", height: "40px", borderRadius: "50%", border: "2px solid #c084fc", backgroundColor: "rgba(255,255,255,0.05)" }}
-              />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <Link 
-                    href={`/players/${encodeURIComponent(player.playerName)}`} 
-                    style={{ fontWeight: "bold", color: "var(--text-primary)", fontSize: "0.95rem", textDecoration: "none" }}
-                  >
-                    {player.playerName}
-                  </Link>
-                  <span style={{ fontWeight: "bold", color: "#c084fc", fontSize: "0.9rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <PlayerSignature name={player.playerName} size={44} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {/* Player name */}
+                <Link
+                  href={`/players/${encodeURIComponent(player.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`}
+                  style={{ fontWeight: "700", color: "var(--text-primary)", fontSize: "1rem", textDecoration: "none", display: "block", lineHeight: 1.2 }}
+                >
+                  {player.playerName}
+                </Link>
+                {/* Team name */}
+                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginTop: "0.15rem" }}>
+                  {playerToTeamMap[player.playerName?.trim().toLowerCase()]?.name || "Free Agent"}
+                </span>
+                {/* Stats row — MVP count + Avg grouped, bold & prominent */}
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.45rem" }}>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: "0.25rem",
+                    fontWeight: "900", fontSize: "1rem", color: sc.text,
+                    backgroundColor: `${sc.bg}`, border: `1px solid ${sc.border}`,
+                    padding: "0.15rem 0.6rem", borderRadius: "20px", letterSpacing: "0.01em"
+                  }}>
+                    <Award size={12} />
                     {player[countKey]} MVP{player[countKey] !== 1 ? "s" : ""}
                   </span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.1rem" }}>
-                  <span>{playerToTeamMap[player.playerName?.trim().toLowerCase()]?.name || "Free Agent"}</span>
-                  <span>Avg MVP Score: {player.avgMvpScore.toFixed(1)}</span>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: "0.25rem",
+                    fontWeight: "800", fontSize: "0.9rem", color: sc.text,
+                    backgroundColor: `${sc.bg}`, border: `1px solid ${sc.border}`,
+                    padding: "0.15rem 0.6rem", borderRadius: "20px", opacity: 0.85
+                  }}>
+                    Avg {player.avgMvpScore.toFixed(1)}
+                  </span>
                 </div>
               </div>
-            </>
-          ) : (
-            <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", fontStyle: "italic", flex: 1 }}>
-              TBD (No MVPs awarded yet)
             </div>
+          ) : (
+            <div style={{ color: "var(--text-muted)", fontSize: "0.82rem", fontStyle: "italic" }}>TBD – No MVPs awarded yet</div>
           )}
         </div>
       );
     };
+
 
     return (
       <div className="card" style={{
@@ -840,39 +873,21 @@ export default function PlayerRankings() {
         padding: "2rem",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
         minHeight: "420px",
         borderRadius: "12px"
       }}>
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-            <span style={{ color: "#c084fc", fontWeight: "bold", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>👑 MVP Awards</span>
-            <span style={{ color: "#c084fc", fontWeight: "900", fontSize: "1.2rem" }}>👑</span>
-          </div>
-          <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em" }}>Tournament MVPs</h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "2.5rem" }}>
-            Rewarded by tournament stages based on Series MVP counts (tiebroken by average MVP score).
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-            {/* Group Stage MVP */}
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "bold", marginBottom: "0.4rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Group Stage MVP</div>
-              {renderMvpRow(topGroupMvp, hasGroupMvp, "groupMvpCount", "GP")}
-            </div>
-
-            {/* Playoff MVP */}
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "bold", marginBottom: "0.4rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Playoff MVP</div>
-              {renderMvpRow(topPlayoffMvp, hasPlayoffMvp, "playoffMvpCount", "PO")}
-            </div>
-
-            {/* Grand Final MVP */}
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "bold", marginBottom: "0.4rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Grand Final MVP</div>
-              {renderMvpRow(topGfMvp, hasGfMvp, "grandFinalMvpCount", "GF")}
-            </div>
-          </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+          <span style={{ color: "#c084fc", fontWeight: "bold", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>👑 MVP Awards</span>
+          <span style={{ color: "#c084fc", fontWeight: "900", fontSize: "1.2rem" }}>👑</span>
+        </div>
+        <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em", color: "#c084fc" }}>Tournament MVPs</h3>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+          Rewarded by tournament stages based on Series MVP counts (tiebroken by average MVP score).
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          {renderMvpRow(topGroupMvp, hasGroupMvp, "groupMvpCount", "GP")}
+          {renderMvpRow(topPlayoffMvp, hasPlayoffMvp, "playoffMvpCount", "PO")}
+          {renderMvpRow(topGfMvp, hasGfMvp, "grandFinalMvpCount", "GF")}
         </div>
       </div>
     );
@@ -890,45 +905,46 @@ export default function PlayerRankings() {
         padding: "2rem",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
         minHeight: "420px",
+        maxHeight: "calc(80vh - 2rem)",
+        boxSizing: "border-box",
         borderRadius: "12px"
       }}>
-        <div>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
             <span style={{ color: "#ef4444", fontWeight: "bold", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>⚡ Bounty Rewards</span>
             <span style={{ color: "#ef4444", fontWeight: "900", fontSize: "1.2rem" }}>⚡</span>
           </div>
-          <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em" }}>Pentakill Slayers</h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "2.5rem" }}>
+          <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em", color: "#ef4444" }}>Pentakill Slayers</h3>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
             Rewarded to players per pentakill secured during the tournament.
           </p>
 
           {hasPentakills ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", overflowY: pentakillPlayers.length > 3 ? "auto" : "visible", maxHeight: "280px", paddingRight: "4px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", overflowY: "auto", flex: 1, minHeight: 0, paddingRight: "2px" }}>
               {pentakillPlayers.map(player => (
                 <div key={player.playerName} style={{ display: "flex", alignItems: "center", gap: "1rem", backgroundColor: "rgba(239, 68, 68, 0.05)", padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
-                  <img 
-                    src={getChampionIcon(player.topChamp)} 
-                    alt={player.topChamp} 
-                    style={{ width: "40px", height: "40px", borderRadius: "50%", border: "2px solid #ef4444", backgroundColor: "rgba(255,255,255,0.05)" }}
-                  />
+                  <PlayerSignature name={player.playerName} size={40} />
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                       <Link 
-                        href={`/players/${encodeURIComponent(player.playerName)}`} 
-                        style={{ fontWeight: "bold", color: "var(--text-primary)", fontSize: "0.95rem", textDecoration: "none" }}
+                        href={`/players/${encodeURIComponent(player.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} 
+                        style={{ fontWeight: "bold", color: "var(--text-primary)", fontSize: "0.95rem", textDecoration: "none", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", marginRight: "0.5rem" }}
                       >
                         {player.playerName}
                       </Link>
-                      <span style={{ fontWeight: "bold", color: "#ef4444", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                      <span style={{ fontWeight: "bold", color: "#ef4444", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.25rem", whiteSpace: "nowrap", flexShrink: 0 }}>
                         <span>{player.pentaKills}</span>
                         <Zap size={14} style={{ color: "#ef4444" }} />
                       </span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.1rem" }}>
-                      <span>{playerToTeamMap[player.playerName?.trim().toLowerCase()]?.name || "Free Agent"}</span>
-                      <span>Total Kills: {player.kills}</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                      <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", marginRight: "0.5rem" }}>
+                        {playerToTeamMap[player.playerName?.trim().toLowerCase()]?.name || "Free Agent"}
+                      </span>
+                      <span style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
+                        Total Kills: {player.kills}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1016,257 +1032,336 @@ export default function PlayerRankings() {
             </div>
           )}
 
-          {(activeTab === "players" || activeTab === "teams") && (
-            <>
-              {/* Stat Categories */}
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.5rem", marginBottom: "3rem" }}>
-                {metrics.map(m => {
-                  const isActive = sortBy === m.id || 
-                    (m.id === "seriesMvpCount" && ["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount"].includes(sortBy));
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => setSortBy(m.id)}
-                      className={`btn ${isActive ? "btn-primary" : "btn-outline"}`}
-                      style={{ padding: "0.4rem 1rem", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}
-                    >
-                      {m.icon}
-                      {m.label}
-                    </button>
-                  );
-                })}
-              </div>
+          {(activeTab === "players" || activeTab === "teams") && (() => {
+            const maxVal = rankedItems.length > 0 ? rankedItems[0][sortBy] : 1;
 
-              {/* Sub-selector for Player Series MVPs stages */}
-              {activeTab === "players" && ["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount"].includes(sortBy) && (
-                <div style={{ display: "flex", justifyContent: "center", marginTop: "-1.5rem", marginBottom: "3rem" }}>
-                  <div style={{ display: "inline-flex", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-dark)", padding: "4px", borderRadius: "30px" }}>
-                    <button 
-                      className={`btn ${sortBy === "seriesMvpCount" ? "btn-primary" : ""}`}
-                      style={{ borderRadius: "20px", padding: "0.4rem 1.2rem", fontSize: "0.8rem", background: sortBy === "seriesMvpCount" ? "" : "transparent", border: "none", color: sortBy === "seriesMvpCount" ? "#000" : "var(--text-muted)", fontWeight: "bold" }}
-                      onClick={() => setSortBy("seriesMvpCount")}
-                    >
-                      All Matches
-                    </button>
-                    <button 
-                      className={`btn ${sortBy === "groupMvpCount" ? "btn-primary" : ""}`}
-                      style={{ borderRadius: "20px", padding: "0.4rem 1.2rem", fontSize: "0.8rem", background: sortBy === "groupMvpCount" ? "" : "transparent", border: "none", color: sortBy === "groupMvpCount" ? "#000" : "var(--text-muted)", fontWeight: "bold" }}
-                      onClick={() => setSortBy("groupMvpCount")}
-                    >
-                      Group Stage
-                    </button>
-                    <button 
-                      className={`btn ${sortBy === "playoffMvpCount" ? "btn-primary" : ""}`}
-                      style={{ borderRadius: "20px", padding: "0.4rem 1.2rem", fontSize: "0.8rem", background: sortBy === "playoffMvpCount" ? "" : "transparent", border: "none", color: sortBy === "playoffMvpCount" ? "#000" : "var(--text-muted)", fontWeight: "bold" }}
-                      onClick={() => setSortBy("playoffMvpCount")}
-                    >
-                      Playoffs
-                    </button>
-                    <button 
-                      className={`btn ${sortBy === "grandFinalMvpCount" ? "btn-primary" : ""}`}
-                      style={{ borderRadius: "20px", padding: "0.4rem 1.2rem", fontSize: "0.8rem", background: sortBy === "grandFinalMvpCount" ? "" : "transparent", border: "none", color: sortBy === "grandFinalMvpCount" ? "#000" : "var(--text-muted)", fontWeight: "bold" }}
-                      onClick={() => setSortBy("grandFinalMvpCount")}
-                    >
-                      Grand Final
-                    </button>
+            return (
+              <>
+                {/* ── Section header ── */}
+                <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+                  <span style={{
+                    display: "inline-block", marginBottom: "0.75rem",
+                    backgroundColor: rankingType === "player" ? "rgba(192,132,252,0.08)" : "rgba(212,175,55,0.08)",
+                    border: `1px solid ${rankingType === "player" ? "rgba(192,132,252,0.35)" : "var(--border-gold)"}`,
+                    color: rankingType === "player" ? "#c084fc" : "var(--primary-gold)",
+                    textTransform: "uppercase", fontSize: "0.75rem", fontWeight: "800",
+                    padding: "0.3rem 1.1rem", borderRadius: "20px", letterSpacing: "0.12em"
+                  }}>
+                    {rankingType === "player" ? "Player Leaderboard" : "Team Leaderboard"}
+                  </span>
+                  <h2 style={{
+                    fontSize: "2rem", fontWeight: "900", textTransform: "uppercase",
+                    letterSpacing: "0.06em", margin: "0 auto 0.4rem",
+                    color: rankingType === "player" ? "#c084fc" : "var(--primary-gold-bright)"
+                  }}>
+                    {getMetricLabel(sortBy)}
+                  </h2>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                    {rankingType === "player"
+                      ? "Ranked by performance across all tournament matches."
+                      : "Ranked by team results throughout the tournament."}
+                  </p>
+                </div>
+
+                {/* ── Metric selector strip ── */}
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "2rem" }}>
+                  <div style={{
+                    display: "flex", gap: "0", overflowX: "auto", flexWrap: "nowrap",
+                    backgroundColor: "rgba(0,0,0,0.4)", border: "1px solid var(--border-dark)",
+                    borderRadius: "12px", padding: "6px"
+                  }}>
+                    {metrics.map(m => {
+                      const isActive = sortBy === m.id ||
+                        (m.id === "seriesMvpCount" && ["seriesMvpCount","groupMvpCount","playoffMvpCount","grandFinalMvpCount"].includes(sortBy));
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => setSortBy(m.id)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: "0.4rem",
+                            padding: "0.45rem 1rem", borderRadius: "8px", border: "none",
+                            background: isActive
+                              ? (rankingType === "player" ? "rgba(192,132,252,0.15)" : "rgba(212,175,55,0.12)")
+                              : "transparent",
+                            color: isActive
+                              ? (rankingType === "player" ? "#c084fc" : "var(--primary-gold-bright)")
+                              : "var(--text-muted)",
+                            fontWeight: isActive ? "800" : "500",
+                            fontSize: "0.8rem", cursor: "pointer", whiteSpace: "nowrap",
+                            transition: "all 0.2s ease",
+                            borderBottom: isActive
+                              ? `2px solid ${rankingType === "player" ? "#c084fc" : "var(--primary-gold)"}`
+                              : "2px solid transparent",
+                            boxShadow: isActive
+                              ? `0 0 12px ${rankingType === "player" ? "rgba(192,132,252,0.2)" : "rgba(212,175,55,0.15)"}`
+                              : "none"
+                          }}
+                        >
+                          {m.icon}
+                          {m.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              )}
 
-              {/* Top 3 Podium */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "4rem" }}>
-                <h2 style={{ textTransform: "uppercase", fontSize: "1.2rem", letterSpacing: "0.05em", color: "var(--primary-gold)", display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "2rem" }}>
-                  {activeMetric?.icon}
-                  Top 3: {getMetricLabel(sortBy)}
-                </h2>
-                
-                <div className="podium-container" style={{ display: "flex", alignItems: "flex-end", gap: "1rem", marginTop: "2rem", minHeight: "300px" }}>
-                  {/* 2nd Place */}
-                  {top2 && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "140px" }}>
-                      <img 
-                        src={rankingType === "player" ? getChampionIcon(top2.topChamp) : (top2.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top2.teamName, 60) : ""))} 
-                        alt={rankingType === "player" ? top2.topChamp : top2.teamName} 
-                        style={{ 
-                          width: "60px", 
-                          height: "60px", 
-                          borderRadius: rankingType === "player" ? "50%" : "8px", 
-                          border: "2px solid #C0C0C0", 
-                          marginBottom: "0.5rem",
-                          objectFit: "contain",
-                          padding: rankingType === "player" ? "0" : "4px",
-                          backgroundColor: rankingType === "player" ? "transparent" : "rgba(255,255,255,0.05)"
-                        }} 
-                      />
-                      <Link 
-                        href={rankingType === "player" ? `/players/${encodeURIComponent(top2.playerName)}` : `/teams?teamId=${top2.teamId}`} 
-                        style={{ fontWeight: "bold", fontSize: "0.9rem", textAlign: "center", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%", textDecoration: "none", color: rankingType === "player" ? "var(--text-primary)" : "var(--primary-gold-bright)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}
-                      >
-                        <span>{rankingType === "player" ? top2.playerName : top2.teamName}</span>
-                        {rankingType === "team" && getPositionBadge(top2.position)}
-                      </Link>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem", marginTop: rankingType === "team" ? "0.25rem" : "0" }}>{top2.gamesPlayed} Games</div>
-                      <div style={{ width: "100%", height: "135px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid #C0C0C0", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "0.5rem", boxSizing: "border-box" }}>
-                        <div style={{ fontSize: "1.8rem", fontWeight: "900", color: "#C0C0C0" }}>2</div>
-                        {rankingType === "player" && (
-                          <div style={{ margin: "0.15rem 0" }}>
-                            <PlayerSignature name={top2.playerName} size={50} />
-                          </div>
-                        )}
-                        <div style={{ fontSize: "0.85rem", fontWeight: "bold", color: "var(--text-primary)", marginTop: "0.25rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
-                          {formatStat(top2[sortBy], sortBy, top2)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 1st Place */}
-                  {top1 && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "160px" }}>
-                      <div style={{ position: "relative" }}>
-                        <SummonersCup size={30} style={{ color: "var(--primary-gold)", position: "absolute", top: "-25px", left: "50%", transform: "translateX(-50%)" }} />
-                        <img 
-                          src={rankingType === "player" ? getChampionIcon(top1.topChamp) : (top1.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top1.teamName, 80) : ""))} 
-                          alt={rankingType === "player" ? top1.topChamp : top1.teamName} 
-                          style={{ 
-                            width: "80px", 
-                            height: "80px", 
-                            borderRadius: rankingType === "player" ? "50%" : "8px", 
-                            border: "3px solid var(--primary-gold)", 
-                            marginBottom: "0.5rem",
-                            objectFit: "contain",
-                            padding: rankingType === "player" ? "0" : "6px",
-                            backgroundColor: rankingType === "player" ? "transparent" : "rgba(255,255,255,0.05)"
-                          }} 
-                        />
-                      </div>
-                      <Link 
-                        href={rankingType === "player" ? `/players/${encodeURIComponent(top1.playerName)}` : `/teams?teamId=${top1.teamId}`} 
-                        style={{ fontWeight: "bold", fontSize: "1.1rem", textAlign: "center", color: "var(--primary-gold-bright)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%", textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}
-                      >
-                        <span>{rankingType === "player" ? top1.playerName : top1.teamName}</span>
-                        {rankingType === "team" && getPositionBadge(top1.position)}
-                      </Link>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem", marginTop: rankingType === "team" ? "0.25rem" : "0" }}>{top1.gamesPlayed} Games</div>
-                      <div style={{ width: "100%", height: "180px", backgroundColor: "rgba(228,179,60,0.1)", border: "1px solid var(--border-gold)", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "0.5rem", boxShadow: "0 -10px 30px rgba(228,179,60,0.15)", boxSizing: "border-box" }}>
-                        <div style={{ fontSize: "2.5rem", fontWeight: "900", color: "var(--primary-gold)", lineHeight: "1" }}>1</div>
-                        {rankingType === "player" && (
-                          <div style={{ margin: "0.25rem 0" }}>
-                            <PlayerSignature name={top1.playerName} size={65} />
-                          </div>
-                        )}
-                        <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: "var(--primary-gold-bright)", marginTop: "0.25rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
-                          {formatStat(top1[sortBy], sortBy, top1)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3rd Place */}
-                  {top3 && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "140px" }}>
-                      <img 
-                        src={rankingType === "player" ? getChampionIcon(top3.topChamp) : (top3.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top3.teamName, 60) : ""))} 
-                        alt={rankingType === "player" ? top3.topChamp : top3.teamName} 
-                        style={{ 
-                          width: "60px", 
-                          height: "60px", 
-                          borderRadius: rankingType === "player" ? "50%" : "8px", 
-                          border: "2px solid #CD7F32", 
-                          marginBottom: "0.5rem",
-                          objectFit: "contain",
-                          padding: rankingType === "player" ? "0" : "4px",
-                          backgroundColor: rankingType === "player" ? "transparent" : "rgba(255,255,255,0.05)"
-                        }} 
-                      />
-                      <Link 
-                        href={rankingType === "player" ? `/players/${encodeURIComponent(top3.playerName)}` : `/teams?teamId=${top3.teamId}`} 
-                        style={{ fontWeight: "bold", fontSize: "0.9rem", textAlign: "center", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", width: "100%", textDecoration: "none", color: "var(--text-primary)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}
-                      >
-                        <span>{rankingType === "player" ? top3.playerName : top3.teamName}</span>
-                        {rankingType === "team" && getPositionBadge(top3.position)}
-                      </Link>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem", marginTop: rankingType === "team" ? "0.25rem" : "0" }}>{top3.gamesPlayed} Games</div>
-                      <div style={{ width: "100%", height: "115px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid #CD7F32", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "0.5rem", boxSizing: "border-box" }}>
-                        <div style={{ fontSize: "1.2rem", fontWeight: "900", color: "#CD7F32" }}>3</div>
-                        {rankingType === "player" && (
-                          <div style={{ margin: "0.15rem 0" }}>
-                            <PlayerSignature name={top3.playerName} size={45} />
-                          </div>
-                        )}
-                        <div style={{ fontSize: "0.85rem", fontWeight: "bold", color: "var(--text-primary)", marginTop: "0.25rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
-                          {formatStat(top3[sortBy], sortBy, top3)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {/* Podium Base Line */}
-                <div style={{ width: "100%", maxWidth: "600px", height: "4px", backgroundColor: "var(--border-dark)", borderRadius: "2px" }}></div>
-              </div>
-
-              {/* Ranking Table */}
-              <div className="card" style={{ padding: "0", overflow: "hidden" }}>
-                <div className="table-responsive">
-                  <table className="teams-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead style={{ backgroundColor: "rgba(0,0,0,0.5)", borderBottom: "1px solid var(--border-dark)" }}>
-                      <tr>
-                        <th style={{ padding: "1rem", textAlign: "center", width: "60px" }}>Rank</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>{rankingType === "player" ? "Player" : "Team"}</th>
-                        <th style={{ padding: "1rem", textAlign: "center" }}>Games</th>
-                        <th style={{ padding: "1rem", textAlign: "right", color: "var(--primary-gold-bright)" }}>
-                          {getMetricLabel(sortBy)}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rankedItems.slice(3).map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: "1px solid var(--border-dark)", transition: "background 0.2s" }}>
-                          <td style={{ padding: "1rem", textAlign: "center", fontWeight: "bold", color: "var(--text-muted)" }}>
-                            {idx + 4}
-                          </td>
-                          <td style={{ padding: "1rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-                            <img 
-                              src={rankingType === "player" ? getChampionIcon(item.topChamp) : (item.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(item.teamName, 32) : ""))} 
-                              alt={rankingType === "player" ? item.topChamp : item.teamName} 
-                              style={{ 
-                                width: "32px", 
-                                height: "32px", 
-                                borderRadius: rankingType === "player" ? "4px" : "4px",
-                                objectFit: "contain",
-                                padding: rankingType === "player" ? "0" : "2px",
-                                backgroundColor: rankingType === "player" ? "transparent" : "rgba(255,255,255,0.05)"
-                              }} 
-                            />
-                            <Link 
-                              href={rankingType === "player" ? `/players/${encodeURIComponent(item.playerName)}` : `/teams?teamId=${item.teamId}`} 
-                              style={{ fontWeight: "bold", textDecoration: "none", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}
-                            >
-                              <span>{rankingType === "player" ? item.playerName : item.teamName}</span>
-                              {rankingType === "team" && getPositionBadge(item.position)}
-                            </Link>
-                          </td>
-                          <td style={{ padding: "1rem", textAlign: "center", color: "var(--text-muted)" }}>
-                            {item.gamesPlayed}
-                          </td>
-                          <td style={{ padding: "1rem", textAlign: "right", fontWeight: "bold", color: "var(--text-primary)" }}>
-                            {formatStat(item[sortBy], sortBy, item)}
-                          </td>
-                        </tr>
+                {/* ── Sub-selector for MVP stages ── */}
+                {activeTab === "players" && ["seriesMvpCount","groupMvpCount","playoffMvpCount","grandFinalMvpCount"].includes(sortBy) && (
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: "2.5rem" }}>
+                    <div style={{ display: "flex", gap: "0.4rem", backgroundColor: "rgba(192,132,252,0.06)", border: "1px solid rgba(192,132,252,0.2)", borderRadius: "8px", padding: "5px" }}>
+                      {[
+                        { id: "seriesMvpCount", label: "All Stages" },
+                        { id: "groupMvpCount", label: "Group Stage" },
+                        { id: "playoffMvpCount", label: "Playoffs" },
+                        { id: "grandFinalMvpCount", label: "Grand Final" },
+                      ].map(s => (
+                        <button key={s.id} onClick={() => setSortBy(s.id)} style={{
+                          padding: "0.3rem 0.9rem", borderRadius: "5px", border: "none", cursor: "pointer",
+                          background: sortBy === s.id ? "rgba(192,132,252,0.25)" : "transparent",
+                          color: sortBy === s.id ? "#c084fc" : "var(--text-muted)",
+                          fontWeight: sortBy === s.id ? "800" : "500",
+                          fontSize: "0.75rem", transition: "all 0.2s",
+                          boxShadow: sortBy === s.id ? "0 0 8px rgba(192,132,252,0.2)" : "none"
+                        }}>
+                          {s.label}
+                        </button>
                       ))}
-                      {rankedItems.length <= 3 && (
-                        <tr>
-                          <td colSpan="4" style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>
-                            No other {rankingType === "player" ? "players" : "teams"} to display.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Top 3 Podium ── */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "3rem" }}>
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: "1.5rem", marginBottom: "0" }}>
+
+                    {/* 2nd Place */}
+                    {top2 && (
+                      <div
+                        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "150px", cursor: "pointer" }}
+                        onClick={e => { if (!e.target.closest("a")) router.push(rankingType === "team" ? `/teams?teamId=${top2.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}` : `/players/${encodeURIComponent(top2.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`); }}
+                      >
+                        <div style={{ marginBottom: "0.75rem", filter: "drop-shadow(0 0 10px rgba(192,192,192,0.4))" }}>
+                          {rankingType === "player" ? (
+                            <PlayerSignature name={top2.playerName} size={60} />
+                          ) : (
+                            <Link href={`/teams?teamId=${top2.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
+                              <img src={top2.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top2.teamName, 60) : "")} alt={top2.teamName} className="no-zoom"
+                                style={{ width: "60px", height: "60px", borderRadius: "10px", border: "2px solid #C0C0C0", objectFit: "contain", padding: "4px", backgroundColor: "rgba(255,255,255,0.04)" }} />
+                            </Link>
+                          )}
+                        </div>
+                        <Link href={rankingType === "player" ? `/players/${encodeURIComponent(top2.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}` : `/teams?teamId=${top2.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`}
+                          style={{ fontWeight: "700", fontSize: "0.85rem", textAlign: "center", textDecoration: "none", color: "#C0C0C0", marginBottom: "0.2rem", display: "block" }}>
+                          {rankingType === "player" ? top2.playerName : top2.teamName}
+                        </Link>
+                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top2.gamesPlayed} Games</div>
+                        {/* Pedestal */}
+                        <div style={{
+                          width: "100%", height: "120px", borderRadius: "8px 8px 0 0",
+                          background: "linear-gradient(180deg, rgba(192,192,192,0.15) 0%, rgba(192,192,192,0.04) 100%)",
+                          border: "1px solid rgba(192,192,192,0.35)", borderBottom: "none",
+                          boxShadow: "0 -6px 20px rgba(192,192,192,0.12)",
+                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.3rem"
+                        }}>
+                          <div style={{ fontSize: "2rem", fontWeight: "900", color: "#C0C0C0", lineHeight: 1 }}>2</div>
+                          <div style={{ fontSize: "0.85rem", fontWeight: "800", color: "#C0C0C0", textAlign: "center", padding: "0 8px" }}>
+                            {formatStat(top2[sortBy], sortBy, top2)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 1st Place */}
+                    {top1 && (
+                      <div
+                        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "170px", cursor: "pointer" }}
+                        onClick={e => { if (!e.target.closest("a")) router.push(rankingType === "team" ? `/teams?teamId=${top1.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}` : `/players/${encodeURIComponent(top1.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`); }}
+                      >
+                        <div style={{ position: "relative", marginBottom: "0.75rem" }}>
+                          <SummonersCup size={28} style={{ color: "var(--primary-gold)", position: "absolute", top: "-28px", left: "50%", transform: "translateX(-50%)", filter: "drop-shadow(0 0 8px var(--primary-gold))" }} />
+                          <div style={{ filter: "drop-shadow(0 0 16px rgba(212,175,55,0.6))" }}>
+                            {rankingType === "player" ? (
+                              <PlayerSignature name={top1.playerName} size={80} />
+                            ) : (
+                              <Link href={`/teams?teamId=${top1.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
+                                <img src={top1.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top1.teamName, 80) : "")} alt={top1.teamName} className="no-zoom"
+                                  style={{ width: "80px", height: "80px", borderRadius: "12px", border: "3px solid var(--primary-gold)", objectFit: "contain", padding: "6px", backgroundColor: "rgba(255,255,255,0.04)" }} />
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                        <Link href={rankingType === "player" ? `/players/${encodeURIComponent(top1.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}` : `/teams?teamId=${top1.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`}
+                          style={{ fontWeight: "800", fontSize: "1rem", textAlign: "center", textDecoration: "none", color: "var(--primary-gold-bright)", marginBottom: "0.2rem", display: "block" }}>
+                          {rankingType === "player" ? top1.playerName : top1.teamName}
+                        </Link>
+                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top1.gamesPlayed} Games</div>
+                        {/* Pedestal */}
+                        <div style={{
+                          width: "100%", height: "165px", borderRadius: "8px 8px 0 0",
+                          background: "linear-gradient(180deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.05) 100%)",
+                          border: "1px solid rgba(212,175,55,0.5)", borderBottom: "none",
+                          boxShadow: "0 -12px 40px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
+                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem"
+                        }}>
+                          <div style={{ fontSize: "2.8rem", fontWeight: "900", color: "var(--primary-gold)", lineHeight: 1, textShadow: "0 0 20px rgba(212,175,55,0.5)" }}>1</div>
+                          <div style={{ fontSize: "1rem", fontWeight: "900", color: "var(--primary-gold-bright)", textAlign: "center", padding: "0 8px", textShadow: "0 0 12px rgba(212,175,55,0.3)" }}>
+                            {formatStat(top1[sortBy], sortBy, top1)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 3rd Place */}
+                    {top3 && (
+                      <div
+                        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "150px", cursor: "pointer" }}
+                        onClick={e => { if (!e.target.closest("a")) router.push(rankingType === "team" ? `/teams?teamId=${top3.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}` : `/players/${encodeURIComponent(top3.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`); }}
+                      >
+                        <div style={{ marginBottom: "0.75rem", filter: "drop-shadow(0 0 8px rgba(205,127,50,0.35))" }}>
+                          {rankingType === "player" ? (
+                            <PlayerSignature name={top3.playerName} size={60} />
+                          ) : (
+                            <Link href={`/teams?teamId=${top3.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
+                              <img src={top3.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top3.teamName, 60) : "")} alt={top3.teamName} className="no-zoom"
+                                style={{ width: "60px", height: "60px", borderRadius: "10px", border: "2px solid #CD7F32", objectFit: "contain", padding: "4px", backgroundColor: "rgba(255,255,255,0.04)" }} />
+                            </Link>
+                          )}
+                        </div>
+                        <Link href={rankingType === "player" ? `/players/${encodeURIComponent(top3.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}` : `/teams?teamId=${top3.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`}
+                          style={{ fontWeight: "700", fontSize: "0.85rem", textAlign: "center", textDecoration: "none", color: "#CD7F32", marginBottom: "0.2rem", display: "block" }}>
+                          {rankingType === "player" ? top3.playerName : top3.teamName}
+                        </Link>
+                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top3.gamesPlayed} Games</div>
+                        {/* Pedestal */}
+                        <div style={{
+                          width: "100%", height: "95px", borderRadius: "8px 8px 0 0",
+                          background: "linear-gradient(180deg, rgba(205,127,50,0.12) 0%, rgba(205,127,50,0.03) 100%)",
+                          border: "1px solid rgba(205,127,50,0.3)", borderBottom: "none",
+                          boxShadow: "0 -4px 16px rgba(205,127,50,0.1)",
+                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.25rem"
+                        }}>
+                          <div style={{ fontSize: "1.4rem", fontWeight: "900", color: "#CD7F32", lineHeight: 1 }}>3</div>
+                          <div style={{ fontSize: "0.85rem", fontWeight: "800", color: "#CD7F32", textAlign: "center", padding: "0 8px" }}>
+                            {formatStat(top3[sortBy], sortBy, top3)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Podium ground line */}
+                  <div style={{ width: "100%", maxWidth: "560px", height: "2px", background: "linear-gradient(90deg, transparent, var(--border-dark), var(--primary-gold), var(--border-dark), transparent)" }} />
                 </div>
-              </div>
-            </>
-          )}
+
+                {/* ── Ranking list (4th+) ── */}
+                {rankedItems.slice(3).length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    {rankedItems.slice(3).map((item, idx) => {
+                      const rank = idx + 4;
+                      const pct = maxVal > 0 ? ((item[sortBy] || 0) / maxVal) * 100 : 0;
+                      const accentColor = rankingType === "player" ? "rgba(192,132,252," : "rgba(212,175,55,";
+
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            display: "flex", alignItems: "center", gap: "1rem",
+                            backgroundColor: "rgba(255,255,255,0.02)",
+                            border: "1px solid var(--border-dark)",
+                            borderLeft: `3px solid ${rankingType === "player" ? "rgba(192,132,252,0.35)" : "rgba(212,175,55,0.35)"}`,
+                            borderRadius: "10px", padding: "0.8rem 1.1rem",
+                            transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
+                            cursor: "pointer"
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = `${accentColor}0.05)`;
+                            e.currentTarget.style.borderColor = `${accentColor}0.4)`;
+                            e.currentTarget.style.boxShadow = `0 2px 16px ${accentColor}0.08)`;
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.02)";
+                            e.currentTarget.style.borderColor = "var(--border-dark)";
+                            e.currentTarget.style.boxShadow = "none";
+                          }}
+                          onClick={e => {
+                            if (e.target.closest("a")) return; // let inner Links handle their own navigation
+                            if (rankingType === "team") {
+                              router.push(`/teams?teamId=${item.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`);
+                            } else {
+                              router.push(`/players/${encodeURIComponent(item.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`);
+                            }
+                          }}
+                        >
+                          {/* Rank badge */}
+                          <div style={{
+                            minWidth: "32px", height: "32px", borderRadius: "8px",
+                            backgroundColor: "rgba(255,255,255,0.04)",
+                            border: "1px solid var(--border-dark)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontWeight: "800", fontSize: "0.8rem", color: "var(--text-muted)"
+                          }}>
+                            {rank}
+                          </div>
+
+                          {/* Avatar / logo */}
+                          {rankingType === "player" ? (
+                            <PlayerSignature name={item.playerName} size={36} />
+                          ) : (
+                            <Link href={`/teams?teamId=${item.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
+                              <img src={item.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(item.teamName, 36) : "")} alt={item.teamName} className="no-zoom"
+                                style={{ width: "36px", height: "36px", borderRadius: "6px", objectFit: "contain", padding: "2px", backgroundColor: "rgba(255,255,255,0.04)" }} />
+                            </Link>
+                          )}
+
+                          {/* Name + stat bar */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                              <Link
+                                href={rankingType === "player" ? `/players/${encodeURIComponent(item.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}` : `/teams?teamId=${item.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`}
+                                style={{ fontWeight: "700", textDecoration: "none", color: "var(--text-primary)", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
+                              >
+                                {rankingType === "player" ? item.playerName : item.teamName}
+                                {rankingType === "team" && getPositionBadge(item.position)}
+                              </Link>
+                              {/* Stat pill */}
+                              <span style={{
+                                fontWeight: "800", fontSize: "0.88rem", whiteSpace: "nowrap", flexShrink: 0,
+                                color: rankingType === "player" ? "#c084fc" : "var(--primary-gold-bright)",
+                                backgroundColor: rankingType === "player" ? "rgba(192,132,252,0.1)" : "rgba(212,175,55,0.08)",
+                                border: `1px solid ${rankingType === "player" ? "rgba(192,132,252,0.25)" : "rgba(212,175,55,0.2)"}`,
+                                padding: "0.15rem 0.6rem", borderRadius: "20px"
+                              }}>
+                                {formatStat(item[sortBy], sortBy, item)}
+                              </span>
+                            </div>
+                            {/* Comparison bar */}
+                            <div style={{ marginTop: "0.35rem", height: "3px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                              <div style={{
+                                height: "100%", borderRadius: "2px", width: `${pct}%`,
+                                background: rankingType === "player"
+                                  ? "linear-gradient(90deg, rgba(192,132,252,0.4), #c084fc)"
+                                  : "linear-gradient(90deg, rgba(212,175,55,0.4), var(--primary-gold))",
+                                transition: "width 0.6s ease"
+                              }} />
+                            </div>
+                            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
+                              {item.gamesPlayed} games played
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {rankedItems.length <= 3 && (
+                  <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                    No other {rankingType === "player" ? "players" : "teams"} to display.
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </>
       )}
     </div>

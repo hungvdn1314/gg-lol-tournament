@@ -120,7 +120,7 @@ export default function PlayerSignature({ name, size = 120 }) {
   };
 
   return (
-    <div className="signature-badge" style={containerStyle} title={`${cleanName}'s Signature`}>
+    <div className="signature-badge" style={containerStyle} title={`${cleanName}'s Signature`} data-player-name={name}>
       <div style={textStyle}>
         {cleanName}
         

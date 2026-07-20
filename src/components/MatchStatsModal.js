@@ -348,15 +348,11 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                   <img 
                     src={currentGameDetails.screenshot} 
                     alt="End Game Screenshot" 
-                    style={{ width: "100%", height: "auto", display: "block", maxHeight: "60vh", objectFit: "contain", cursor: "zoom-in" }} 
-                    onClick={() => {
-                      const w = window.open();
-                      w.document.write(`<img src="${currentGameDetails.screenshot}" style="width:100%;height:auto;" />`);
-                    }}
+                    style={{ width: "100%", height: "auto", display: "block", maxHeight: "60vh", objectFit: "contain" }} 
                   />
                 </div>
                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                  Click image to open in full size.
+                  Click image to zoom.
                 </span>
               </div>
             )}
@@ -453,19 +449,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>CS</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.cs}</span>
                         </div>
-                        {/* Items */}
-                        <div className="sb-col-player" style={{ display: "flex", gap: "3px" }}>
-                          {p.items.map((itemId, i) => {
-                            const iconUrl = getItemIcon(itemId);
-                            return (
-                              <div key={i} style={{ width: "22px", height: "22px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "2px", border: "1px solid var(--border-dark)", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
-                                {iconUrl ? (
-                                  <img src={iconUrl} alt="item" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                ) : null}
-                              </div>
-                            );
-                          })}
-                        </div>
+
 
                         {/* Damage Bar Chart */}
                         <div className="sb-col-items">
@@ -568,19 +552,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>CS</span>
                           <span style={{ fontSize: "0.8rem" }}>{p.cs}</span>
                         </div>
-                        {/* Items */}
-                        <div className="sb-col-player" style={{ display: "flex", gap: "3px" }}>
-                          {p.items.map((itemId, i) => {
-                            const iconUrl = getItemIcon(itemId);
-                            return (
-                              <div key={i} style={{ width: "22px", height: "22px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "2px", border: "1px solid var(--border-dark)", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
-                                {iconUrl ? (
-                                  <img src={iconUrl} alt="item" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                ) : null}
-                              </div>
-                            );
-                          })}
-                        </div>
+
 
                         {/* Damage Bar Chart */}
                         <div className="sb-col-items">
