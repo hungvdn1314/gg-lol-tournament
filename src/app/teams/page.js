@@ -177,6 +177,8 @@ function TeamsContent() {
     if (queryTeamId && decoratedTeams[queryTeamId]) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTeamId(queryTeamId);
+    } else if (!queryTeamId) {
+      setSelectedTeamId(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryTeamId, teams]);
