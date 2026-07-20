@@ -282,57 +282,7 @@ export default function PlayerProfile() {
       >
         <ArrowLeft size={16} /> Back
       </button>
-      {playerName.toLowerCase() === "hungvdn" && (
-        <div className="card" style={{ padding: "1.5rem", marginBottom: "2rem", border: "1px solid var(--primary-gold)", background: "rgba(13, 13, 17, 0.95)", boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)" }}>
-          <h3 style={{ color: "var(--primary-gold-bright)", marginTop: 0, marginBottom: "0.5rem", fontSize: "1.2rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            👑 Choose Your Signature Font Option:
-          </h3>
-          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1.5rem", lineHeight: "1.4" }}>
-            Since the image generator quota is temporarily exhausted, I have loaded all 4 Google handwriting font choices directly on this page for you to compare live in your browser!
-          </p>
-          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", justifyContent: "space-around" }}>
-            {/* Option 1: Alex Brush */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--primary-gold-bright)", fontWeight: "bold" }}>Option 1: Alex Brush</span>
-              <div style={{ width: "100px", height: "100px", borderRadius: "50%", backgroundColor: "#0d0d11", border: "2px solid rgba(245, 176, 65, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                <div style={{ fontFamily: "var(--font-alex-brush)", fontSize: "20px", background: "linear-gradient(135deg, #FFE082 0%, #F5B041 50%, #D68910 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", transform: "rotate(-8deg)" }}>
-                  HungVD 👑
-                </div>
-              </div>
-            </div>
 
-            {/* Option 2: Mr De Haviland */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--primary-gold-bright)", fontWeight: "bold" }}>Option 2: Mr De Haviland</span>
-              <div style={{ width: "100px", height: "100px", borderRadius: "50%", backgroundColor: "#0d0d11", border: "2px solid rgba(245, 176, 65, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                <div style={{ fontFamily: "var(--font-mr-de-haviland)", fontSize: "20px", background: "linear-gradient(135deg, #FFE082 0%, #F5B041 50%, #D68910 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", transform: "rotate(-8deg)" }}>
-                  HungVD 👑
-                </div>
-              </div>
-            </div>
-
-            {/* Option 3: Cedarville Cursive */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--primary-gold-bright)", fontWeight: "bold" }}>Option 3: Cedarville Cursive</span>
-              <div style={{ width: "100px", height: "100px", borderRadius: "50%", backgroundColor: "#0d0d11", border: "2px solid rgba(245, 176, 65, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                <div style={{ fontFamily: "var(--font-cedarville-cursive)", fontSize: "20px", background: "linear-gradient(135deg, #FFE082 0%, #F5B041 50%, #D68910 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", transform: "rotate(-8deg)" }}>
-                  HungVD 👑
-                </div>
-              </div>
-            </div>
-
-            {/* Option 4: Caveat */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--primary-gold-bright)", fontWeight: "bold" }}>Option 4: Caveat</span>
-              <div style={{ width: "100px", height: "100px", borderRadius: "50%", backgroundColor: "#0d0d11", border: "2px solid rgba(245, 176, 65, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                <div style={{ fontFamily: "var(--font-caveat)", fontSize: "20px", background: "linear-gradient(135deg, #FFE082 0%, #F5B041 50%, #D68910 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", transform: "rotate(-8deg)" }}>
-                  HungVD 👑
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* HEADER */}
       <div
