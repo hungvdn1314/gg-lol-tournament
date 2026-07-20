@@ -38,7 +38,7 @@ const getSignatureStyle = (playerName) => {
     font = "var(--font-caveat)"; // Option 4
     rotation = -5;
     hasHeart = false;
-    hasStar = true; // Star icon instead of crown
+    hasStar = false; // No doodles, just text
     hasCrown = false;
   } else if (normalized === "faker") {
     font = "var(--font-alex-brush)";
