@@ -8,6 +8,7 @@ import { ArrowLeft, Target, Shield, Sword, Award, Activity, Zap } from "lucide-r
 import { getLatestDDragonVersion } from "@/lib/riot";
 import { championPlaceholder } from "@/lib/placeholders";
 import { SummonersCup, CrossedSwords } from "@/components/Icons";
+import PlayerSignature from "@/components/PlayerSignature";
 
 export default function PlayerProfile() {
   const params = useParams();
@@ -314,6 +315,11 @@ export default function PlayerProfile() {
               <CrossedSwords size={10} /> ARAM Mayhem
             </span>
           </div>
+        </div>
+
+        {/* Dynamic Player Signature */}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <PlayerSignature name={playerName} size={110} />
         </div>
 
         <div style={{ textAlign: "right" }}>

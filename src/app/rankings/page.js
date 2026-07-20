@@ -7,6 +7,7 @@ import { SummonersCup, HextechCrest } from "@/components/Icons";
 import { Award, Eye, Crosshair, Shield, Coins, Target, Heart, Zap } from "lucide-react";
 import { getLatestDDragonVersion } from "@/lib/riot";
 import { championPlaceholder, teamLogoPlaceholder } from "@/lib/placeholders";
+import PlayerSignature from "@/components/PlayerSignature";
 
 class ConfettiShower {
   constructor() {
@@ -1105,9 +1106,14 @@ export default function PlayerRankings() {
                         {rankingType === "team" && getPositionBadge(top2.position)}
                       </Link>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem", marginTop: rankingType === "team" ? "0.25rem" : "0" }}>{top2.gamesPlayed} Games</div>
-                      <div style={{ width: "100%", height: "120px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid #C0C0C0", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "1rem", boxSizing: "border-box" }}>
-                        <div style={{ fontSize: "2rem", fontWeight: "900", color: "#C0C0C0" }}>2</div>
-                        <div style={{ fontSize: "0.85rem", fontWeight: "bold", color: "var(--text-primary)", marginTop: "0.5rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
+                      <div style={{ width: "100%", height: "135px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid #C0C0C0", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "0.5rem", boxSizing: "border-box" }}>
+                        <div style={{ fontSize: "1.8rem", fontWeight: "900", color: "#C0C0C0" }}>2</div>
+                        {rankingType === "player" && (
+                          <div style={{ margin: "0.15rem 0" }}>
+                            <PlayerSignature name={top2.playerName} size={50} />
+                          </div>
+                        )}
+                        <div style={{ fontSize: "0.85rem", fontWeight: "bold", color: "var(--text-primary)", marginTop: "0.25rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
                           {formatStat(top2[sortBy], sortBy, top2)}
                         </div>
                       </div>
@@ -1142,9 +1148,14 @@ export default function PlayerRankings() {
                         {rankingType === "team" && getPositionBadge(top1.position)}
                       </Link>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem", marginTop: rankingType === "team" ? "0.25rem" : "0" }}>{top1.gamesPlayed} Games</div>
-                      <div style={{ width: "100%", height: "160px", backgroundColor: "rgba(228,179,60,0.1)", border: "1px solid var(--border-gold)", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "1rem", boxShadow: "0 -10px 30px rgba(228,179,60,0.15)", boxSizing: "border-box" }}>
-                        <div style={{ fontSize: "3rem", fontWeight: "900", color: "var(--primary-gold)", lineHeight: "1" }}>1</div>
-                        <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: "var(--primary-gold-bright)", marginTop: "0.5rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
+                      <div style={{ width: "100%", height: "180px", backgroundColor: "rgba(228,179,60,0.1)", border: "1px solid var(--border-gold)", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "0.5rem", boxShadow: "0 -10px 30px rgba(228,179,60,0.15)", boxSizing: "border-box" }}>
+                        <div style={{ fontSize: "2.5rem", fontWeight: "900", color: "var(--primary-gold)", lineHeight: "1" }}>1</div>
+                        {rankingType === "player" && (
+                          <div style={{ margin: "0.25rem 0" }}>
+                            <PlayerSignature name={top1.playerName} size={65} />
+                          </div>
+                        )}
+                        <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: "var(--primary-gold-bright)", marginTop: "0.25rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
                           {formatStat(top1[sortBy], sortBy, top1)}
                         </div>
                       </div>
@@ -1176,9 +1187,14 @@ export default function PlayerRankings() {
                         {rankingType === "team" && getPositionBadge(top3.position)}
                       </Link>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem", marginTop: rankingType === "team" ? "0.25rem" : "0" }}>{top3.gamesPlayed} Games</div>
-                      <div style={{ width: "100%", height: "100px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid #CD7F32", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "1rem", boxSizing: "border-box" }}>
-                        <div style={{ fontSize: "1.5rem", fontWeight: "900", color: "#CD7F32" }}>3</div>
-                        <div style={{ fontSize: "0.85rem", fontWeight: "bold", color: "var(--text-primary)", marginTop: "0.5rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
+                      <div style={{ width: "100%", height: "115px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid #CD7F32", borderBottom: "none", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: "0.5rem", boxSizing: "border-box" }}>
+                        <div style={{ fontSize: "1.2rem", fontWeight: "900", color: "#CD7F32" }}>3</div>
+                        {rankingType === "player" && (
+                          <div style={{ margin: "0.15rem 0" }}>
+                            <PlayerSignature name={top3.playerName} size={45} />
+                          </div>
+                        )}
+                        <div style={{ fontSize: "0.85rem", fontWeight: "bold", color: "var(--text-primary)", marginTop: "0.25rem", textAlign: "center", padding: "0 8px", width: "100%", boxSizing: "border-box", lineHeight: "1.2" }}>
                           {formatStat(top3[sortBy], sortBy, top3)}
                         </div>
                       </div>

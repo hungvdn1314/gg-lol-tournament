@@ -1,4 +1,4 @@
-import { Russo_One, Chakra_Petch } from "next/font/google";
+import { Russo_One, Chakra_Petch, Alex_Brush, Mr_De_Haviland, Caveat, Cedarville_Cursive } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 
@@ -12,6 +12,30 @@ const chakraPetch = Chakra_Petch({
   subsets: ["latin", "vietnamese"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-chakra-petch",
+});
+
+const alexBrush = Alex_Brush({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-alex-brush",
+});
+
+const mrDeHaviland = Mr_De_Haviland({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-mr-de-haviland",
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-caveat",
+});
+
+const cedarvilleCursive = Cedarville_Cursive({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-cedarville-cursive",
 });
 
 export const metadata = {
@@ -32,7 +56,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${russoOne.variable} ${chakraPetch.variable}`}>
+    <html lang="en" className={`${russoOne.variable} ${chakraPetch.variable} ${alexBrush.variable} ${mrDeHaviland.variable} ${caveat.variable} ${cedarvilleCursive.variable}`}>
       <body>
         <Header />
         
