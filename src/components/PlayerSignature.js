@@ -35,8 +35,8 @@ const getSignatureStyle = (playerName) => {
 
   // EXPLICIT PLAYER OVERRIDES (Case Insensitive)
   if (normalized === "hungvdn" || normalized === "hungvd") {
-    font = "var(--font-mr-de-haviland)"; // elegant script
-    rotation = -10;
+    font = "var(--font-alex-brush)"; // elegant readable script
+    rotation = -8;
     hasHeart = false;
     hasStar = false;
     hasCrown = true; // Give HungVDN the crown!
