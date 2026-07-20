@@ -64,8 +64,9 @@ const getSignatureStyle = (playerName) => {
 };
 
 export default function PlayerSignature({ name, size = 120 }) {
-  // Clean name: extract first part of name if it contains tags like -10013 or -3108
-  const cleanName = name ? name.split("-")[0].split(" ")[0] : "Player";
+  // Clean name: extract first part, remove spaces/hyphens, and strip out all numbers (e.g. DungHP2712 -> DungHP)
+  const baseName = name ? name.split("-")[0].split(" ")[0] : "Player";
+  const cleanName = baseName.replace(/[0-9]/g, "");
   
   const { font, rotation, hasHeart, hasStar, hasCrown } = getSignatureStyle(cleanName);
 
