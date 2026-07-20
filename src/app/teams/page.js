@@ -283,7 +283,7 @@ function TeamsContent() {
               <div
                 key={team.id}
                 onClick={() => setSelectedTeamId(team.id)}
-                className="card"
+                className={`card esports-team-card ${isSelected ? "selected" : ""}`}
                 style={{
                   cursor: "pointer",
                   display: "flex",
@@ -312,9 +312,13 @@ function TeamsContent() {
                   }
                 }}
               >
-                {/* Ghost Background Logo/Letter for Esports feel */}
-                <div style={{ position: "absolute", right: "-10px", bottom: "-15px", fontSize: "6rem", fontWeight: "900", color: "rgba(255,255,255,0.015)", userSelect: "none", zIndex: 0, textTransform: "uppercase" }}>
-                  {team.name.substring(0, 2)}
+                {/* Team Portrait Background Watermark / Hover Graphic */}
+                <div className="esports-team-card-bg">
+                  <img
+                    src={`/logos/${team.id}.png`}
+                    alt=""
+                    className="esports-team-card-img"
+                  />
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "1rem", zIndex: 1, marginBottom: "1rem" }}>
@@ -424,6 +428,44 @@ function TeamsContent() {
               >
                 Close
               </button>
+            </div>
+            
+            {/* Team Portrait Banner */}
+            <div style={{
+              position: "relative",
+              width: "100%",
+              height: "260px",
+              background: "radial-gradient(circle at center, rgba(245, 176, 65, 0.12) 0%, rgba(10, 10, 12, 0.6) 100%)",
+              border: "1px solid var(--border-dark)",
+              borderRadius: "8px",
+              overflow: "hidden",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-end",
+              marginBottom: "2rem",
+              boxShadow: "inset 0 0 20px rgba(0,0,0,0.8)"
+            }}>
+              {/* Scanline / Grid overlay */}
+              <div style={{
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundImage: "linear-gradient(rgba(18, 18, 22, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px)",
+                backgroundSize: "100% 4px, 20px 100%",
+                zIndex: 1,
+                pointerEvents: "none"
+              }} />
+              
+              <img
+                src={`/logos/${selectedTeam.id}.png`}
+                alt={`${selectedTeam.name} team portrait`}
+                style={{
+                  maxHeight: "95%",
+                  maxWidth: "95%",
+                  objectFit: "contain",
+                  zIndex: 2,
+                  filter: "drop-shadow(0 0 20px rgba(245, 176, 65, 0.35))",
+                }}
+              />
             </div>
 
             {/* Inner Content Grid */}

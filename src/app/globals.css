@@ -1460,3 +1460,53 @@ a {
   color: var(--primary-gold-bright) !important;
   transform: translate(2px, -2px);
 }
+
+/* Esports Team Card Custom Styling */
+.esports-team-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.esports-team-card-bg {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  height: 95px;
+  width: 150px;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.esports-team-card-img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  filter: grayscale(100%) brightness(1.1);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform: translateY(5px);
+}
+
+/* Hover States */
+.esports-team-card:hover .esports-team-card-bg {
+  opacity: 0.32;
+}
+
+.esports-team-card:hover .esports-team-card-img {
+  transform: scale(1.08) translateY(0);
+  filter: grayscale(0%) brightness(1.2) drop-shadow(0 0 10px rgba(245, 176, 65, 0.4));
+}
+
+/* Selected state overrides */
+.esports-team-card.selected .esports-team-card-bg {
+  opacity: 0.45;
+}
+.esports-team-card.selected .esports-team-card-img {
+  transform: scale(1.08) translateY(0);
+  filter: grayscale(0%) brightness(1.2) drop-shadow(0 0 15px rgba(245, 176, 65, 0.5));
+}
