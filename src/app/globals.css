@@ -387,6 +387,7 @@ a {
   border: 1px solid var(--border-dark);
   border-radius: 4px;
   padding: 1.5rem;
+  cursor: pointer;
   transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -478,6 +479,7 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
   transition: all var(--transition-speed) ease;
   margin-bottom: 1rem;
 }
@@ -608,6 +610,7 @@ a {
 
 .leaderboard-table tr {
   border-bottom: 1px solid var(--border-dark);
+  cursor: pointer;
   transition: background-color var(--transition-speed) ease;
 }
 
@@ -755,6 +758,7 @@ a {
   width: 240px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   position: relative;
+  cursor: pointer;
 }
 
 .bracket-match-node:hover {

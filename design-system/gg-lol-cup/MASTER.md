@@ -18,19 +18,21 @@
 
 | Role | Hex | CSS Variable |
 |------|-----|--------------|
-| Primary | `#0EA5E9` | `--color-primary` |
-| Secondary | `#38BDF8` | `--color-secondary` |
-| CTA/Accent | `#FBBF24` | `--color-cta` |
-| Background | `#F0F9FF` | `--color-background` |
-| Text | `#0C4A6E` | `--color-text` |
+| Primary/Gold | `#F5B041` | `--primary-gold` |
+| Secondary Background | `#121216` | `--bg-secondary` |
+| Background | `#0A0A0C` | `--bg-primary` |
+| Tertiary Background | `#1A1A22` | `--bg-tertiary` |
+| Text Primary | `#FFFFFF` | `--text-primary` |
+| Text Secondary | `#E2E8F0` | `--text-secondary` |
+| Text Muted | `#94A3B8` | `--text-muted` |
 
-**Color Notes:** Fresh blue + smile yellow
+**Color Notes:** Dark Esports Theme (Deep Black + Championship Gold & White text)
 
 ### Typography
 
-- **Heading Font:** Inter
-- **Body Font:** Inter
-- **Mood:** Professional + Hierarchy
+- **Heading Font:** Russo One
+- **Body Font:** Chakra Petch
+- **Mood:** Professional + High-contrast Esports
 
 ### Spacing Variables
 
@@ -147,13 +149,13 @@
 
 ## Style Guidelines
 
-**Style:** Flat Design
+**Style:** Dark Esports Design
 
-**Keywords:** 2D, minimalist, bold colors, no shadows, clean lines, simple shapes, typography-focused, modern, icon-heavy
+**Keywords:** Esports HUD, championship gold, dark mode, high-contrast, neon glows, glassmorphism, responsive, typography-focused
 
-**Best For:** Web apps, mobile apps, cross-platform, startup MVPs, user-friendly, SaaS, dashboards, corporate
+**Best For:** Tournament portals, gaming dashboards, high-impact branding
 
-**Key Effects:** No gradients/shadows, simple hover (color/opacity shift), fast loading, clean transitions (150-200ms ease), minimal icons
+**Key Effects:** Glowing borders, subtle hover lifts, clean transitions (150-200ms ease), esports themed SVGs
 
 ### Page Pattern
 
@@ -167,7 +169,6 @@
 ## Anti-Patterns (Do NOT Use)
 
 - ❌ Excessive animation
-- ❌ Dark mode by default
 
 ### Additional Forbidden Patterns
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Calendar, ChevronRight } from "lucide-react";
 import { LoLWard, ZhonyaHourglass, CrossedSwords } from "@/components/Icons";
 import { subscribeToData } from "@/lib/db";
@@ -90,10 +91,13 @@ export default function Home() {
       <section className="hero-banner">
         {/* Company Logo at top */}
         <div style={{ marginBottom: "1.25rem" }}>
-          <img 
+          <Image 
             src="/company_logo.png" 
             alt="Gear Games Logo" 
-            style={{ height: "38px", objectFit: "contain", filter: "drop-shadow(0 0 10px rgba(255,255,255,0.15))" }}
+            width={102} 
+            height={38} 
+            priority
+            style={{ objectFit: "contain", filter: "drop-shadow(0 0 10px rgba(255,255,255,0.15))" }}
           />
         </div>
         

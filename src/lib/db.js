@@ -1196,7 +1196,7 @@ const DEFAULT_TEAMS = {
   "team-kylan": {
     "id": "team-kylan",
     "name": "Kỳ Lân Parky",
-    "logo": "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/kylan.jpg",
     "group": "B",
     "players": [
       {
@@ -1254,7 +1254,7 @@ const DEFAULT_TEAMS = {
   "team-36loi": {
     "id": "team-36loi",
     "name": "36 Lõi Kim Cương",
-    "logo": "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/loi_36.jpg",
     "group": "C",
     "players": [
       {
@@ -1312,7 +1312,7 @@ const DEFAULT_TEAMS = {
   "team-siuu": {
     "id": "team-siuu",
     "name": "TEAM SIUUUUUU",
-    "logo": "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/siuu.jpg",
     "group": "C",
     "players": [
       {
@@ -1370,7 +1370,7 @@ const DEFAULT_TEAMS = {
   "team-4dtl": {
     "id": "team-4dtl",
     "name": "TEAM 4ĐTL",
-    "logo": "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/4dtl.jpg",
     "group": "A",
     "players": [
       {
@@ -1428,7 +1428,7 @@ const DEFAULT_TEAMS = {
   "team-lienminh": {
     "id": "team-lienminh",
     "name": "TEAM Liên minh đá bay",
-    "logo": "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/lienminh.jpg",
     "group": "B",
     "players": [
       {
@@ -1486,7 +1486,7 @@ const DEFAULT_TEAMS = {
   "team-u40": {
     "id": "team-u40",
     "name": "U40-500KG",
-    "logo": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/u40.jpg",
     "group": "A",
     "players": [
       {
@@ -1537,7 +1537,7 @@ const DEFAULT_TEAMS = {
   "team-gapvibe": {
     "id": "team-gapvibe",
     "name": "Gap Vibe",
-    "logo": "https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/gapvibe.jpg",
     "group": "A",
     "players": [
       {
@@ -1588,7 +1588,7 @@ const DEFAULT_TEAMS = {
   "team-bodoi": {
     "id": "team-bodoi",
     "name": "BoDoi",
-    "logo": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/bodoi.jpg",
     "group": "B",
     "players": [
       {
@@ -1639,7 +1639,7 @@ const DEFAULT_TEAMS = {
   "team-pickme": {
     "id": "team-pickme",
     "name": "Pick Me",
-    "logo": "https://images.unsplash.com/photo-1563089145-599997674d42?w=150&auto=format&fit=crop&q=80",
+    "logo": "/logos/pickme.jpg",
     "group": "C",
     "players": [
       {
