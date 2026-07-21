@@ -8,8 +8,7 @@ import { HextechCrest, LoLMinion, CrossedSwords } from "@/components/Icons";
 import { isMockMode, auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { 
-  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard, seedFakedTournamentData,
-  subscribeToNews, saveNews, deleteNews
+  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard, seedFakedTournamentData
 } from "@/lib/db";
 import { getLatestDDragonVersion } from "@/lib/riot";
 import { teamLogoPlaceholder, championPlaceholder } from "@/lib/placeholders";
@@ -26,7 +25,6 @@ export default function Admin() {
   const [config, setConfig] = useState(null);
   const [teams, setTeams] = useState({});
   const [matches, setMatches] = useState({});
-  const [news, setNews] = useState({});
   const [activeTab, setActiveTab] = useState("config");
 
   // Edit State
@@ -70,7 +68,6 @@ export default function Admin() {
     teamAId: "", teamBId: "", date: "", time: "", bestOf: 1,
     status: "scheduled", scoreA: 0, scoreB: 0, winnerId: ""
   });
-  const [newsForm, setNewsForm] = useState({ id: "", title: "", content: "", category: "Announcement" });
 
   useEffect(() => {
     // Check local storage session first
@@ -84,11 +81,9 @@ export default function Admin() {
   useEffect(() => {
     const unsubMatches = subscribeToData("matches", (data) => setMatches(data || {}));
     const unsubTeams = subscribeToData("teams", (data) => setTeams(data || {}));
-    const unsubNews = subscribeToNews((data) => setNews(data || {}));
     return () => {
       unsubMatches();
       unsubTeams();
-      unsubNews();
     };
   }, []);
 
@@ -573,28 +568,6 @@ export default function Admin() {
     }
   };
 
-  // News Handlers
-  const handleSaveNews = () => {
-    if (!newsForm.title || !newsForm.content) return alert("Title and content are required");
-    const newsItem = {
-      ...newsForm,
-      id: newsForm.id || `news-${Date.now()}`,
-      timestamp: newsForm.id ? news[newsForm.id].timestamp : Date.now()
-    };
-    saveNews(newsItem);
-    setNewsForm({ id: "", title: "", content: "", category: "Announcement" });
-  };
-
-  const handleEditNews = (item) => {
-    setNewsForm(item);
-    window.scrollTo(0, 0);
-  };
-
-  const handleDeleteNews = (id) => {
-    if (confirm("Are you sure you want to delete this announcement?")) {
-      deleteNews(id);
-    }
-  };
 
   // Live Score Update & Bracket Advancement
   const handleUpdateMatchScore = async (e) => {
@@ -1551,72 +1524,6 @@ export default function Admin() {
                 >
                   {simulating ? "Processing..." : "Trigger Simulated Webhook"}
                 </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: NEWS MANAGEMENT */}
-          {activeTab === "news" && (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
-                <h2>News & Announcements</h2>
-              </div>
-              
-              <div className="card" style={{ marginBottom: "2rem" }}>
-                <h3>{newsForm.id ? "Edit Announcement" : "Create New Announcement"}</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                  <div className="form-group">
-                    <label>Title</label>
-                    <input type="text" className="form-control" value={newsForm.title} onChange={(e) => setNewsForm({...newsForm, title: e.target.value})} placeholder="Patch 16.12 is Live!" />
-                  </div>
-                  <div className="form-group">
-                    <label>Category</label>
-                    <select className="form-control" value={newsForm.category} onChange={(e) => setNewsForm({...newsForm, category: e.target.value})}>
-                      <option value="Announcement">Announcement</option>
-                      <option value="Patch Notes">Patch Notes</option>
-                      <option value="Rules">Rules</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>Content (Markdown supported in future, use plaintext for now)</label>
-                  <textarea className="form-control" rows="5" value={newsForm.content} onChange={(e) => setNewsForm({...newsForm, content: e.target.value})} placeholder="Write the announcement details here..."></textarea>
-                </div>
-                <div style={{ display: "flex", gap: "1rem" }}>
-                  <button onClick={handleSaveNews} className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <Save size={16} /> {newsForm.id ? "Update News" : "Publish News"}
-                  </button>
-                  {newsForm.id && (
-                    <button onClick={() => setNewsForm({ id: "", title: "", content: "", category: "Announcement" })} className="btn btn-secondary">
-                      Cancel Edit
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="card">
-                <h3>Published News ({Object.keys(news).length})</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
-                  {Object.values(news).sort((a,b) => b.timestamp - a.timestamp).map((item) => (
-                    <div key={item.id} style={{ padding: "1rem", backgroundColor: "rgba(255,255,255,0.02)", border: "1px solid var(--border-dark)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.5rem" }}>
-                          <span style={{ fontSize: "0.7rem", backgroundColor: "var(--bg-lighter)", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>{item.category}</span>
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }} suppressHydrationWarning>{new Date(item.timestamp).toLocaleDateString()}</span>
-                        </div>
-                        <h4 style={{ margin: "0 0 0.5rem 0", color: "var(--primary-gold)" }}>{item.title}</h4>
-                      </div>
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <button onClick={() => handleEditNews(item)} className="btn btn-secondary" style={{ padding: "0.4rem" }}>
-                          <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDeleteNews(item.id)} className="btn btn-secondary" style={{ padding: "0.4rem", color: "var(--color-danger)" }}>
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           )}

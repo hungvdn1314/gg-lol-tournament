@@ -43,6 +43,8 @@ const cedarvilleCursive = Cedarville_Cursive({
 export const metadata = {
   title: "Gear Games League of Legend Championship",
   description: "Web portal for the company League of Legends tournament - live brackets, team standings, and match schedules.",
+  authors: [{ name: "IrrationaL" }],
+  creator: "IrrationaL",
   openGraph: {
     title: "Gear Games League of Legend Championship",
     description: "Web portal for the company League of Legends tournament - live brackets, team standings, and match schedules.",
@@ -110,8 +112,11 @@ export default function RootLayout({ children }) {
                 <polygon points="48,51 52,51 50,54" fill="#0F172A" />
               </svg>
             </p>
-            <p style={{ fontSize: "0.75rem", opacity: 0.7, maxWidth: "700px", margin: "0.5rem auto 1rem auto", lineHeight: "1.4" }}>
+            <p style={{ fontSize: "0.75rem", opacity: 0.7, maxWidth: "700px", margin: "0.5rem auto 0.5rem auto", lineHeight: "1.4" }}>
               Gear Games LoL Cup Portal is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+            </p>
+            <p style={{ fontSize: "0.75rem", color: "var(--primary-gold)", marginBottom: "1rem" }}>
+              Created with ❤️ by <strong>IrrationaL</strong>
             </p>
             <div className="footer-links">
               <Link href="/">Home</Link>

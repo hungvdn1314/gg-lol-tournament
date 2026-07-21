@@ -62,32 +62,39 @@
 ### Buttons
 
 ```css
-/* Primary Button */
+/* Primary Button (Championship Gold) */
 .btn-primary {
-  background: #FBBF24;
-  color: white;
+  background: var(--primary-gold);
+  color: #000000;
   padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
   transition: all 200ms ease;
   cursor: pointer;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  background: var(--primary-gold-bright);
+  box-shadow: var(--shadow-gold-glow);
   transform: translateY(-1px);
 }
 
-/* Secondary Button */
+/* Secondary / Outline Button */
 .btn-secondary {
-  background: transparent;
-  color: #0EA5E9;
-  border: 2px solid #0EA5E9;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-dark);
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: 4px;
   font-weight: 600;
   transition: all 200ms ease;
   cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-gold);
+  color: var(--primary-gold);
 }
 ```
 
@@ -95,16 +102,17 @@
 
 ```css
 .card {
-  background: #F0F9FF;
-  border-radius: 12px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-dark);
+  border-radius: 8px;
   padding: 24px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-card);
   transition: all 200ms ease;
-  cursor: pointer;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
+  border-color: var(--border-gold);
+  box-shadow: var(--shadow-gold-glow);
   transform: translateY(-2px);
 }
 ```
@@ -113,17 +121,19 @@
 
 ```css
 .input {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
   padding: 12px 16px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
+  border: 1px solid var(--border-dark);
+  border-radius: 4px;
   font-size: 16px;
   transition: border-color 200ms ease;
 }
 
 .input:focus {
-  border-color: #0EA5E9;
+  border-color: var(--primary-gold);
   outline: none;
-  box-shadow: 0 0 0 3px #0EA5E920;
+  box-shadow: 0 0 0 2px rgba(245, 176, 65, 0.2);
 }
 ```
 
@@ -131,15 +141,16 @@
 
 ```css
 .modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 10, 12, 0.85);
+  backdrop-filter: blur(8px);
 }
 
 .modal {
-  background: white;
-  border-radius: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-gold);
+  border-radius: 8px;
   padding: 32px;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9);
   max-width: 500px;
   width: 90%;
 }
