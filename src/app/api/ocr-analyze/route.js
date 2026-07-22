@@ -116,10 +116,17 @@ Format response strictly as JSON. Ensure exactly 10 player records are returned 
     };
 
     const trials = [
+      { version: "v1beta", model: "gemini-3.5-flash" },
+      { version: "v1beta", model: "gemini-3.1-flash-lite" },
+      { version: "v1beta", model: "gemini-2.5-flash" },
+      { version: "v1beta", model: "gemini-2.5-pro" },
       { version: "v1beta", model: "gemini-2.0-flash" },
       { version: "v1beta", model: "gemini-2.0-flash-lite" },
+      { version: "v1beta", model: "gemini-1.5-pro" },
       { version: "v1beta", model: "gemini-1.5-flash" },
       { version: "v1beta", model: "gemini-flash-latest" },
+      { version: "v1", model: "gemini-3.5-flash" },
+      { version: "v1", model: "gemini-2.5-flash" },
       { version: "v1", model: "gemini-2.0-flash" },
       { version: "v1", model: "gemini-1.5-flash" }
     ];
