@@ -1,13 +1,13 @@
-import { Be_Vietnam_Pro, Chakra_Petch, Alex_Brush, Mr_De_Haviland, Caveat, Cedarville_Cursive } from "next/font/google";
+import { Russo_One, Chakra_Petch, Alex_Brush, Mr_De_Haviland, Caveat, Cedarville_Cursive } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import ImageZoomOverlay from "@/components/ImageZoomOverlay";
 import Link from "next/link";
 
-const beVietnamPro = Be_Vietnam_Pro({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-be-vietnam-pro",
+const russoOne = Russo_One({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-russo-one",
 });
 
 const chakraPetch = Chakra_Petch({
@@ -60,7 +60,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="vi" className={`${beVietnamPro.variable} ${chakraPetch.variable} ${alexBrush.variable} ${mrDeHaviland.variable} ${caveat.variable} ${cedarvilleCursive.variable}`}>
+    <html lang="en" className={`${russoOne.variable} ${chakraPetch.variable} ${alexBrush.variable} ${mrDeHaviland.variable} ${caveat.variable} ${cedarvilleCursive.variable}`}>
       <body>
         <Header />
         
