@@ -35,13 +35,22 @@ export async function POST(request) {
       : "";
 
     const promptText = `
-Extract the post-game statistics for the 10 players from these screenshots of a League of Legends ARAM match.
-There are up to 3 screenshots provided: Scoreboard overview (BẢNG ĐIỂM), Damage Dealt (SÁT THƯƠNG GÂY RA), and Damage Taken & Healed (SÁT THƯƠNG GÁNH CHỊU VÀ HỒI MÁU).
-Combine the data across all screenshots into exactly 10 player records.
+Extract the post-game statistics for the 10 players from these screenshots of a League of Legends match.
+Multiple screenshots are provided (up to 3 images).
+
+CRITICAL INSTRUCTION FOR EXTRACTING CHAMPION/HERO NAMES:
+1. LOCATE THE SCOREBOARD OVERVIEW SCREENSHOT:
+   - First, scan the 3 provided images and find the main Scoreboard overview image (titled "BẢNG ĐIỂM" or showing the 10 players/heroes layout split into 2 team sections, 5 rows each).
+2. EXTRACT HERO/CHAMPION NAME DIRECTLY BELOW THE IGN / RIOT ID:
+   - On that Scoreboard image, inspect each of the 10 player rows.
+   - Each player row shows the player's in-game name (IGN / Riot ID) on the top text line.
+   - DIRECTLY BELOW the IGN / Riot ID, the text name of the hero/champion is explicitly written (e.g. under "Phucego" it explicitly says "Zed", under "Amadeus" it says "Corki", under "LôngDàiVlLẩuThái" it says "Sona", under "DarkTurquois" it says "Maokai", under "mmbl" it says "Rakan").
+   - Extract the hero/champion name strictly from this printed text line directly below the IGN / Riot ID.
+   - DO NOT guess or infer champions from circular avatar icons on stats, damage, or healing tabs. Always use the text printed directly below the IGN on the Scoreboard layout.
 ${validChampsText}${registeredPlayersText}
 For each player, extract:
 1. "summonerName": The in-game name/Riot ID shown in the screenshot. Do not guess jersey name/employee ID if not present in the screenshot, just extract the name literally shown.
-2. "champion": The name of the champion played. IMPORTANT: Read the EXPLICIT TEXT NAME of the champion printed directly below each player's summoner name on the Scoreboard (BẢNG ĐIỂM) screenshot (e.g. under 'Phucego' it explicitly reads 'Zed', under 'Amadeus' it reads 'Corki', under 'LôngDàiVlLẩuThái' it reads 'Sona'). DO NOT guess champions from small circular icon portraits on stats/damage screens as small icons can be visually confusing. Always extract the text label from the Scoreboard screenshot and map it to the exact spelling in the VALID CHAMPIONS LIST.
+2. "champion": The name of the hero/champion played, extracted from the text line directly BELOW the IGN / Riot ID on the Scoreboard layout screen, mapped to the exact spelling in the VALID CHAMPIONS LIST.
 3. "kills": Integer number of kills.
 4. "deaths": Integer number of deaths.
 5. "assists": Integer number of assists.
