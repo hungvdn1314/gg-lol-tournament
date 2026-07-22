@@ -35,18 +35,21 @@ export async function POST(request) {
       : "";
 
     const promptText = `
-Extract the post-game statistics for the 10 players from these screenshots of a League of Legends match.
-Multiple screenshots are provided (up to 3 images).
+You are an expert League of Legends OCR Data Extractor.
+You are provided with up to 3 screenshots from a League of Legends match (labeled === SCREENSHOT #1 ===, === SCREENSHOT #2 ===, === SCREENSHOT #3 ===).
 
-CRITICAL INSTRUCTION FOR EXTRACTING CHAMPION/HERO NAMES:
-1. LOCATE THE SCOREBOARD OVERVIEW SCREENSHOT:
-   - First, scan the 3 provided images and find the main Scoreboard overview image (titled "BẢNG ĐIỂM" or showing the 10 players/heroes layout split into 2 team sections, 5 rows each).
-2. EXTRACT HERO/CHAMPION NAME DIRECTLY BELOW THE IGN / RIOT ID:
-   - On that Scoreboard image, inspect each of the 10 player rows.
-   - Each player row shows the player's in-game name (IGN / Riot ID) on the top text line.
-   - DIRECTLY BELOW the IGN / Riot ID, the text name of the hero/champion is explicitly written (e.g. under "Phucego" it explicitly says "Zed", under "Amadeus" it says "Corki", under "LôngDàiVlLẩuThái" it says "Sona", under "DarkTurquois" it says "Maokai", under "mmbl" it says "Rakan").
-   - Extract the hero/champion name strictly from this printed text line directly below the IGN / Riot ID.
-   - DO NOT guess or infer champions from circular avatar icons on stats, damage, or healing tabs. Always use the text printed directly below the IGN on the Scoreboard layout.
+PRIMARY TASK - CHAMPION / HERO NAME EXTRACTION PROTOCOL:
+1. IDENTIFY THE MAIN SCOREBOARD SCREENSHOT:
+   - First, examine all provided screenshots and determine which image is the main SCOREBOARD overview (titled "BẢNG ĐIỂM" or showing the full 10-player match overview split into 2 team sections: ĐỘI 1 / Blue side and ĐỘI 2 / Red side, with 5 player rows per team).
+   - Set "scoreboardImageLabel" in your response to the label of this image (e.g. "SCREENSHOT #3").
+
+2. EXTRACT CHAMPION NAME STRICTLY FROM THE PRINTED TEXT LINE BELOW THE IGN:
+   - On that SCOREBOARD screenshot ONLY, inspect each of the 10 player rows from top to bottom (Row 1-5 for Team 1, Row 6-10 for Team 2).
+   - In each player row:
+     * Line 1 (large text) is the player's in-game name (IGN / Riot ID) (e.g. "Phucego", "mmbl", "JayQKA2", "SmokeWeedAllTime").
+     * Line 2 (smaller text printed directly BELOW Line 1) is the EXPLICIT TEXT NAME of the champion played (e.g., under "Phucego" it explicitly says "Smolder", under "Amadeus" it says "Sion", under "LôngDàiVlLẩuThái" it says "Miss Fortune", under "DarkTurquois" it says "Nautilus", under "mmbl" it says "Hecarim", under "JayQKA2" it says "Gwen", under "Crying Over You" it says "Seraphine", under "SuperiorDragon12" it says "Mel", under "SứtMôiĐẹpTrai" it says "Braum", under "SmokeWeedAllTime" it says "Jhin").
+   - Extract the hero/champion name strictly by reading this printed text line located directly below the IGN line.
+   - ABSOLUTE WARNING: DO NOT guess champions from circular portrait icons on stats/damage tabs. Circular icons are small and visually deceptive (e.g. Hecarim icon can look like Rakan, Gwen icon can look like Lux, Jhin icon can look like Ashe). ALWAYS read the text string printed directly below the IGN line on the Scoreboard screenshot.
 ${validChampsText}${registeredPlayersText}
 For each player, extract:
 1. "summonerName": The in-game name/Riot ID shown in the screenshot. Do not guess jersey name/employee ID if not present in the screenshot, just extract the name literally shown.
@@ -60,42 +63,29 @@ For each player, extract:
 9. "damageTaken": Integer total damage taken.
 10. "healing": Integer representing the total ally heal/shield value. This MUST be the sum of "Ally Healing" and "Ally Shielding" shown in the screenshots under the 'DAMAGE TAKEN AND HEALED' section (DO NOT include 'Damage Healed'; if a row is missing or has no value, treat it as 0). For example, if a player has 22474 Damage Healed, 17157 Ally Healing, and 11013 Ally Shielding, the "healing" value should be 17157 + 11013 = 28170.
 
-Format the response strictly as a JSON object with this exact structure:
-{
-  "gameDuration": "MM:SS",
-  "winnerSide": "Blue" | "Red",
-  "playerStats": [
-    {
-      "summonerName": "Name",
-      "champion": "ChampionName",
-      "kills": 0,
-      "deaths": 0,
-      "assists": 0,
-      "gold": 0,
-      "cs": 0,
-      "damageDealt": 0,
-      "damageTaken": 0,
-      "healing": 0
-    }
-  ]
-}
-Ensure there are exactly 10 players in "playerStats". Do not return any other text outside the JSON block.
+Format response strictly as JSON. Ensure exactly 10 player records are returned in "playerStats".
 `;
+
+    // Combine text prompt and labeled image parts
+    const parts = [
+      { text: promptText }
+    ];
+
+    imageParts.forEach((imgPart, idx) => {
+      parts.push({ text: `=== SCREENSHOT #${idx + 1} ===` });
+      parts.push(imgPart);
+    });
 
     const payload = {
       contents: [
-        {
-          parts: [
-            { text: promptText },
-            ...imageParts
-          ]
-        }
+        { parts }
       ],
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
           properties: {
+            scoreboardImageLabel: { type: "STRING" },
             gameDuration: { type: "STRING" },
             winnerSide: { type: "STRING", enum: ["Blue", "Red"] },
             playerStats: {
@@ -120,22 +110,18 @@ Ensure there are exactly 10 players in "playerStats". Do not return any other te
               }
             }
           },
-          required: ["gameDuration", "winnerSide", "playerStats"]
+          required: ["scoreboardImageLabel", "gameDuration", "winnerSide", "playerStats"]
         }
       }
     };
 
     const trials = [
-      { version: "v1beta", model: "gemini-flash-lite-latest" },
-      { version: "v1beta", model: "gemini-3.1-flash-lite" },
-      { version: "v1beta", model: "gemini-flash-latest" },
-      { version: "v1beta", model: "gemini-3.5-flash" },
-      { version: "v1", model: "gemini-flash-lite-latest" },
-      { version: "v1", model: "gemini-3.1-flash-lite" },
-      { version: "v1", model: "gemini-flash-latest" },
-      { version: "v1", model: "gemini-3.5-flash" },
+      { version: "v1beta", model: "gemini-2.0-flash" },
       { version: "v1beta", model: "gemini-2.0-flash-lite" },
-      { version: "v1beta", model: "gemini-2.0-flash" }
+      { version: "v1beta", model: "gemini-1.5-flash" },
+      { version: "v1beta", model: "gemini-flash-latest" },
+      { version: "v1", model: "gemini-2.0-flash" },
+      { version: "v1", model: "gemini-1.5-flash" }
     ];
 
     let lastError = null;
