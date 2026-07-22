@@ -36,12 +36,12 @@ export async function POST(request) {
 
     const promptText = `
 Extract the post-game statistics for the 10 players from these screenshots of a League of Legends ARAM match.
-There are up to 3 screenshots provided. They show the scoreboard overview, damage stats, healing, gold, minion kills (CS), etc.
+There are up to 3 screenshots provided: Scoreboard overview (BẢNG ĐIỂM), Damage Dealt (SÁT THƯƠNG GÂY RA), and Damage Taken & Healed (SÁT THƯƠNG GÁNH CHỊU VÀ HỒI MÁU).
 Combine the data across all screenshots into exactly 10 player records.
 ${validChampsText}${registeredPlayersText}
 For each player, extract:
 1. "summonerName": The in-game name/Riot ID shown in the screenshot. Do not guess jersey name/employee ID if not present in the screenshot, just extract the name literally shown.
-2. "champion": The name of the champion played. Map this to the exact spelling in the VALID CHAMPIONS LIST. For example, if you see the champion 'Yunara', select 'Yunara'.
+2. "champion": The name of the champion played. IMPORTANT: Read the EXPLICIT TEXT NAME of the champion printed directly below each player's summoner name on the Scoreboard (BẢNG ĐIỂM) screenshot (e.g. under 'Phucego' it explicitly reads 'Zed', under 'Amadeus' it reads 'Corki', under 'LôngDàiVlLẩuThái' it reads 'Sona'). DO NOT guess champions from small circular icon portraits on stats/damage screens as small icons can be visually confusing. Always extract the text label from the Scoreboard screenshot and map it to the exact spelling in the VALID CHAMPIONS LIST.
 3. "kills": Integer number of kills.
 4. "deaths": Integer number of deaths.
 5. "assists": Integer number of assists.
