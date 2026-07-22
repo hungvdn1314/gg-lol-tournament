@@ -354,7 +354,7 @@ function PlayerProfileContent() {
 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-            <h1 style={{ fontSize: "2.2rem", margin: 0, color: "var(--text-primary)", fontWeight: "800", textTransform: "uppercase" }}>{playerName}</h1>
+            <h1 style={{ fontSize: "2.2rem", margin: 0, color: "var(--text-primary)", fontWeight: "800", textTransform: "uppercase", fontFamily: "var(--font-family)" }}>{playerName}</h1>
             <span style={{ fontSize: "0.9rem", color: "var(--text-muted)", backgroundColor: "rgba(0,0,0,0.3)", padding: "0.2rem 0.6rem", borderRadius: "4px", border: "1px solid var(--border-dark)" }}>
               {riotId}
             </span>
