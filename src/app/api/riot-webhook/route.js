@@ -195,18 +195,38 @@ export async function POST(request) {
 
       if (matchSnapshot.exists()) {
         const match = matchSnapshot.val();
-        
-        // 2. Increment score based on winning team
-        let scoreA = match.scoreA || 0;
-        let scoreB = match.scoreB || 0;
 
-        if (winningTeamSide === 100) {
-          scoreA += 1;
-        } else {
-          scoreB += 1;
+        // 2. Fetch existing match details array
+        const detailsRef = ref(db, `matchDetails/${internalMatchId}`);
+        const detailsSnapshot = await get(detailsRef);
+        let existingDetails = detailsSnapshot.exists() ? detailsSnapshot.val() : [];
+        if (!Array.isArray(existingDetails)) {
+          existingDetails = [existingDetails];
         }
+        
+        const gameIndex = (match.scoreA || 0) + (match.scoreB || 0);
+        while (existingDetails.length <= gameIndex) {
+          existingDetails.push(null);
+        }
+        existingDetails[gameIndex] = matchDetailsData;
+        await set(detailsRef, existingDetails);
+        
+        // 3. Recalculate scoreA and scoreB based on all completed games
+        const { getGameWinnerTeamId } = await import("@/lib/db");
+        let scoreA = 0;
+        let scoreB = 0;
+        existingDetails.forEach(game => {
+          if (game) {
+            const winnerTeamId = getGameWinnerTeamId(game, match, teams);
+            if (winnerTeamId === match.teamAId) {
+              scoreA += 1;
+            } else if (winnerTeamId === match.teamBId) {
+              scoreB += 1;
+            }
+          }
+        });
 
-        // 3. Determine if series is completed (e.g. Bo3 reaches 2 wins)
+        // 4. Determine if series is completed (e.g. Bo3 reaches 2 wins)
         const targetWins = Math.ceil(match.bestOf / 2);
         let status = "live";
         let winnerId = null;
@@ -227,11 +247,8 @@ export async function POST(request) {
           winnerId
         };
 
-        // 4. Save updated match to Firebase
+        // 5. Save updated match to Firebase
         await set(matchRef, updatedMatch);
-
-        // 5. Save detailed match telemetry
-        await set(ref(db, `matchDetails/${internalMatchId}`), matchDetailsData);
 
         // 6. Handle Playoff Bracket Advancement
         if (status === "completed" && match.type === "knockout") {

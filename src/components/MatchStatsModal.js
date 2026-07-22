@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Award, Eye, BarChart2, Check, Copy, Activity, Info } from "lucide-react";
 import { HextechCrest, CrossedSwords } from "@/components/Icons";
-import { subscribeToMatchDetails } from "@/lib/db";
+import { subscribeToMatchDetails, resolveGameTeamSides } from "@/lib/db";
 import { useDDragon } from "@/lib/riot";
 
 export default function MatchStatsModal({ match, teams, onClose }) {
@@ -74,6 +74,11 @@ export default function MatchStatsModal({ match, teams, onClose }) {
   // Sort participants by team
   const blueParticipants = currentGameDetails?.participants?.filter(p => p.teamId === 100) || [];
   const redParticipants = currentGameDetails?.participants?.filter(p => p.teamId === 200) || [];
+
+  // Team side resolution
+  const { blueTeamId, redTeamId } = resolveGameTeamSides(currentGameDetails, match, teams);
+  const blueTeam = teams?.[blueTeamId] || teamA;
+  const redTeam = teams?.[redTeamId] || teamB;
 
   // Team totals
   const blueTotalGold = blueParticipants.reduce((sum, p) => sum + (p.gold || 0), 0);
@@ -189,7 +194,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
   const seriesScoredParticipants = getSeriesMVPData();
 
   const goldDiff = Math.abs(blueTotalGold - redTotalGold);
-  const goldLeadTeam = blueTotalGold > redTotalGold ? teamA?.name?.split(" (")[0] : teamB?.name?.split(" (")[0];
+  const goldLeadTeam = blueTotalGold > redTotalGold ? blueTeam?.name?.split(" (")[0] : redTeam?.name?.split(" (")[0];
 
   // Calculate highest metric value in the game for charts
   const maxMetricVal = currentGameDetails?.participants 
@@ -270,7 +275,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
               <div>
                 <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>Winner</span>
                 <div style={{ color: "var(--primary-gold-bright)", fontWeight: "bold", fontSize: "1.1rem", textTransform: "uppercase", marginTop: "0.25rem" }}>
-                  {currentGameDetails.teams[100]?.winner ? teamA?.name.split(" (")[0] : teamB?.name.split(" (")[0]}
+                  {currentGameDetails.teams[100]?.winner ? blueTeam?.name.split(" (")[0] : redTeam?.name.split(" (")[0]}
                 </div>
               </div>
               <div style={{ textAlign: "center" }}>
@@ -364,7 +369,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                 <div>
                   <h3 style={{ fontSize: "0.9rem", color: "var(--text-primary)", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "2px solid #005A82", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                      <span>{teamA?.name} (Blue Side)</span>
+                      <span>{blueTeam?.name} (Blue Side)</span>
                       {currentGameDetails?.teams?.[100]?.bans && currentGameDetails.teams[100].bans.length > 0 && (
                         <div style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}>
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginRight: "0.2rem" }}>BANS:</span>
@@ -467,7 +472,7 @@ export default function MatchStatsModal({ match, teams, onClose }) {
                 <div>
                   <h3 style={{ fontSize: "0.9rem", color: "var(--text-primary)", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "2px solid #820000", paddingBottom: "0.25rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                      <span>{teamB?.name} (Red Side)</span>
+                      <span>{redTeam?.name} (Red Side)</span>
                       {currentGameDetails?.teams?.[200]?.bans && currentGameDetails.teams[200].bans.length > 0 && (
                         <div style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}>
                           <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginRight: "0.2rem" }}>BANS:</span>

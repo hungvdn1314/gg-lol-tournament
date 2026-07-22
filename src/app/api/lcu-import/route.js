@@ -121,7 +121,7 @@ export async function POST(request) {
     if (!isMockMode) {
       const { database: db } = await import("@/lib/firebase");
       const { ref, get, set } = await import("firebase/database");
-      const { recalculateLeaderboard } = await import("@/lib/db");
+      const { recalculateLeaderboard, getGameWinnerTeamId } = await import("@/lib/db");
 
       // A. Fetch current match configuration
       const matchRef = ref(db, `matches/${matchId}`);
@@ -189,10 +189,10 @@ export async function POST(request) {
 
       existingDetails.forEach(game => {
         if (game) {
-          const isBlueWinner = game.teams[100].winner;
-          if (isBlueWinner) {
+          const winnerTeamId = getGameWinnerTeamId(game, match, teams);
+          if (winnerTeamId === match.teamAId) {
             scoreA += 1;
-          } else {
+          } else if (winnerTeamId === match.teamBId) {
             scoreB += 1;
           }
         }

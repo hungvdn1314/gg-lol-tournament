@@ -8,7 +8,7 @@ import { HextechCrest, LoLMinion, CrossedSwords } from "@/components/Icons";
 import { isMockMode, auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { 
-  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard, seedFakedTournamentData
+  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard, seedFakedTournamentData, getGameWinnerTeamId
 } from "@/lib/db";
 import { getLatestDDragonVersion } from "@/lib/riot";
 import { teamLogoPlaceholder, championPlaceholder } from "@/lib/placeholders";
@@ -212,38 +212,13 @@ export default function Admin() {
         if (!match) throw new Error("Match not found");
 
         const gameIndex = (match.scoreA || 0) + (match.scoreB || 0);
-        let scoreA = match.scoreA || 0;
-        let scoreB = match.scoreB || 0;
-
-        if (winnerSide === 100) {
-          scoreA += 1;
-        } else {
-          scoreB += 1;
-        }
-
-        const targetWins = Math.ceil(match.bestOf / 2);
-        let status = "live";
-        let winnerId = null;
-
-        if (scoreA >= targetWins) {
-          status = "completed";
-          winnerId = match.teamAId;
-        } else if (scoreB >= targetWins) {
-          status = "completed";
-          winnerId = match.teamBId;
-        }
-
-        const updatedMatch = {
-          ...match,
-          scoreA,
-          scoreB,
-          status,
-          winnerId
-        };
 
         // Generate realistic mock matchDetails with summonerSpells and runes
         const mockDetails = {
           gameDuration: 1654,
+          blueTeamId: match.teamAId,
+          redTeamId: match.teamBId,
+          winnerTeamId: winnerSide === 100 ? match.teamAId : match.teamBId,
           teams: {
             100: { winner: winnerSide === 100, bans: ["Zed", "Yasuo", "Yone"], barons: 1, dragons: 3, firstBlood: true },
             200: { winner: winnerSide === 200, bans: ["Yuumi", "Teemo", "Briar"], barons: 0, dragons: 1, firstBlood: false }
@@ -275,6 +250,40 @@ export default function Admin() {
           existingDetails.push(null);
         }
         existingDetails[gameIndex] = mockDetails;
+        await saveMatchDetails(matchId, existingDetails);
+
+        let scoreA = 0;
+        let scoreB = 0;
+        existingDetails.forEach(game => {
+          if (game) {
+            const winnerTeamId = getGameWinnerTeamId(game, match, teams);
+            if (winnerTeamId === match.teamAId) {
+              scoreA += 1;
+            } else if (winnerTeamId === match.teamBId) {
+              scoreB += 1;
+            }
+          }
+        });
+
+        const targetWins = Math.ceil(match.bestOf / 2);
+        let status = "live";
+        let winnerId = null;
+
+        if (scoreA >= targetWins) {
+          status = "completed";
+          winnerId = match.teamAId;
+        } else if (scoreB >= targetWins) {
+          status = "completed";
+          winnerId = match.teamBId;
+        }
+
+        const updatedMatch = {
+          ...match,
+          scoreA,
+          scoreB,
+          status,
+          winnerId
+        };
 
         await saveMatch(updatedMatch);
         await saveMatchDetails(matchId, existingDetails);
@@ -374,37 +383,7 @@ export default function Admin() {
       const match = matches[matchId];
       if (!match) throw new Error("Match not found in local state");
       
-      let scoreA = match.scoreA || 0;
-      let scoreB = match.scoreB || 0;
-      
-      if (data.winnerSide === 100) {
-        scoreA += 1;
-      } else {
-        scoreB += 1;
-      }
-      
-      const targetWins = Math.ceil(match.bestOf / 2);
-      let status = "live";
-      let winnerId = null;
-      
-      if (scoreA >= targetWins) {
-        status = "completed";
-        winnerId = match.teamAId;
-      } else if (scoreB >= targetWins) {
-        status = "completed";
-        winnerId = match.teamBId;
-      }
-      
-      const updatedMatch = {
-        ...match,
-        scoreA,
-        scoreB,
-        status,
-        winnerId
-      };
-      
       const { fetchMatchDetails, saveMatchDetails } = await import("@/lib/db");
-      await saveMatch(updatedMatch);
       
       let existingDetails = await fetchMatchDetails(matchId);
       if (!existingDetails) {
@@ -455,9 +434,43 @@ export default function Admin() {
       };
       
       existingDetails[gameIndex] = matchDetailsData;
-      
       await saveMatchDetails(matchId, existingDetails);
       setCurrentSyncDetails(existingDetails);
+      
+      let scoreA = 0;
+      let scoreB = 0;
+      existingDetails.forEach(game => {
+        if (game) {
+          const winnerTeamId = getGameWinnerTeamId(game, match, teams);
+          if (winnerTeamId === match.teamAId) {
+            scoreA += 1;
+          } else if (winnerTeamId === match.teamBId) {
+            scoreB += 1;
+          }
+        }
+      });
+
+      const targetWins = Math.ceil(match.bestOf / 2);
+      let status = "live";
+      let winnerId = null;
+      
+      if (scoreA >= targetWins) {
+        status = "completed";
+        winnerId = match.teamAId;
+      } else if (scoreB >= targetWins) {
+        status = "completed";
+        winnerId = match.teamBId;
+      }
+      
+      const updatedMatch = {
+        ...match,
+        scoreA,
+        scoreB,
+        status,
+        winnerId
+      };
+      
+      await saveMatch(updatedMatch);
       
       if (status === "completed" && match.type === "knockout") {
         if (matchId === "match-semi1") {

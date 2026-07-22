@@ -2739,6 +2739,72 @@ export async function fetchMatchDetails(matchId) {
   }
 }
 
+export function resolveGameTeamSides(gameDetails, match, teams = {}) {
+  if (!gameDetails || !match) return { blueTeamId: match?.teamAId, redTeamId: match?.teamBId };
+
+  if (gameDetails.blueTeamId && gameDetails.redTeamId) {
+    return { blueTeamId: gameDetails.blueTeamId, redTeamId: gameDetails.redTeamId };
+  }
+
+  const teamA = teams[match.teamAId];
+  const teamB = teams[match.teamBId];
+
+  const normalize = (str) => (str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  const teamAPlayerNames = new Set();
+  if (teamA?.players) {
+    teamA.players.forEach(p => {
+      if (p.name) teamAPlayerNames.add(normalize(p.name));
+      if (p.jerseyName) teamAPlayerNames.add(normalize(p.jerseyName));
+      if (p.riotId) teamAPlayerNames.add(normalize(p.riotId.split("#")[0]));
+    });
+  }
+
+  const teamBPlayerNames = new Set();
+  if (teamB?.players) {
+    teamB.players.forEach(p => {
+      if (p.name) teamBPlayerNames.add(normalize(p.name));
+      if (p.jerseyName) teamBPlayerNames.add(normalize(p.jerseyName));
+      if (p.riotId) teamBPlayerNames.add(normalize(p.riotId.split("#")[0]));
+    });
+  }
+
+  if (Array.isArray(gameDetails.participants) && (teamAPlayerNames.size > 0 || teamBPlayerNames.size > 0)) {
+    const blueParticipants = gameDetails.participants.filter(p => p.teamId === 100);
+    let matchACount = 0;
+    let matchBCount = 0;
+
+    blueParticipants.forEach(p => {
+      const normName = normalize(p.playerName);
+      if (normName) {
+        if ([...teamAPlayerNames].some(tn => normName.includes(tn) || tn.includes(normName))) matchACount++;
+        if ([...teamBPlayerNames].some(tn => normName.includes(tn) || tn.includes(normName))) matchBCount++;
+      }
+    });
+
+    if (matchACount > matchBCount) {
+      return { blueTeamId: match.teamAId, redTeamId: match.teamBId };
+    } else if (matchBCount > matchACount) {
+      return { blueTeamId: match.teamBId, redTeamId: match.teamAId };
+    }
+  }
+
+  return { blueTeamId: match.teamAId, redTeamId: match.teamBId };
+}
+
+export function getGameWinnerTeamId(gameDetails, match, teams = {}) {
+  if (!gameDetails || !match) return null;
+  if (gameDetails.winnerTeamId) return gameDetails.winnerTeamId;
+
+  const { blueTeamId, redTeamId } = resolveGameTeamSides(gameDetails, match, teams);
+  if (gameDetails.teams?.[100]?.winner) {
+    return blueTeamId;
+  } else if (gameDetails.teams?.[200]?.winner) {
+    return redTeamId;
+  }
+  return null;
+}
+
 export async function submitCaptainGameScore(matchId, gameIndex, gameDetails) {
   // 1. Fetch match metadata
   let match;
@@ -2785,14 +2851,21 @@ export async function submitCaptainGameScore(matchId, gameIndex, gameDetails) {
   }
 
   // 4. Recalculate match scores based on existingDetails
+  let teams = {};
+  if (isMockMode) {
+    teams = getMockStorage("teams", DEFAULT_TEAMS);
+  } else {
+    teams = (await fetchData("teams")) || {};
+  }
+
   let scoreA = 0;
   let scoreB = 0;
   existingDetails.forEach(game => {
     if (game) {
-      const isBlueWinner = game.teams[100]?.winner;
-      if (isBlueWinner) {
+      const winnerTeamId = getGameWinnerTeamId(game, match, teams);
+      if (winnerTeamId === match.teamAId) {
         scoreA += 1;
-      } else {
+      } else if (winnerTeamId === match.teamBId) {
         scoreB += 1;
       }
     }

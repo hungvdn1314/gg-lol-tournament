@@ -474,6 +474,9 @@ export default function SubmitScore() {
     const gameDetails = {
       gameDuration: durationSeconds,
       captainSubmission: true,
+      blueTeamId,
+      redTeamId,
+      winnerTeamId: blueWin ? blueTeamId : redTeamId,
       teams: {
         100: { winner: blueWin, firstBlood: false },
         200: { winner: redWin, firstBlood: false }
