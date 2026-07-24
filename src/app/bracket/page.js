@@ -66,9 +66,9 @@ export default function Bracket() {
 
     const teamA = teams[match.teamAId];
     const teamB = teams[match.teamBId];
-    const isCompleted = match.status === "completed";
+    const isCompleted = match.status === "completed" || (match.scoreA !== undefined && match.scoreB !== undefined && match.scoreA !== match.scoreB && (match.scoreA > 0 || match.scoreB > 0));
+    const winnerId = match.winnerId || (match.scoreA > match.scoreB ? match.teamAId : match.scoreB > match.scoreA ? match.teamBId : null);
     const isLive = match.status === "live" || match.status === "in_progress";
-    const winnerId = match.winnerId;
 
     return (
       <motion.div 
