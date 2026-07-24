@@ -444,12 +444,34 @@ function RankingsContent() {
       const rP = game.participants.filter(p => p.teamId === 200);
       const bK = bP.reduce((s, p) => s + (p.kills || 0), 0);
       const rK = rP.reduce((s, p) => s + (p.kills || 0), 0);
+      const bA = bP.reduce((s, p) => s + (p.assists || 0), 0);
+      const rA = rP.reduce((s, p) => s + (p.assists || 0), 0);
+      const bDeaths = bP.reduce((s, p) => s + (p.deaths || 0), 0);
+      const rDeaths = rP.reduce((s, p) => s + (p.deaths || 0), 0);
       const bD = bP.reduce((s, p) => s + (p.damageDealt || 0), 0);
       const rD = rP.reduce((s, p) => s + (p.damageDealt || 0), 0);
       const bG = bP.reduce((s, p) => s + (p.gold || 0), 0);
       const rG = rP.reduce((s, p) => s + (p.gold || 0), 0);
       const bDT = bP.reduce((s, p) => s + (p.damageTaken || 0), 0);
       const rDT = rP.reduce((s, p) => s + (p.damageTaken || 0), 0);
+
+      // Accumulate team per-game KDA
+      const bGameKda = (bK + bA) / Math.max(bDeaths, 1);
+      const rGameKda = (rK + rA) / Math.max(rDeaths, 1);
+      if (bP[0]) {
+        const playerTeam = playerToTeamMap[bP[0].playerName?.trim().toLowerCase()];
+        const actualTeamId = playerTeam ? playerTeam.id : bP[0].teamId;
+        if (teamsData[actualTeamId]) {
+          teamsData[actualTeamId].totalGameKda = (teamsData[actualTeamId].totalGameKda || 0) + bGameKda;
+        }
+      }
+      if (rP[0]) {
+        const playerTeam = playerToTeamMap[rP[0].playerName?.trim().toLowerCase()];
+        const actualTeamId = playerTeam ? playerTeam.id : rP[0].teamId;
+        if (teamsData[actualTeamId]) {
+          teamsData[actualTeamId].totalGameKda = (teamsData[actualTeamId].totalGameKda || 0) + rGameKda;
+        }
+      }
 
       const scored = calculateGameMVP(game.participants, game.gameDuration);
       const gameMvp = scored[0]?.playerName;
@@ -460,7 +482,15 @@ function RankingsContent() {
             playerName: p.playerName,
             championCounts: {}, // to find most played champ
             gamesPlayed: 0,
+            gamesWon: 0,
             kills: 0, deaths: 0, assists: 0,
+            totalGameKda: 0,
+            totalGameDpm: 0,
+            totalGameDmgShare: 0,
+            totalGameKp: 0,
+            totalGameGpm: 0,
+            totalGameDmgTakenShare: 0,
+            totalGameCspm: 0,
             damageDealt: 0, damageTaken: 0,
             gold: 0, cs: 0,
             teamKills: 0, teamDamageDealt: 0, teamDamageTaken: 0,
@@ -481,6 +511,27 @@ function RankingsContent() {
         stats.gamesPlayed += 1;
         stats.championCounts[p.champion] = (stats.championCounts[p.champion] || 0) + 1;
         
+        const durationMins = game.gameDuration ? game.gameDuration / 60 : 0;
+        const teamK = p.teamId === 100 ? bK : rK;
+        const teamD = p.teamId === 100 ? bD : rD;
+        const teamDT = p.teamId === 100 ? bDT : rDT;
+
+        const gameKda = ((p.kills || 0) + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
+        const gameDpm = durationMins > 0 ? (p.damageDealt || 0) / durationMins : 0;
+        const gameDmgShare = teamD > 0 ? ((p.damageDealt || 0) / teamD) * 100 : 0;
+        const gameKp = teamK > 0 ? (((p.kills || 0) + (p.assists || 0)) / teamK) * 100 : 0;
+        const gameGpm = durationMins > 0 ? (p.gold || 0) / durationMins : 0;
+        const gameDmgTakenShare = teamDT > 0 ? ((p.damageTaken || 0) / teamDT) * 100 : 0;
+        const gameCspm = durationMins > 0 ? (p.cs || 0) / durationMins : 0;
+
+        stats.totalGameKda = (stats.totalGameKda || 0) + gameKda;
+        stats.totalGameDpm = (stats.totalGameDpm || 0) + gameDpm;
+        stats.totalGameDmgShare = (stats.totalGameDmgShare || 0) + gameDmgShare;
+        stats.totalGameKp = (stats.totalGameKp || 0) + gameKp;
+        stats.totalGameGpm = (stats.totalGameGpm || 0) + gameGpm;
+        stats.totalGameDmgTakenShare = (stats.totalGameDmgTakenShare || 0) + gameDmgTakenShare;
+        stats.totalGameCspm = (stats.totalGameCspm || 0) + gameCspm;
+
         stats.kills += (p.kills || 0);
         stats.deaths += (p.deaths || 0);
         stats.assists += (p.assists || 0);
@@ -488,13 +539,13 @@ function RankingsContent() {
         stats.damageTaken += (p.damageTaken || 0);
         stats.gold += (p.gold || 0);
         stats.cs += (p.cs || 0);
-        stats.durationMins += (game.gameDuration / 60);
+        stats.durationMins += durationMins;
         stats.pentaKills += (p.pentaKills || 0);
         stats.healing += (p.healing || 0);
 
-        stats.teamKills += (p.teamId === 100 ? bK : rK);
-        stats.teamDamageDealt += (p.teamId === 100 ? bD : rD);
-        stats.teamDamageTaken += (p.teamId === 100 ? bDT : rDT);
+        stats.teamKills += teamK;
+        stats.teamDamageDealt += teamD;
+        stats.teamDamageTaken += teamDT;
 
         if (p.playerName === gameMvp) stats.matchMvpCount += 1;
 
@@ -517,6 +568,9 @@ function RankingsContent() {
         // Add to series scores
         const pScored = scored.find(s => s.playerName === p.playerName);
         if (pScored) {
+          if (pScored.totalScore > 0) {
+            stats.gamesWon += 1;
+          }
           stats.totalMvpScore = (stats.totalMvpScore || 0) + pScored.totalScore;
           seriesScores[p.playerName] = (seriesScores[p.playerName] || 0) + pScored.totalScore;
         }
@@ -545,14 +599,14 @@ function RankingsContent() {
     return {
       ...p,
       topChamp,
-      kda: p.deaths === 0 ? (p.kills + p.assists) : (p.kills + p.assists) / p.deaths,
-      dpm: p.damageDealt / p.durationMins,
-      dmgShare: p.teamDamageDealt > 0 ? (p.damageDealt / p.teamDamageDealt) * 100 : 0,
-      kp: p.teamKills > 0 ? ((p.kills + p.assists) / p.teamKills) * 100 : 0,
-      gpm: p.gold / p.durationMins,
-      dmgTakenShare: p.teamDamageTaken > 0 ? (p.damageTaken / p.teamDamageTaken) * 100 : 0,
-      cspm: p.cs / p.durationMins,
-      avgMvpScore: p.gamesPlayed > 0 ? p.totalMvpScore / p.gamesPlayed : 0
+      kda: p.gamesPlayed > 0 ? p.totalGameKda / p.gamesPlayed : 0,
+      dpm: p.gamesPlayed > 0 ? p.totalGameDpm / p.gamesPlayed : 0,
+      dmgShare: p.gamesPlayed > 0 ? p.totalGameDmgShare / p.gamesPlayed : 0,
+      kp: p.gamesPlayed > 0 ? p.totalGameKp / p.gamesPlayed : 0,
+      gpm: p.gamesPlayed > 0 ? p.totalGameGpm / p.gamesPlayed : 0,
+      dmgTakenShare: p.gamesPlayed > 0 ? p.totalGameDmgTakenShare / p.gamesPlayed : 0,
+      cspm: p.gamesPlayed > 0 ? p.totalGameCspm / p.gamesPlayed : 0,
+      avgMvpScore: p.gamesWon > 0 ? p.totalMvpScore / p.gamesWon : 0
     };
   });
 
@@ -560,7 +614,7 @@ function RankingsContent() {
   const rankedTeams = Object.values(teamsData).map(t => {
     return {
       ...t,
-      kda: t.deaths === 0 ? (t.kills + t.assists) : (t.kills + t.assists) / t.deaths,
+      kda: t.gamesPlayed > 0 ? (t.totalGameKda || 0) / t.gamesPlayed : 0,
       winRate: t.gamesPlayed > 0 ? (t.wins / t.gamesPlayed) * 100 : 0,
       dpg: t.gamesPlayed > 0 ? t.damageDealt / t.gamesPlayed : 0,
       gpg: t.gamesPlayed > 0 ? t.gold / t.gamesPlayed : 0,
