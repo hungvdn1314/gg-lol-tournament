@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Info, Trophy, Swords, Clock, Zap, Shield, HelpCircle, CheckCircle2 } from "lucide-react";
-import { subscribeToData } from "@/lib/db";
+import { subscribeToData, sortGroupTeams } from "@/lib/db";
 import { teamLogoPlaceholder } from "@/lib/placeholders";
 
 export default function Leaderboard() {
@@ -29,48 +29,9 @@ export default function Leaderboard() {
 
   const teamList = Object.values(teams);
 
-  const getHeadToHead = (teamAId, teamBId) => {
-    const match = Object.values(matches).find(
-      (m) =>
-        m.status === "completed" &&
-        ((m.teamAId === teamAId && m.teamBId === teamBId) ||
-          (m.teamAId === teamBId && m.teamBId === teamAId))
-    );
-    if (!match) return 0;
-    return match.winnerId === teamAId ? 1 : -1;
-  };
-
-  const compareTeams = (a, b) => {
-    // Step 1: Points
-    const ptsA = a.stats?.points || 0;
-    const ptsB = b.stats?.points || 0;
-    if (ptsA !== ptsB) return ptsB - ptsA;
-
-    // Step 2: Head-to-Head
-    const h2h = getHeadToHead(b.id, a.id);
-    if (h2h !== 0) return h2h;
-
-    // Step 3: Game Differential
-    const gDiffA = (a.stats?.gameWins || 0) - (a.stats?.gameLosses || 0);
-    const gDiffB = (b.stats?.gameWins || 0) - (b.stats?.gameLosses || 0);
-    if (gDiffA !== gDiffB) return gDiffB - gDiffA;
-
-    // Step 4: Total Kill Differential
-    const kDiffA = a.stats?.killDiff || 0;
-    const kDiffB = b.stats?.killDiff || 0;
-    if (kDiffA !== kDiffB) return kDiffB - kDiffA;
-
-    // Step 5: Total Win Time (lower time is better)
-    const timeA = a.stats?.totalWinTime || Infinity;
-    const timeB = b.stats?.totalWinTime || Infinity;
-    if (timeA !== timeB) return timeA - timeB;
-
-    return (a.name || "").localeCompare(b.name || "");
-  };
-
-  const groupATeams = teamList.filter((t) => t.group === "A").sort(compareTeams);
-  const groupBTeams = teamList.filter((t) => t.group === "B").sort(compareTeams);
-  const groupCTeams = teamList.filter((t) => t.group === "C").sort(compareTeams);
+  const groupATeams = sortGroupTeams(teamList.filter((t) => t.group === "A"), matches);
+  const groupBTeams = sortGroupTeams(teamList.filter((t) => t.group === "B"), matches);
+  const groupCTeams = sortGroupTeams(teamList.filter((t) => t.group === "C"), matches);
 
   // Cross-group ranking for seed mapping
   const top1Teams = [];
@@ -81,15 +42,15 @@ export default function Leaderboard() {
     if (groupList[1]) top2Teams.push(groupList[1]);
   });
 
-  top1Teams.sort(compareTeams);
-  top2Teams.sort(compareTeams);
+  const sortedTop1Teams = sortGroupTeams(top1Teams, matches);
+  const sortedTop2Teams = sortGroupTeams(top2Teams, matches);
 
   const seedInfoMap = {};
 
   const top1RankLabels = ["Group Winner #1", "Group Winner #2", "Group Winner #3"];
   const top1BracketLabels = ["Upper Semis · Match 2", "Upper Semis · Match 1", "Upper Semis · Match 1"];
 
-  top1Teams.forEach((team, idx) => {
+  sortedTop1Teams.forEach((team, idx) => {
     seedInfoMap[team.id] = {
       rankTitle: top1RankLabels[idx] || `Winner #${idx + 1}`,
       overallSeed: idx + 1,
@@ -102,7 +63,7 @@ export default function Leaderboard() {
   const top2RankLabels = ["Runner-Up #1", "Runner-Up #2", "Runner-Up #3"];
   const top2BracketLabels = ["Upper Semis · Match 2", "Lower Quarters · Match 3", "Lower Quarters · Match 4"];
 
-  top2Teams.forEach((team, idx) => {
+  sortedTop2Teams.forEach((team, idx) => {
     seedInfoMap[team.id] = {
       rankTitle: top2RankLabels[idx] || `Runner-Up #${idx + 1}`,
       overallSeed: idx + 4,
@@ -332,7 +293,7 @@ export default function Leaderboard() {
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {top1Teams.map((t, idx) => {
+                {sortedTop1Teams.map((t, idx) => {
                   const info = seedInfoMap[t.id];
                   return (
                     <div key={t.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "var(--bg-secondary)", border: "1px solid rgba(245,176,65,0.3)", borderRadius: "8px", padding: "0.6rem 0.9rem" }}>
@@ -370,7 +331,7 @@ export default function Leaderboard() {
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {top2Teams.map((t, idx) => {
+                {sortedTop2Teams.map((t, idx) => {
                   const info = seedInfoMap[t.id];
                   return (
                     <div key={t.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "var(--bg-secondary)", border: "1px solid rgba(34,211,238,0.3)", borderRadius: "8px", padding: "0.6rem 0.9rem" }}>

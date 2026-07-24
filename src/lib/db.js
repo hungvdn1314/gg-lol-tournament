@@ -2710,43 +2710,6 @@ export async function recalculateLeaderboard() {
     groupMatches.length > 0 && groupMatches.every((m) => m.status === "completed");
 
   if (allGroupMatchesCompleted) {
-    const compareTeams = (teamA, teamB) => {
-      // Step 1: Points
-      const ptsA = teamA.stats?.points || 0;
-      const ptsB = teamB.stats?.points || 0;
-      if (ptsA !== ptsB) return ptsB - ptsA;
-
-      // Step 2: Head-to-head result between tied teams
-      const h2hMatch = groupMatches.find(
-        (m) =>
-          m.status === "completed" &&
-          ((m.teamAId === teamA.id && m.teamBId === teamB.id) ||
-            (m.teamAId === teamB.id && m.teamBId === teamA.id))
-      );
-      if (h2hMatch && h2hMatch.winnerId) {
-        if (h2hMatch.winnerId === teamA.id) return -1;
-        if (h2hMatch.winnerId === teamB.id) return 1;
-      }
-
-      // Step 3: Game differential (gameWins - gameLosses)
-      const gameDiffA = (teamA.stats?.gameWins || 0) - (teamA.stats?.gameLosses || 0);
-      const gameDiffB = (teamB.stats?.gameWins || 0) - (teamB.stats?.gameLosses || 0);
-      if (gameDiffA !== gameDiffB) return gameDiffB - gameDiffA;
-
-      // Step 4: Total kill differential (kills - deaths)
-      const killDiffA = teamA.stats?.killDiff || 0;
-      const killDiffB = teamB.stats?.killDiff || 0;
-      if (killDiffA !== killDiffB) return killDiffB - killDiffA;
-
-      // Step 5: Total game completion time (faster wins favored)
-      const timeA = teamA.stats?.totalWinTime || Infinity;
-      const timeB = teamB.stats?.totalWinTime || Infinity;
-      if (timeA !== timeB) return timeA - timeB;
-
-      // Fallback
-      return (teamA.name || "").localeCompare(teamB.name || "");
-    };
-
     const groups = { A: [], B: [], C: [] };
     Object.values(teams).forEach((t) => {
       if (t.group && groups[t.group]) {
@@ -2755,7 +2718,7 @@ export async function recalculateLeaderboard() {
     });
 
     Object.keys(groups).forEach((g) => {
-      groups[g].sort(compareTeams);
+      groups[g] = sortGroupTeams(groups[g], matches);
     });
 
     const top1Teams = [];
@@ -2766,17 +2729,17 @@ export async function recalculateLeaderboard() {
       if (groups[g][1]) top2Teams.push(groups[g][1]);
     });
 
-    top1Teams.sort(compareTeams);
-    top2Teams.sort(compareTeams);
+    const sortedTop1 = sortGroupTeams(top1Teams, matches);
+    const sortedTop2 = sortGroupTeams(top2Teams, matches);
 
-    if (top1Teams.length >= 3 && top2Teams.length >= 3) {
-      const top1_Rank1 = top1Teams[0];
-      const top1_Rank2 = top1Teams[1];
-      const top1_Rank3 = top1Teams[2];
+    if (sortedTop1.length >= 3 && sortedTop2.length >= 3) {
+      const top1_Rank1 = sortedTop1[0];
+      const top1_Rank2 = sortedTop1[1];
+      const top1_Rank3 = sortedTop1[2];
 
-      const top2_Rank1 = top2Teams[0];
-      const top2_Rank2 = top2Teams[1];
-      const top2_Rank3 = top2Teams[2];
+      const top2_Rank1 = sortedTop2[0];
+      const top2_Rank2 = sortedTop2[1];
+      const top2_Rank3 = sortedTop2[2];
 
       if (matches["match-playoff-1"]) {
         matches["match-playoff-1"].teamAId = top1_Rank2.id;
@@ -2806,6 +2769,103 @@ export async function recalculateLeaderboard() {
     await set(ref(database, "teams"), teams);
     await set(ref(database, "matches"), matches);
   }
+}
+
+// ==========================================
+// TIE-BREAKER TEAM SORTING UTILITY
+// ==========================================
+
+export function sortGroupTeams(teamList, matches) {
+  if (!teamList || teamList.length === 0) return [];
+  const matchesList = Object.values(matches || {});
+
+  // Primary sort by Points descending
+  const sorted = [...teamList].sort((a, b) => {
+    const ptsA = a.stats?.points || 0;
+    const ptsB = b.stats?.points || 0;
+    return ptsB - ptsA;
+  });
+
+  // Group teams into clusters sharing identical point totals
+  const clusters = [];
+  let currentCluster = [];
+
+  sorted.forEach((team) => {
+    if (currentCluster.length === 0) {
+      currentCluster.push(team);
+    } else {
+      const prevPts = currentCluster[0].stats?.points || 0;
+      const currPts = team.stats?.points || 0;
+      if (prevPts === currPts) {
+        currentCluster.push(team);
+      } else {
+        clusters.push(currentCluster);
+        currentCluster = [team];
+      }
+    }
+  });
+  if (currentCluster.length > 0) clusters.push(currentCluster);
+
+  // Helper to sort a cluster of teams tied on points
+  const sortTiedCluster = (cluster) => {
+    if (cluster.length <= 1) return cluster;
+
+    const clusterIds = new Set(cluster.map((t) => t.id));
+
+    // Calculate Head-to-Head wins within this specific tied cluster
+    const h2hWinsMap = {};
+    cluster.forEach((t) => (h2hWinsMap[t.id] = 0));
+
+    matchesList.forEach((m) => {
+      if (
+        m.status === "completed" &&
+        clusterIds.has(m.teamAId) &&
+        clusterIds.has(m.teamBId) &&
+        m.winnerId
+      ) {
+        if (h2hWinsMap[m.winnerId] !== undefined) {
+          h2hWinsMap[m.winnerId] += 1;
+        }
+      }
+    });
+
+    const h2hWinValues = Object.values(h2hWinsMap);
+    const allH2HEqual = h2hWinValues.every((val) => val === h2hWinValues[0]);
+
+    return [...cluster].sort((a, b) => {
+      // Step 2: Head-to-Head within tied cluster (only if not all equal)
+      if (!allH2HEqual) {
+        const h2hA = h2hWinsMap[a.id] || 0;
+        const h2hB = h2hWinsMap[b.id] || 0;
+        if (h2hA !== h2hB) return h2hB - h2hA;
+      }
+
+      // Step 3: Game Differential (gameWins - gameLosses)
+      const gameDiffA = (a.stats?.gameWins || 0) - (a.stats?.gameLosses || 0);
+      const gameDiffB = (b.stats?.gameWins || 0) - (b.stats?.gameLosses || 0);
+      if (gameDiffA !== gameDiffB) return gameDiffB - gameDiffA;
+
+      // Step 4: Total Kill Differential (kills - deaths)
+      const killDiffA = a.stats?.killDiff || 0;
+      const killDiffB = b.stats?.killDiff || 0;
+      if (killDiffA !== killDiffB) return killDiffB - killDiffA;
+
+      // Step 5: Total Win Time (lower is better)
+      const timeA = a.stats?.totalWinTime || Infinity;
+      const timeB = b.stats?.totalWinTime || Infinity;
+      if (timeA !== timeB) return timeA - timeB;
+
+      // Fallback
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  };
+
+  const finalSorted = [];
+  clusters.forEach((cluster) => {
+    finalSorted.push(...sortTiedCluster(cluster));
+  });
+
+  return finalSorted;
 }
 
 // ==========================================
