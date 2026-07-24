@@ -257,11 +257,11 @@ export default function Bracket() {
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-around", height: "620px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>Upper Finals</span>
-                  {renderMatchNode("match-playoff-5", true, true)}
+                  {renderMatchNode("match-playoff-5", "Match 5", true, true)}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>LB Semis</span>
-                  {renderMatchNode("match-playoff-6", true, true)}
+                  {renderMatchNode("match-playoff-6", "Match 6", true, true)}
                 </div>
               </div>
 
