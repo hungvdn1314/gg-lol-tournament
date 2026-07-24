@@ -375,7 +375,8 @@ function RankingsContent() {
         healing: 0,
         gold: 0,
         cs: 0,
-        pentaKills: 0
+        pentaKills: 0,
+        totalGameKda: 0
       };
     }
   });
@@ -433,7 +434,8 @@ function RankingsContent() {
             healing: 0,
             gold: 0,
             cs: 0,
-            pentaKills: 0
+            pentaKills: 0,
+            totalGameKda: 0
           };
         }
         const teamStats = teamsData[teamId];
@@ -635,7 +637,7 @@ function RankingsContent() {
   const rankedPlayers = Object.values(players).map(p => {
     // Most played champion
     const topChamp = Object.entries(p.championCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-    const totalKda = p.deaths > 0 ? (p.kills + p.assists) / p.deaths : (p.kills + p.assists);
+    const totalKda = p.gamesPlayed > 0 ? p.totalGameKda / p.gamesPlayed : 0;
     
     return {
       ...p,
@@ -659,7 +661,7 @@ function RankingsContent() {
 
   // Calculate advanced metrics for teams
   const rankedTeams = Object.values(teamsData).map(t => {
-    const teamKda = t.deaths > 0 ? (t.kills + t.assists) / t.deaths : (t.kills + t.assists);
+    const teamKda = t.gamesPlayed > 0 ? (t.totalGameKda || 0) / t.gamesPlayed : 0;
     return {
       ...t,
       kda: teamKda,

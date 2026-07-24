@@ -151,7 +151,7 @@ function PlayerProfileContent() {
   // Aggregate tournament stats from matches DB
   let totalKills = 0, totalDeaths = 0, totalAssists = 0;
   let totalHealing = 0, totalDamage = 0;
-  let gamesPlayed = 0, wins = 0;
+  let gamesPlayed = 0, wins = 0, totalGameKda = 0;
   let seriesMvpCount = 0, pentakillCount = 0;
   const champStats = {};
   const matchHistory = [];
@@ -186,17 +186,20 @@ function PlayerProfileContent() {
         totalAssists += assists;
         totalHealing += healing;
         totalDamage += damage;
+        const gameKda = (kills + assists) / Math.max(deaths, 1);
+        totalGameKda += gameKda;
         if (stat.pentaKills) pentakillCount += stat.pentaKills;
 
         const champ = stat.champion || "Unknown";
         if (!champStats[champ]) {
-          champStats[champ] = { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 };
+          champStats[champ] = { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0, totalGameKda: 0 };
         }
         champStats[champ].games++;
         if (stat.win) champStats[champ].wins++;
         champStats[champ].kills += kills;
         champStats[champ].deaths += deaths;
         champStats[champ].assists += assists;
+        champStats[champ].totalGameKda += gameKda;
 
         // Resolve opponent team name
         const opponentParticipant = game.participants.find(
@@ -289,15 +292,12 @@ function PlayerProfileContent() {
       champ,
       ...s,
       winRate: (s.wins / s.games) * 100,
-      kda: s.deaths === 0 ? s.kills + s.assists : (s.kills + s.assists) / s.deaths,
+      kda: s.games > 0 ? s.totalGameKda / s.games : 0,
     }))
     .sort((a, b) => b.games - a.games || b.winRate - a.winRate)
     .slice(0, 5);
 
-  const overallKda =
-    totalDeaths === 0
-      ? (totalKills + totalAssists).toFixed(2)
-      : ((totalKills + totalAssists) / totalDeaths).toFixed(2);
+  const overallKda = gamesPlayed > 0 ? (totalGameKda / gamesPlayed).toFixed(2) : "0.00";
   const winRate = gamesPlayed > 0 ? ((wins / gamesPlayed) * 100).toFixed(1) : "0.0";
   const avgKills = gamesPlayed > 0 ? (totalKills / gamesPlayed).toFixed(1) : "0.0";
   const avgDeaths = gamesPlayed > 0 ? (totalDeaths / gamesPlayed).toFixed(1) : "0.0";
