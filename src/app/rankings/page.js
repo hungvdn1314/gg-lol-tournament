@@ -498,8 +498,17 @@ function RankingsContent() {
             matchMvpCount: 0,
             seriesMvpCount: 0,
             groupMvpCount: 0,
+            groupMatchMvpCount: 0,
+            groupGamesWon: 0,
+            groupTotalMvpScore: 0,
             playoffMvpCount: 0,
+            playoffMatchMvpCount: 0,
+            playoffGamesWon: 0,
+            playoffTotalMvpScore: 0,
             grandFinalMvpCount: 0,
+            grandFinalMatchMvpCount: 0,
+            grandFinalGamesWon: 0,
+            grandFinalTotalMvpScore: 0,
             totalMvpScore: 0,
             avgMvpScore: 0,
             pentaKills: 0,
@@ -547,7 +556,12 @@ function RankingsContent() {
         stats.teamDamageDealt += teamD;
         stats.teamDamageTaken += teamDT;
 
-        if (p.playerName === gameMvp) stats.matchMvpCount += 1;
+        if (p.playerName === gameMvp) {
+          stats.matchMvpCount += 1;
+          if (isGroup) stats.groupMatchMvpCount += 1;
+          if (isPlayoff) stats.playoffMatchMvpCount += 1;
+          if (isGrandFinal) stats.grandFinalMatchMvpCount += 1;
+        }
 
         // Accumulate player stats into actual team totals
         const playerTeam = playerToTeamMap[p.playerName?.trim().toLowerCase()];
@@ -570,8 +584,15 @@ function RankingsContent() {
         if (pScored) {
           if (pScored.totalScore > 0) {
             stats.gamesWon += 1;
+            if (isGroup) stats.groupGamesWon += 1;
+            if (isPlayoff) stats.playoffGamesWon += 1;
+            if (isGrandFinal) stats.grandFinalGamesWon += 1;
           }
           stats.totalMvpScore = (stats.totalMvpScore || 0) + pScored.totalScore;
+          if (isGroup) stats.groupTotalMvpScore = (stats.groupTotalMvpScore || 0) + pScored.totalScore;
+          if (isPlayoff) stats.playoffTotalMvpScore = (stats.playoffTotalMvpScore || 0) + pScored.totalScore;
+          if (isGrandFinal) stats.grandFinalTotalMvpScore = (stats.grandFinalTotalMvpScore || 0) + pScored.totalScore;
+
           seriesScores[p.playerName] = (seriesScores[p.playerName] || 0) + pScored.totalScore;
         }
       });
@@ -581,11 +602,11 @@ function RankingsContent() {
     const seriesMvp = Object.entries(seriesScores).sort((a, b) => b[1] - a[1])[0]?.[0];
     if (seriesMvp && players[seriesMvp]) {
       players[seriesMvp].seriesMvpCount += 1;
-      if (matchId.startsWith("match-g-")) {
+      if (isGroup) {
         players[seriesMvp].groupMvpCount += 1;
-      } else if (matchId.startsWith("match-playoff-") && matchId !== "match-playoff-8") {
+      } else if (isPlayoff) {
         players[seriesMvp].playoffMvpCount += 1;
-      } else if (matchId === "match-playoff-8") {
+      } else if (isGrandFinal) {
         players[seriesMvp].grandFinalMvpCount += 1;
       }
     }
@@ -606,7 +627,10 @@ function RankingsContent() {
       gpm: p.gamesPlayed > 0 ? p.totalGameGpm / p.gamesPlayed : 0,
       dmgTakenShare: p.gamesPlayed > 0 ? p.totalGameDmgTakenShare / p.gamesPlayed : 0,
       cspm: p.gamesPlayed > 0 ? p.totalGameCspm / p.gamesPlayed : 0,
-      avgMvpScore: p.gamesWon > 0 ? p.totalMvpScore / p.gamesWon : 0
+      avgMvpScore: p.gamesWon > 0 ? p.totalMvpScore / p.gamesWon : 0,
+      groupAvgMvpScore: p.groupGamesWon > 0 ? p.groupTotalMvpScore / p.groupGamesWon : 0,
+      playoffAvgMvpScore: p.playoffGamesWon > 0 ? p.playoffTotalMvpScore / p.playoffGamesWon : 0,
+      grandFinalAvgMvpScore: p.grandFinalGamesWon > 0 ? p.grandFinalTotalMvpScore / p.grandFinalGamesWon : 0,
     };
   });
 
@@ -625,18 +649,46 @@ function RankingsContent() {
 
   const rankedItems = rankingType === "player" ? rankedPlayers : rankedTeams;
   rankedItems.sort((a, b) => {
-    if (b[sortBy] !== a[sortBy]) {
-      return b[sortBy] - a[sortBy];
-    }
     if (rankingType === "player") {
-      if (["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount", "matchMvpCount"].includes(sortBy)) {
-        if (b.avgMvpScore !== a.avgMvpScore) {
-          return b.avgMvpScore - a.avgMvpScore;
-        }
+      if (sortBy === "seriesMvpCount") {
+        if (b.seriesMvpCount !== a.seriesMvpCount) return b.seriesMvpCount - a.seriesMvpCount;
+        if (b.matchMvpCount !== a.matchMvpCount) return b.matchMvpCount - a.matchMvpCount;
+        if (b.avgMvpScore !== a.avgMvpScore) return b.avgMvpScore - a.avgMvpScore;
+        return (b.kda || 0) - (a.kda || 0);
+      }
+      if (sortBy === "groupMvpCount") {
+        if (b.groupMvpCount !== a.groupMvpCount) return b.groupMvpCount - a.groupMvpCount;
+        if (b.groupMatchMvpCount !== a.groupMatchMvpCount) return b.groupMatchMvpCount - a.groupMatchMvpCount;
+        if (b.groupAvgMvpScore !== a.groupAvgMvpScore) return b.groupAvgMvpScore - a.groupAvgMvpScore;
+        return (b.kda || 0) - (a.kda || 0);
+      }
+      if (sortBy === "playoffMvpCount") {
+        if (b.playoffMvpCount !== a.playoffMvpCount) return b.playoffMvpCount - a.playoffMvpCount;
+        if (b.playoffMatchMvpCount !== a.playoffMatchMvpCount) return b.playoffMatchMvpCount - a.playoffMatchMvpCount;
+        if (b.playoffAvgMvpScore !== a.playoffAvgMvpScore) return b.playoffAvgMvpScore - a.playoffAvgMvpScore;
+        return (b.kda || 0) - (a.kda || 0);
+      }
+      if (sortBy === "grandFinalMvpCount") {
+        if (b.grandFinalMvpCount !== a.grandFinalMvpCount) return b.grandFinalMvpCount - a.grandFinalMvpCount;
+        if (b.grandFinalMatchMvpCount !== a.grandFinalMatchMvpCount) return b.grandFinalMatchMvpCount - a.grandFinalMatchMvpCount;
+        if (b.grandFinalAvgMvpScore !== a.grandFinalAvgMvpScore) return b.grandFinalAvgMvpScore - a.grandFinalAvgMvpScore;
+        return (b.kda || 0) - (a.kda || 0);
+      }
+      if (sortBy === "matchMvpCount") {
+        if (b.matchMvpCount !== a.matchMvpCount) return b.matchMvpCount - a.matchMvpCount;
+        if (b.seriesMvpCount !== a.seriesMvpCount) return b.seriesMvpCount - a.seriesMvpCount;
+        if (b.avgMvpScore !== a.avgMvpScore) return b.avgMvpScore - a.avgMvpScore;
+        return (b.kda || 0) - (a.kda || 0);
+      }
+      if (b[sortBy] !== a[sortBy]) {
+        return b[sortBy] - a[sortBy];
       }
       return (b.kda || 0) - (a.kda || 0);
     }
     if (rankingType === "team") {
+      if (b[sortBy] !== a[sortBy]) {
+        return b[sortBy] - a[sortBy];
+      }
       return (b.winRate || 0) - (a.winRate || 0);
     }
     return 0;
@@ -658,8 +710,25 @@ function RankingsContent() {
       return "Group Stage";
     }
     if (["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount", "matchMvpCount"].includes(metricId)) {
-      const avgStr = item && typeof item.avgMvpScore === "number" ? ` (Avg: ${item.avgMvpScore.toFixed(1)})` : "";
-      return `${val} MVP${val !== 1 ? 's' : ''}${avgStr}`;
+      let seriesVal = item.seriesMvpCount || 0;
+      let matchVal = item.matchMvpCount || 0;
+      let avgVal = item.avgMvpScore || 0;
+
+      if (metricId === "groupMvpCount") {
+        seriesVal = item.groupMvpCount || 0;
+        matchVal = item.groupMatchMvpCount || 0;
+        avgVal = item.groupAvgMvpScore || 0;
+      } else if (metricId === "playoffMvpCount") {
+        seriesVal = item.playoffMvpCount || 0;
+        matchVal = item.playoffMatchMvpCount || 0;
+        avgVal = item.playoffAvgMvpScore || 0;
+      } else if (metricId === "grandFinalMvpCount") {
+        seriesVal = item.grandFinalMvpCount || 0;
+        matchVal = item.grandFinalMatchMvpCount || 0;
+        avgVal = item.grandFinalAvgMvpScore || 0;
+      }
+
+      return `${seriesVal} Series MVP${seriesVal !== 1 ? 's' : ''} · ${matchVal} Match MVP${matchVal !== 1 ? 's' : ''} (Avg: ${avgVal.toFixed(1)})`;
     }
     if (metricId === "kda") return `${val.toFixed(2)} KDA`;
     if (["dmgShare", "kp", "dmgTakenShare"].includes(metricId)) return val.toFixed(1) + "%";
@@ -841,33 +910,40 @@ function RankingsContent() {
   const renderMvpAwardCard = () => {
     const sortedGroupPlayers = [...rankedPlayers].sort((a, b) => {
       if (b.groupMvpCount !== a.groupMvpCount) return b.groupMvpCount - a.groupMvpCount;
-      return b.avgMvpScore - a.avgMvpScore;
+      if (b.groupMatchMvpCount !== a.groupMatchMvpCount) return b.groupMatchMvpCount - a.groupMatchMvpCount;
+      return b.groupAvgMvpScore - a.groupAvgMvpScore;
     });
     const topGroupMvp = sortedGroupPlayers[0];
-    const hasGroupMvp = topGroupMvp && topGroupMvp.groupMvpCount > 0;
+    const hasGroupMvp = topGroupMvp && (topGroupMvp.groupMvpCount > 0 || topGroupMvp.groupMatchMvpCount > 0);
 
     const sortedPlayoffPlayers = [...rankedPlayers].sort((a, b) => {
       if (b.playoffMvpCount !== a.playoffMvpCount) return b.playoffMvpCount - a.playoffMvpCount;
-      return b.avgMvpScore - a.avgMvpScore;
+      if (b.playoffMatchMvpCount !== a.playoffMatchMvpCount) return b.playoffMatchMvpCount - a.playoffMatchMvpCount;
+      return b.playoffAvgMvpScore - a.playoffAvgMvpScore;
     });
     const topPlayoffMvp = sortedPlayoffPlayers[0];
-    const hasPlayoffMvp = topPlayoffMvp && topPlayoffMvp.playoffMvpCount > 0;
+    const hasPlayoffMvp = topPlayoffMvp && (topPlayoffMvp.playoffMvpCount > 0 || topPlayoffMvp.playoffMatchMvpCount > 0);
 
     const sortedGfPlayers = [...rankedPlayers].sort((a, b) => {
       if (b.grandFinalMvpCount !== a.grandFinalMvpCount) return b.grandFinalMvpCount - a.grandFinalMvpCount;
-      return b.avgMvpScore - a.avgMvpScore;
+      if (b.grandFinalMatchMvpCount !== a.grandFinalMatchMvpCount) return b.grandFinalMatchMvpCount - a.grandFinalMatchMvpCount;
+      return b.grandFinalAvgMvpScore - a.grandFinalAvgMvpScore;
     });
     const topGfMvp = sortedGfPlayers[0];
-    const hasGfMvp = topGfMvp && topGfMvp.grandFinalMvpCount > 0;
+    const hasGfMvp = topGfMvp && (topGfMvp.grandFinalMvpCount > 0 || topGfMvp.grandFinalMatchMvpCount > 0);
 
     const stageColors = {
-      GP: { bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.3)", text: "#60a5fa", label: "Group Stage MVP" },
-      PO: { bg: "rgba(192,132,252,0.12)", border: "rgba(192,132,252,0.3)", text: "#c084fc", label: "Playoff MVP" },
-      GF: { bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.35)", text: "#fbbf24", label: "Grand Final MVP" },
+      GP: { bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.3)", text: "#60a5fa", label: "Group Stage MVP", seriesKey: "groupMvpCount", matchKey: "groupMatchMvpCount", avgKey: "groupAvgMvpScore" },
+      PO: { bg: "rgba(192,132,252,0.12)", border: "rgba(192,132,252,0.3)", text: "#c084fc", label: "Playoff MVP", seriesKey: "playoffMvpCount", matchKey: "playoffMatchMvpCount", avgKey: "playoffAvgMvpScore" },
+      GF: { bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.35)", text: "#fbbf24", label: "Grand Final MVP", seriesKey: "grandFinalMvpCount", matchKey: "grandFinalMatchMvpCount", avgKey: "grandFinalAvgMvpScore" },
     };
 
-    const renderMvpRow = (player, hasMvp, countKey, stage) => {
+    const renderMvpRow = (player, hasMvp, stage) => {
       const sc = stageColors[stage];
+      const seriesCount = player ? (player[sc.seriesKey] || 0) : 0;
+      const matchCount = player ? (player[sc.matchKey] || 0) : 0;
+      const avgScore = player ? (player[sc.avgKey] || 0) : 0;
+
       return (
         <div style={{ backgroundColor: sc.bg, padding: "0.9rem 1rem", borderRadius: "10px", border: `1px solid ${sc.border}` }}>
           {/* Stage label */}
@@ -889,24 +965,32 @@ function RankingsContent() {
                 <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginTop: "0.15rem" }}>
                   {playerToTeamMap[player.playerName?.trim().toLowerCase()]?.name || "Free Agent"}
                 </span>
-                {/* Stats row — MVP count + Avg grouped, bold & prominent */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.45rem" }}>
+                {/* Combined Stats row — Series MVP + Match MVP + Avg Score */}
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.4rem", marginTop: "0.45rem" }}>
                   <span style={{
                     display: "inline-flex", alignItems: "center", gap: "0.25rem",
-                    fontWeight: "900", fontSize: "1rem", color: sc.text,
+                    fontWeight: "900", fontSize: "0.85rem", color: sc.text,
                     backgroundColor: `${sc.bg}`, border: `1px solid ${sc.border}`,
-                    padding: "0.15rem 0.6rem", borderRadius: "20px", letterSpacing: "0.01em"
+                    padding: "0.15rem 0.5rem", borderRadius: "20px"
                   }}>
                     <Award size={12} />
-                    {player[countKey]} MVP{player[countKey] !== 1 ? "s" : ""}
+                    {seriesCount} Series MVP{seriesCount !== 1 ? "s" : ""}
                   </span>
                   <span style={{
                     display: "inline-flex", alignItems: "center", gap: "0.25rem",
-                    fontWeight: "800", fontSize: "0.9rem", color: sc.text,
+                    fontWeight: "800", fontSize: "0.85rem", color: sc.text,
                     backgroundColor: `${sc.bg}`, border: `1px solid ${sc.border}`,
-                    padding: "0.15rem 0.6rem", borderRadius: "20px", opacity: 0.85
+                    padding: "0.15rem 0.5rem", borderRadius: "20px", opacity: 0.9
                   }}>
-                    Avg {player.avgMvpScore.toFixed(1)}
+                    {matchCount} Match MVP{matchCount !== 1 ? "s" : ""}
+                  </span>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: "0.25rem",
+                    fontWeight: "800", fontSize: "0.85rem", color: sc.text,
+                    backgroundColor: `${sc.bg}`, border: `1px solid ${sc.border}`,
+                    padding: "0.15rem 0.5rem", borderRadius: "20px", opacity: 0.85
+                  }}>
+                    Avg {avgScore.toFixed(1)}
                   </span>
                 </div>
               </div>
@@ -936,12 +1020,12 @@ function RankingsContent() {
         </div>
         <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em", color: "#c084fc" }}>Tournament MVPs</h3>
         <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
-          Rewarded by tournament stages based on Series MVP counts (tiebroken by average MVP score).
+          Ranked by Series MVPs, Match MVPs, and phase average MVP scores per stage.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-          {renderMvpRow(topGroupMvp, hasGroupMvp, "groupMvpCount", "GP")}
-          {renderMvpRow(topPlayoffMvp, hasPlayoffMvp, "playoffMvpCount", "PO")}
-          {renderMvpRow(topGfMvp, hasGfMvp, "grandFinalMvpCount", "GF")}
+          {renderMvpRow(topGroupMvp, hasGroupMvp, "GP")}
+          {renderMvpRow(topPlayoffMvp, hasPlayoffMvp, "PO")}
+          {renderMvpRow(topGfMvp, hasGfMvp, "GF")}
         </div>
       </div>
     );
