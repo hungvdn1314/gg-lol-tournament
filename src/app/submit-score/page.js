@@ -419,7 +419,7 @@ export default function SubmitScore() {
           damageTaken: parseInt(stat.damageTaken) || 0,
           healing: parseInt(stat.healing) || 0,
           items: resolveItemIds(stat.items),
-          pentaKills: 0,
+          pentaKills: parseInt(stat.pentaKills) || 0,
           firstBlood: false,
           summonerSpells: [0, 0],
           runes: { keystoneId: 0, primaryStyleId: 0 }
@@ -908,7 +908,14 @@ export default function SubmitScore() {
                     <div key={idx} style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "6px", border: `1px solid ${isAssigned ? "rgba(59, 130, 246, 0.3)" : "var(--color-danger)"}` }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Row {idx + 1} (Extracted: <strong>{stat.summonerName || "Unknown"}</strong>)</span>
-                        <span style={{ fontSize: "0.75rem", fontWeight: "bold", color: "var(--primary-gold)" }}>{stat.champion} ({stat.kills}/{stat.deaths}/{stat.assists})</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          {stat.pentaKills > 0 && (
+                            <span style={{ fontSize: "0.65rem", padding: "0.15rem 0.4rem", borderRadius: "4px", backgroundColor: "rgba(239, 68, 68, 0.2)", color: "#ef4444", border: "1px solid #ef4444", fontWeight: "bold" }}>
+                              🔥 PENTAKILL
+                            </span>
+                          )}
+                          <span style={{ fontSize: "0.75rem", fontWeight: "bold", color: "var(--primary-gold)" }}>{stat.champion} ({stat.kills}/{stat.deaths}/{stat.assists})</span>
+                        </div>
                       </div>
                       
                       <select
@@ -944,7 +951,14 @@ export default function SubmitScore() {
                     <div key={actualIdx} style={{ backgroundColor: "var(--bg-tertiary)", padding: "1rem", borderRadius: "6px", border: `1px solid ${isAssigned ? "rgba(239, 68, 68, 0.3)" : "var(--color-danger)"}` }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Row {actualIdx + 1} (Extracted: <strong>{stat.summonerName || "Unknown"}</strong>)</span>
-                        <span style={{ fontSize: "0.75rem", fontWeight: "bold", color: "var(--primary-gold)" }}>{stat.champion} ({stat.kills}/{stat.deaths}/{stat.assists})</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          {stat.pentaKills > 0 && (
+                            <span style={{ fontSize: "0.65rem", padding: "0.15rem 0.4rem", borderRadius: "4px", backgroundColor: "rgba(239, 68, 68, 0.2)", color: "#ef4444", border: "1px solid #ef4444", fontWeight: "bold" }}>
+                              🔥 PENTAKILL
+                            </span>
+                          )}
+                          <span style={{ fontSize: "0.75rem", fontWeight: "bold", color: "var(--primary-gold)" }}>{stat.champion} ({stat.kills}/{stat.deaths}/{stat.assists})</span>
+                        </div>
                       </div>
                       
                       <select
