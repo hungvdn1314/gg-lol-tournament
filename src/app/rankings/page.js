@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { subscribeToAllMatchDetails, subscribeToData } from "@/lib/db";
 import { SummonersCup, HextechCrest } from "@/components/Icons";
-import { Award, Eye, Crosshair, Shield, Coins, Target, Heart, Zap } from "lucide-react";
+import { Award, Eye, Crosshair, Shield, Coins, Target, Heart, Zap, Crown } from "lucide-react";
 import { getLatestDDragonVersion } from "@/lib/riot";
 import { championPlaceholder, teamLogoPlaceholder } from "@/lib/placeholders";
 import PlayerSignature from "@/components/PlayerSignature";
@@ -206,39 +206,42 @@ function RankingsContent() {
   const [activeTab, setActiveTab] = useState(queryTab); // awards, players, teams
   const [rankingType, setRankingType] = useState(queryTab === "teams" ? "team" : "player"); // player, team
   const [sortBy, setSortBy] = useState(queryTab === "teams" ? "positionScore" : "seriesMvpCount");
+  const [sortColumn, setSortColumn] = useState(queryTab === "teams" ? "positionScore" : "seriesMvpCount");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [version, setVersion] = useState("16.13.1");
+  const [concept, setConcept] = useState(searchParams.get("concept") || "concept3");
 
 
 
   // Sort options
   const playerMetrics = [
-    { id: "seriesMvpCount", label: "Series MVPs", icon: <SummonersCup size={14} /> },
-    { id: "matchMvpCount", label: "Match MVPs", icon: <Award size={14} /> },
-    { id: "avgMvpScore", label: "Avg MVP Score", icon: <Award size={14} /> },
-    { id: "kda", label: "KDA Ratio", icon: <Crosshair size={14} /> },
-    { id: "dpm", label: "DMG / Min", icon: <Target size={14} /> },
-    { id: "dmgShare", label: "DMG Share %", icon: <Target size={14} /> },
-    { id: "kp", label: "Kill Part %", icon: <HextechCrest size={14} /> },
-    { id: "gpm", label: "Gold / Min", icon: <Coins size={14} /> },
-    { id: "dmgTakenShare", label: "DMG Taken %", icon: <Shield size={14} /> },
-    { id: "cspm", label: "CS / Min", icon: <Crosshair size={14} /> },
-    { id: "pentaKills", label: "Pentakills", icon: <Zap size={14} /> },
-    { id: "healing", label: "Total Healing", icon: <Heart size={14} /> }
+    { id: "seriesMvpCount", label: "Series MVPs", icon: <Crown size={14} /> },
+    { id: "kda", label: "KDA", icon: <Crosshair size={14} /> },
+    { id: "damageDealt", label: "Damage Dealt", icon: <Target size={14} /> },
+    { id: "damageTaken", label: "Damage Taken", icon: <Shield size={14} /> },
+    { id: "healing", label: "Healing & Shielding", icon: <Heart size={14} /> }
   ];
 
   const teamMetrics = [
-    { id: "winRate", label: "Win Rate", icon: <SummonersCup size={14} /> },
     { id: "positionScore", label: "Final Position", icon: <Award size={14} /> },
-    { id: "kda", label: "KDA Ratio", icon: <Crosshair size={14} /> },
-    { id: "kills", label: "Total Kills", icon: <Target size={14} /> },
-    { id: "dpg", label: "Avg DMG / Game", icon: <Target size={14} /> },
-    { id: "healing", label: "Total Healing", icon: <Heart size={14} /> },
-    { id: "pentaKills", label: "Pentakills", icon: <Zap size={14} /> },
-    { id: "gpg", label: "Avg Gold / Game", icon: <Coins size={14} /> },
-    { id: "cspg", label: "Avg CS / Game", icon: <Crosshair size={14} /> }
+    { id: "avgDmg", label: "Fighting Stats", icon: <Target size={14} /> },
+    { id: "avgKills", label: "KDA Stats", icon: <Crosshair size={14} /> },
   ];
 
   const metrics = rankingType === "player" ? playerMetrics : teamMetrics;
+
+  const renderSortableHeader = (metric) => (
+    <th 
+      key={metric.id} 
+      onClick={() => handleSort(metric.id)}
+      style={{ padding: "0.75rem", cursor: "pointer", color: sortColumn === metric.id ? "white" : "var(--text-muted)" }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", justifyContent: "center" }}>
+        {metric.icon} {metric.label}
+        {sortColumn === metric.id && (sortOrder === "desc" ? <ChevronDown size={14} /> : <ChevronUp size={14} />)}
+      </div>
+    </th>
+  );
 
   useEffect(() => {
     const unsubMatches = subscribeToAllMatchDetails((data) => {
@@ -372,13 +375,18 @@ function RankingsContent() {
         healing: 0,
         gold: 0,
         cs: 0,
-        pentaKills: 0
+        pentaKills: 0,
+        totalGameKda: 0
       };
     }
   });
 
   Object.entries(allMatches).forEach(([matchId, gamesArray]) => {
     if (!Array.isArray(gamesArray)) return;
+
+    const isGroup = matchId.startsWith("match-g-");
+    const isPlayoff = matchId.startsWith("match-playoff-") && matchId !== "match-playoff-8";
+    const isGrandFinal = matchId === "match-playoff-8";
 
     // To calculate Series MVP, we need a separate aggregator for just this series
     const seriesScores = {};
@@ -426,7 +434,8 @@ function RankingsContent() {
             healing: 0,
             gold: 0,
             cs: 0,
-            pentaKills: 0
+            pentaKills: 0,
+            totalGameKda: 0
           };
         }
         const teamStats = teamsData[teamId];
@@ -444,12 +453,36 @@ function RankingsContent() {
       const rP = game.participants.filter(p => p.teamId === 200);
       const bK = bP.reduce((s, p) => s + (p.kills || 0), 0);
       const rK = rP.reduce((s, p) => s + (p.kills || 0), 0);
+      const bA = bP.reduce((s, p) => s + (p.assists || 0), 0);
+      const rA = rP.reduce((s, p) => s + (p.assists || 0), 0);
+      const bDeaths = bP.reduce((s, p) => s + (p.deaths || 0), 0);
+      const rDeaths = rP.reduce((s, p) => s + (p.deaths || 0), 0);
       const bD = bP.reduce((s, p) => s + (p.damageDealt || 0), 0);
       const rD = rP.reduce((s, p) => s + (p.damageDealt || 0), 0);
       const bG = bP.reduce((s, p) => s + (p.gold || 0), 0);
       const rG = rP.reduce((s, p) => s + (p.gold || 0), 0);
       const bDT = bP.reduce((s, p) => s + (p.damageTaken || 0), 0);
       const rDT = rP.reduce((s, p) => s + (p.damageTaken || 0), 0);
+      const bH = bP.reduce((s, p) => s + (p.healing || 0), 0);
+      const rH = rP.reduce((s, p) => s + (p.healing || 0), 0);
+
+      // Accumulate team per-game KDA
+      const bGameKda = (bK + bA) / Math.max(bDeaths, 1);
+      const rGameKda = (rK + rA) / Math.max(rDeaths, 1);
+      if (bP[0]) {
+        const playerTeam = playerToTeamMap[bP[0].playerName?.trim().toLowerCase()];
+        const actualTeamId = playerTeam ? playerTeam.id : bP[0].teamId;
+        if (teamsData[actualTeamId]) {
+          teamsData[actualTeamId].totalGameKda = (teamsData[actualTeamId].totalGameKda || 0) + bGameKda;
+        }
+      }
+      if (rP[0]) {
+        const playerTeam = playerToTeamMap[rP[0].playerName?.trim().toLowerCase()];
+        const actualTeamId = playerTeam ? playerTeam.id : rP[0].teamId;
+        if (teamsData[actualTeamId]) {
+          teamsData[actualTeamId].totalGameKda = (teamsData[actualTeamId].totalGameKda || 0) + rGameKda;
+        }
+      }
 
       const scored = calculateGameMVP(game.participants, game.gameDuration);
       const gameMvp = scored[0]?.playerName;
@@ -460,7 +493,18 @@ function RankingsContent() {
             playerName: p.playerName,
             championCounts: {}, // to find most played champ
             gamesPlayed: 0,
+            gamesWon: 0,
             kills: 0, deaths: 0, assists: 0,
+            totalGameKda: 0,
+            totalGameDpm: 0,
+            totalGameDmgShare: 0,
+            totalGameKp: 0,
+            totalGameGpm: 0,
+            totalGameDtpm: 0,
+            totalGameDmgTakenShare: 0,
+            totalGameHpm: 0,
+            totalGameHealingShare: 0,
+            totalGameCspm: 0,
             damageDealt: 0, damageTaken: 0,
             gold: 0, cs: 0,
             teamKills: 0, teamDamageDealt: 0, teamDamageTaken: 0,
@@ -468,8 +512,17 @@ function RankingsContent() {
             matchMvpCount: 0,
             seriesMvpCount: 0,
             groupMvpCount: 0,
+            groupMatchMvpCount: 0,
+            groupGamesWon: 0,
+            groupTotalMvpScore: 0,
             playoffMvpCount: 0,
+            playoffMatchMvpCount: 0,
+            playoffGamesWon: 0,
+            playoffTotalMvpScore: 0,
             grandFinalMvpCount: 0,
+            grandFinalMatchMvpCount: 0,
+            grandFinalGamesWon: 0,
+            grandFinalTotalMvpScore: 0,
             totalMvpScore: 0,
             avgMvpScore: 0,
             pentaKills: 0,
@@ -481,6 +534,34 @@ function RankingsContent() {
         stats.gamesPlayed += 1;
         stats.championCounts[p.champion] = (stats.championCounts[p.champion] || 0) + 1;
         
+        const durationMins = game.gameDuration ? game.gameDuration / 60 : 0;
+        const teamK = p.teamId === 100 ? bK : rK;
+        const teamD = p.teamId === 100 ? bD : rD;
+        const teamDT = p.teamId === 100 ? bDT : rDT;
+        const teamH = p.teamId === 100 ? bH : rH;
+
+        const gameKda = ((p.kills || 0) + (p.assists || 0)) / Math.max(p.deaths || 0, 1);
+        const gameDpm = durationMins > 0 ? (p.damageDealt || 0) / durationMins : 0;
+        const gameDmgShare = teamD > 0 ? ((p.damageDealt || 0) / teamD) * 100 : 0;
+        const gameKp = teamK > 0 ? (((p.kills || 0) + (p.assists || 0)) / teamK) * 100 : 0;
+        const gameGpm = durationMins > 0 ? (p.gold || 0) / durationMins : 0;
+        const gameDtpm = durationMins > 0 ? (p.damageTaken || 0) / durationMins : 0;
+        const gameDmgTakenShare = teamDT > 0 ? ((p.damageTaken || 0) / teamDT) * 100 : 0;
+        const gameHpm = durationMins > 0 ? (p.healing || 0) / durationMins : 0;
+        const gameHealingShare = teamH > 0 ? ((p.healing || 0) / teamH) * 100 : 0;
+        const gameCspm = durationMins > 0 ? (p.cs || 0) / durationMins : 0;
+
+        stats.totalGameKda = (stats.totalGameKda || 0) + gameKda;
+        stats.totalGameDpm = (stats.totalGameDpm || 0) + gameDpm;
+        stats.totalGameDmgShare = (stats.totalGameDmgShare || 0) + gameDmgShare;
+        stats.totalGameKp = (stats.totalGameKp || 0) + gameKp;
+        stats.totalGameGpm = (stats.totalGameGpm || 0) + gameGpm;
+        stats.totalGameDtpm = (stats.totalGameDtpm || 0) + gameDtpm;
+        stats.totalGameDmgTakenShare = (stats.totalGameDmgTakenShare || 0) + gameDmgTakenShare;
+        stats.totalGameHpm = (stats.totalGameHpm || 0) + gameHpm;
+        stats.totalGameHealingShare = (stats.totalGameHealingShare || 0) + gameHealingShare;
+        stats.totalGameCspm = (stats.totalGameCspm || 0) + gameCspm;
+
         stats.kills += (p.kills || 0);
         stats.deaths += (p.deaths || 0);
         stats.assists += (p.assists || 0);
@@ -488,15 +569,20 @@ function RankingsContent() {
         stats.damageTaken += (p.damageTaken || 0);
         stats.gold += (p.gold || 0);
         stats.cs += (p.cs || 0);
-        stats.durationMins += (game.gameDuration / 60);
+        stats.durationMins += durationMins;
         stats.pentaKills += (p.pentaKills || 0);
         stats.healing += (p.healing || 0);
 
-        stats.teamKills += (p.teamId === 100 ? bK : rK);
-        stats.teamDamageDealt += (p.teamId === 100 ? bD : rD);
-        stats.teamDamageTaken += (p.teamId === 100 ? bDT : rDT);
+        stats.teamKills += teamK;
+        stats.teamDamageDealt += teamD;
+        stats.teamDamageTaken += teamDT;
 
-        if (p.playerName === gameMvp) stats.matchMvpCount += 1;
+        if (p.playerName === gameMvp) {
+          stats.matchMvpCount += 1;
+          if (isGroup) stats.groupMatchMvpCount += 1;
+          if (isPlayoff) stats.playoffMatchMvpCount += 1;
+          if (isGrandFinal) stats.grandFinalMatchMvpCount += 1;
+        }
 
         // Accumulate player stats into actual team totals
         const playerTeam = playerToTeamMap[p.playerName?.trim().toLowerCase()];
@@ -517,7 +603,17 @@ function RankingsContent() {
         // Add to series scores
         const pScored = scored.find(s => s.playerName === p.playerName);
         if (pScored) {
+          if (pScored.totalScore > 0) {
+            stats.gamesWon += 1;
+            if (isGroup) stats.groupGamesWon += 1;
+            if (isPlayoff) stats.playoffGamesWon += 1;
+            if (isGrandFinal) stats.grandFinalGamesWon += 1;
+          }
           stats.totalMvpScore = (stats.totalMvpScore || 0) + pScored.totalScore;
+          if (isGroup) stats.groupTotalMvpScore = (stats.groupTotalMvpScore || 0) + pScored.totalScore;
+          if (isPlayoff) stats.playoffTotalMvpScore = (stats.playoffTotalMvpScore || 0) + pScored.totalScore;
+          if (isGrandFinal) stats.grandFinalTotalMvpScore = (stats.grandFinalTotalMvpScore || 0) + pScored.totalScore;
+
           seriesScores[p.playerName] = (seriesScores[p.playerName] || 0) + pScored.totalScore;
         }
       });
@@ -527,11 +623,11 @@ function RankingsContent() {
     const seriesMvp = Object.entries(seriesScores).sort((a, b) => b[1] - a[1])[0]?.[0];
     if (seriesMvp && players[seriesMvp]) {
       players[seriesMvp].seriesMvpCount += 1;
-      if (matchId.startsWith("match-g-")) {
+      if (isGroup) {
         players[seriesMvp].groupMvpCount += 1;
-      } else if (matchId.startsWith("match-playoff-") && matchId !== "match-playoff-8") {
+      } else if (isPlayoff) {
         players[seriesMvp].playoffMvpCount += 1;
-      } else if (matchId === "match-playoff-8") {
+      } else if (isGrandFinal) {
         players[seriesMvp].grandFinalMvpCount += 1;
       }
     }
@@ -541,80 +637,240 @@ function RankingsContent() {
   const rankedPlayers = Object.values(players).map(p => {
     // Most played champion
     const topChamp = Object.entries(p.championCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const totalKda = p.gamesPlayed > 0 ? p.totalGameKda / p.gamesPlayed : 0;
     
     return {
       ...p,
       topChamp,
-      kda: p.deaths === 0 ? (p.kills + p.assists) : (p.kills + p.assists) / p.deaths,
-      dpm: p.damageDealt / p.durationMins,
-      dmgShare: p.teamDamageDealt > 0 ? (p.damageDealt / p.teamDamageDealt) * 100 : 0,
-      kp: p.teamKills > 0 ? ((p.kills + p.assists) / p.teamKills) * 100 : 0,
-      gpm: p.gold / p.durationMins,
-      dmgTakenShare: p.teamDamageTaken > 0 ? (p.damageTaken / p.teamDamageTaken) * 100 : 0,
-      cspm: p.cs / p.durationMins,
-      avgMvpScore: p.gamesPlayed > 0 ? p.totalMvpScore / p.gamesPlayed : 0
+      kda: totalKda,
+      dpm: p.gamesPlayed > 0 ? p.totalGameDpm / p.gamesPlayed : 0,
+      dmgShare: p.gamesPlayed > 0 ? p.totalGameDmgShare / p.gamesPlayed : 0,
+      dtpm: p.gamesPlayed > 0 ? p.totalGameDtpm / p.gamesPlayed : 0,
+      dmgTakenShare: p.gamesPlayed > 0 ? p.totalGameDmgTakenShare / p.gamesPlayed : 0,
+      hpm: p.gamesPlayed > 0 ? p.totalGameHpm / p.gamesPlayed : 0,
+      healingShare: p.gamesPlayed > 0 ? p.totalGameHealingShare / p.gamesPlayed : 0,
+      kp: p.gamesPlayed > 0 ? p.totalGameKp / p.gamesPlayed : 0,
+      gpm: p.gamesPlayed > 0 ? p.totalGameGpm / p.gamesPlayed : 0,
+      cspm: p.gamesPlayed > 0 ? p.totalGameCspm / p.gamesPlayed : 0,
+      avgMvpScore: p.gamesWon > 0 ? p.totalMvpScore / p.gamesWon : 0,
+      groupAvgMvpScore: p.groupGamesWon > 0 ? p.groupTotalMvpScore / p.groupGamesWon : 0,
+      playoffAvgMvpScore: p.playoffGamesWon > 0 ? p.playoffTotalMvpScore / p.playoffGamesWon : 0,
+      grandFinalAvgMvpScore: p.grandFinalGamesWon > 0 ? p.grandFinalTotalMvpScore / p.grandFinalGamesWon : 0,
     };
   });
 
   // Calculate advanced metrics for teams
   const rankedTeams = Object.values(teamsData).map(t => {
+    const teamKda = t.gamesPlayed > 0 ? (t.totalGameKda || 0) / t.gamesPlayed : 0;
     return {
       ...t,
-      kda: t.deaths === 0 ? (t.kills + t.assists) : (t.kills + t.assists) / t.deaths,
+      kda: teamKda,
       winRate: t.gamesPlayed > 0 ? (t.wins / t.gamesPlayed) * 100 : 0,
-      dpg: t.gamesPlayed > 0 ? t.damageDealt / t.gamesPlayed : 0,
-      gpg: t.gamesPlayed > 0 ? t.gold / t.gamesPlayed : 0,
-      hpg: t.gamesPlayed > 0 ? t.healing / t.gamesPlayed : 0,
-      cspg: t.gamesPlayed > 0 ? t.cs / t.gamesPlayed : 0
+      avgDmg: t.gamesPlayed > 0 ? t.damageDealt / t.gamesPlayed : 0,
+      avgTaken: t.gamesPlayed > 0 ? t.damageTaken / t.gamesPlayed : 0,
+      avgHealing: t.gamesPlayed > 0 ? t.healing / t.gamesPlayed : 0,
+      avgKills: t.gamesPlayed > 0 ? t.kills / t.gamesPlayed : 0,
+      avgDeaths: t.gamesPlayed > 0 ? t.deaths / t.gamesPlayed : 0,
+      avgAssists: t.gamesPlayed > 0 ? t.assists / t.gamesPlayed : 0,
     };
   });
 
-  const rankedItems = rankingType === "player" ? rankedPlayers : rankedTeams;
-  rankedItems.sort((a, b) => {
-    if (b[sortBy] !== a[sortBy]) {
-      return b[sortBy] - a[sortBy];
+  let rankedItems = rankingType === "player" ? [...rankedPlayers] : [...rankedTeams];
+
+  // Filter requirement 7: Player/Team must have stats for the specific selected metric
+  if (rankingType === "player") {
+    if (sortBy === "seriesMvpCount") {
+      rankedItems = rankedItems.filter(p => (p.seriesMvpCount || 0) > 0);
+    } else if (sortBy === "groupMvpCount") {
+      rankedItems = rankedItems.filter(p => (p.groupMvpCount || 0) > 0);
+    } else if (sortBy === "playoffMvpCount") {
+      rankedItems = rankedItems.filter(p => (p.playoffMvpCount || 0) > 0);
+    } else if (sortBy === "grandFinalMvpCount") {
+      rankedItems = rankedItems.filter(p => (p.grandFinalMvpCount || 0) > 0);
+    } else if (["kda", "kills", "deaths", "assists"].includes(sortBy)) {
+      rankedItems = rankedItems.filter(p => (p.gamesPlayed || 0) > 0);
+    } else if (["damageDealt", "dpm", "dmgShare"].includes(sortBy)) {
+      rankedItems = rankedItems.filter(p => (p.damageDealt || 0) > 0);
+    } else if (["damageTaken", "dtpm", "dmgTakenShare"].includes(sortBy)) {
+      rankedItems = rankedItems.filter(p => (p.damageTaken || 0) > 0);
+    } else if (["healing", "hpm", "healingShare"].includes(sortBy)) {
+      rankedItems = rankedItems.filter(p => (p.healing || 0) > 0);
+    } else if (sortBy === "pentaKills") {
+      rankedItems = rankedItems.filter(p => (p.pentaKills || 0) > 0);
+    } else {
+      rankedItems = rankedItems.filter(p => (p.gamesPlayed || 0) > 0);
     }
+  } else {
+    // Team filter groups
+    if (["positionScore", "winRate", "kda"].includes(sortBy)) {
+      rankedItems = rankedItems.filter(t => (t.gamesPlayed || 0) > 0);
+    } else if (["avgDmg", "avgTaken", "avgHealing"].includes(sortBy)) {
+      rankedItems = rankedItems.filter(t => (t.damageDealt || 0) > 0);
+    } else if (["avgKills", "avgDeaths", "avgAssists"].includes(sortBy)) {
+      rankedItems = rankedItems.filter(t => (t.gamesPlayed || 0) > 0);
+    } else {
+      rankedItems = rankedItems.filter(t => (t.gamesPlayed || 0) > 0);
+    }
+  }
+
+  const handleSort = (colKey) => {
+    if (!colKey) return;
+    if (sortColumn === colKey) {
+      setSortOrder(prev => (prev === "desc" ? "asc" : "desc"));
+    } else {
+      setSortColumn(colKey);
+      setSortOrder(colKey === "avgDeaths" || colKey === "deaths" ? "asc" : "desc");
+    }
+  };
+
+  rankedItems.sort((a, b) => {
+    let result = 0;
+    const col = sortColumn || sortBy;
     if (rankingType === "player") {
-      if (["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount", "matchMvpCount"].includes(sortBy)) {
-        if (b.avgMvpScore !== a.avgMvpScore) {
-          return b.avgMvpScore - a.avgMvpScore;
+      if (col === "seriesMvpCount") {
+        if (b.seriesMvpCount !== a.seriesMvpCount) result = b.seriesMvpCount - a.seriesMvpCount;
+        else if (b.matchMvpCount !== a.matchMvpCount) result = b.matchMvpCount - a.matchMvpCount;
+        else if (b.avgMvpScore !== a.avgMvpScore) result = b.avgMvpScore - a.avgMvpScore;
+        else result = (b.kda || 0) - (a.kda || 0);
+      } else if (col === "groupMvpCount") {
+        if (b.groupMvpCount !== a.groupMvpCount) result = b.groupMvpCount - a.groupMvpCount;
+        else if (b.groupMatchMvpCount !== a.groupMatchMvpCount) result = b.groupMatchMvpCount - a.groupMatchMvpCount;
+        else if (b.groupAvgMvpScore !== a.groupAvgMvpScore) result = b.groupAvgMvpScore - a.groupAvgMvpScore;
+        else result = (b.kda || 0) - (a.kda || 0);
+      } else if (col === "playoffMvpCount") {
+        if (b.playoffMvpCount !== a.playoffMvpCount) result = b.playoffMvpCount - a.playoffMvpCount;
+        else if (b.playoffMatchMvpCount !== a.playoffMatchMvpCount) result = b.playoffMatchMvpCount - a.playoffMatchMvpCount;
+        else if (b.playoffAvgMvpScore !== a.playoffAvgMvpScore) result = b.playoffAvgMvpScore - a.playoffAvgMvpScore;
+        else result = (b.kda || 0) - (a.kda || 0);
+      } else if (col === "grandFinalMvpCount") {
+        if (b.grandFinalMvpCount !== a.grandFinalMvpCount) result = b.grandFinalMvpCount - a.grandFinalMvpCount;
+        else if (b.grandFinalMatchMvpCount !== a.grandFinalMatchMvpCount) result = b.grandFinalMatchMvpCount - a.grandFinalMatchMvpCount;
+        else if (b.grandFinalAvgMvpScore !== a.grandFinalAvgMvpScore) result = b.grandFinalAvgMvpScore - a.grandFinalAvgMvpScore;
+        else result = (b.kda || 0) - (a.kda || 0);
+      } else {
+        if ((b[col] || 0) !== (a[col] || 0)) {
+          result = (b[col] || 0) - (a[col] || 0);
+        } else {
+          result = (b.kda || 0) - (a.kda || 0);
         }
       }
-      return (b.kda || 0) - (a.kda || 0);
+    } else if (rankingType === "team") {
+      if (col === "avgDeaths") {
+        if (a.avgDeaths !== b.avgDeaths) result = (a.avgDeaths || 0) - (b.avgDeaths || 0);
+        else result = (b.kda || 0) - (a.kda || 0);
+      } else if ((b[col] || 0) !== (a[col] || 0)) {
+        result = (b[col] || 0) - (a[col] || 0);
+      } else {
+        result = (b.winRate || 0) - (a.winRate || 0);
+      }
     }
-    if (rankingType === "team") {
-      return (b.winRate || 0) - (a.winRate || 0);
-    }
-    return 0;
+    return sortOrder === "asc" ? -result : result;
   });
 
   const top1 = rankedItems[0];
   const top2 = rankedItems[1];
   const top3 = rankedItems[2];
 
-  const formatStat = (val, metricId, item) => {
+  const renderStatPills = (item, metricId) => {
+    if (!item) return null;
+    if (["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount", "matchMvpCount", "avgMvpScore"].includes(metricId)) {
+      let seriesVal = item.seriesMvpCount || 0;
+      let matchVal = item.matchMvpCount || 0;
+      let avgVal = item.avgMvpScore || 0;
+
+      if (metricId === "groupMvpCount") {
+        seriesVal = item.groupMvpCount || 0;
+        matchVal = item.groupMatchMvpCount || 0;
+        avgVal = item.groupAvgMvpScore || 0;
+      } else if (metricId === "playoffMvpCount") {
+        seriesVal = item.playoffMvpCount || 0;
+        matchVal = item.playoffMatchMvpCount || 0;
+        avgVal = item.playoffAvgMvpScore || 0;
+      } else if (metricId === "grandFinalMvpCount") {
+        seriesVal = item.grandFinalMvpCount || 0;
+        matchVal = item.grandFinalMatchMvpCount || 0;
+        avgVal = item.grandFinalAvgMvpScore || 0;
+      }
+
+      const isMatch = metricId === "matchMvpCount";
+      const isAvg = metricId === "avgMvpScore";
+
+      return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
+          {/* Main Sorted Badge */}
+          {isMatch ? (
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: "0.25rem",
+              fontWeight: "900", fontSize: "0.82rem", color: "#c084fc",
+              backgroundColor: "rgba(192,132,252,0.15)", border: "1px solid rgba(192,132,252,0.4)",
+              padding: "0.2rem 0.6rem", borderRadius: "14px", whiteSpace: "nowrap"
+            }}>
+              <Award size={12} /> {matchVal} Match MVP{matchVal !== 1 ? "s" : ""}
+            </span>
+          ) : isAvg ? (
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: "0.25rem",
+              fontWeight: "900", fontSize: "0.82rem", color: "#60a5fa",
+              backgroundColor: "rgba(96,165,250,0.15)", border: "1px solid rgba(96,165,250,0.4)",
+              padding: "0.2rem 0.6rem", borderRadius: "14px", whiteSpace: "nowrap"
+            }}>
+              <Zap size={12} /> Avg {avgVal.toFixed(1)} Score
+            </span>
+          ) : (
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: "0.25rem",
+              fontWeight: "900", fontSize: "0.82rem", color: "#fbbf24",
+              backgroundColor: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.4)",
+              padding: "0.2rem 0.6rem", borderRadius: "14px", whiteSpace: "nowrap"
+            }}>
+              <Crown size={12} /> {seriesVal} Series MVP{seriesVal !== 1 ? "s" : ""}
+            </span>
+          )}
+
+          {/* Sub Stats Row */}
+          <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", whiteSpace: "nowrap", fontWeight: "600" }}>
+            {isMatch
+              ? `${seriesVal} Series · Avg ${avgVal.toFixed(1)}`
+              : isAvg
+              ? `${seriesVal} Series · ${matchVal} Match`
+              : `${matchVal} Match · Avg ${avgVal.toFixed(1)}`}
+          </span>
+        </div>
+      );
+    }
+
+    const val = item[metricId];
+    if (typeof val !== "number") return null;
+
+    let displayStr = `${val.toFixed(2)} pts`;
     if (metricId === "positionScore") {
-      if (val === 100) return "Champion";
-      if (val === 80) return "Runner-up";
-      if (val === 60) return "3rd Place";
-      if (val === 55) return "Top 3";
-      if (val === 40) return "4th Place";
-      if (val === 35) return "Top 4";
-      if (val === 20) return "5th-6th Place";
-      return "Group Stage";
-    }
-    if (["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount", "matchMvpCount"].includes(metricId)) {
-      const avgStr = item && typeof item.avgMvpScore === "number" ? ` (Avg: ${item.avgMvpScore.toFixed(1)})` : "";
-      return `${val} MVP${val !== 1 ? 's' : ''}${avgStr}`;
-    }
-    if (metricId === "kda") return `${val.toFixed(2)} KDA`;
-    if (["dmgShare", "kp", "dmgTakenShare"].includes(metricId)) return val.toFixed(1) + "%";
-    if (metricId === "winRate") return val.toFixed(1) + "% WR";
-    if (["dpm", "gpm", "cspm"].includes(metricId)) return `${Math.round(val).toLocaleString()}/m`;
-    if (metricId === "pentaKills") return `${val} Pentakill${val !== 1 ? 's' : ''}`;
-    if (["healing", "kills"].includes(metricId)) return val.toLocaleString();
-    if (["dpg", "gpg", "hpg", "cspg"].includes(metricId)) return `${Math.round(val).toLocaleString()}/game`;
-    return `${val.toFixed(2)} pts`;
+      if (val === 100) displayStr = "Champion";
+      else if (val === 80) displayStr = "Runner-up";
+      else if (val === 60) displayStr = "3rd Place";
+      else if (val === 55) displayStr = "Top 3";
+      else if (val === 40) displayStr = "4th Place";
+      else if (val === 35) displayStr = "Top 4";
+      else if (val === 20) displayStr = "5th-6th Place";
+      else displayStr = "Group Stage";
+    } else if (metricId === "kda") displayStr = `${val.toFixed(2)} KDA`;
+    else if (["dmgShare", "kp", "dmgTakenShare"].includes(metricId)) displayStr = `${val.toFixed(1)}%`;
+    else if (metricId === "winRate") displayStr = `${val.toFixed(1)}% WR`;
+    else if (["dpm", "gpm", "cspm"].includes(metricId)) displayStr = `${Math.round(val).toLocaleString()}/m`;
+    else if (metricId === "pentaKills") displayStr = `${val} Pentakill${val !== 1 ? 's' : ''}`;
+    else if (["healing", "kills"].includes(metricId)) displayStr = val.toLocaleString();
+    else if (["dpg", "gpg", "hpg", "cspg"].includes(metricId)) displayStr = `${Math.round(val).toLocaleString()}/game`;
+
+    return (
+      <span style={{
+        fontWeight: "800", fontSize: "0.82rem", whiteSpace: "nowrap",
+        color: "var(--primary-gold-bright)",
+        backgroundColor: "rgba(212,175,55,0.08)",
+        border: "1px solid rgba(212,175,55,0.2)",
+        padding: "0.15rem 0.6rem", borderRadius: "16px"
+      }}>
+        {displayStr}
+      </span>
+    );
   };
 
   const handleRankingTypeChange = (type) => {
@@ -691,6 +947,56 @@ function RankingsContent() {
     );
   };
 
+  const renderBroadcastHeroBanner = () => {
+    const topPlayer = rankedPlayers[0];
+
+    return (
+      <div style={{
+        width: "100%", gridColumn: "1 / -1", marginBottom: "1.5rem",
+        background: "linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(15,23,42,0.95) 70%)",
+        border: "1px solid rgba(212,175,55,0.4)", borderRadius: "20px", padding: "2rem",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15)",
+        display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "2rem"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          {topPlayer && (
+            <div style={{ filter: "drop-shadow(0 0 20px rgba(212,175,55,0.5))" }}>
+              <PlayerSignature name={topPlayer.playerName} size={90} />
+            </div>
+          )}
+          <div>
+            <span style={{ fontSize: "0.75rem", fontWeight: "900", color: "var(--primary-gold)", textTransform: "uppercase", letterSpacing: "0.15em", backgroundColor: "rgba(0,0,0,0.5)", padding: "0.25rem 0.75rem", borderRadius: "14px", border: "1px solid rgba(212,175,55,0.3)" }}>
+              📺 LCK BROADCAST SPOTLIGHT MVP
+            </span>
+            <h2 style={{ fontSize: "2.2rem", fontWeight: "900", color: "#fff", margin: "0.5rem 0 0.2rem" }}>
+              {topPlayer ? topPlayer.playerName : "No Player"}
+            </h2>
+            <span style={{ fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: "600" }}>
+              {topPlayer ? (playerToTeamMap[topPlayer.playerName?.trim().toLowerCase()]?.name || "Free Agent") : ""}
+            </span>
+          </div>
+        </div>
+
+        {topPlayer && (
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            <div style={{ backgroundColor: "rgba(0,0,0,0.5)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: "14px", padding: "0.75rem 1.25rem", textAlign: "center" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700" }}>SERIES MVPS</div>
+              <div style={{ fontSize: "1.8rem", fontWeight: "900", color: "#fbbf24" }}>{topPlayer.seriesMvpCount || 0}</div>
+            </div>
+            <div style={{ backgroundColor: "rgba(0,0,0,0.5)", border: "1px solid rgba(192,132,252,0.3)", borderRadius: "14px", padding: "0.75rem 1.25rem", textAlign: "center" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700" }}>MATCH MVPS</div>
+              <div style={{ fontSize: "1.8rem", fontWeight: "900", color: "#c084fc" }}>{topPlayer.matchMvpCount || 0}</div>
+            </div>
+            <div style={{ backgroundColor: "rgba(0,0,0,0.5)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "14px", padding: "0.75rem 1.25rem", textAlign: "center" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700" }}>AVG SCORE (WINS)</div>
+              <div style={{ fontSize: "1.8rem", fontWeight: "900", color: "#60a5fa" }}>{(topPlayer.avgMvpScore || 0).toFixed(1)}</div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderChampionshipCard = () => {
     const gf = matches?.["match-playoff-8"];
     const lbf = matches?.["match-playoff-7"];
@@ -708,42 +1014,45 @@ function RankingsContent() {
         return <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>No roster registered</span>;
       }
       return (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", marginTop: "0.5rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", marginTop: "0.2rem" }}>
           {teamObj.players.map(p => (
             <Link
               key={p.name}
               href={`/players/${encodeURIComponent(p.name)}?backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`}
-              style={{ display: "flex", alignItems: "center", gap: "0.3rem", backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid var(--border-dark)", borderRadius: "20px", padding: "0.15rem 0.5rem 0.15rem 0.25rem", textDecoration: "none", transition: "border-color 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(212,175,55,0.4)"}
-              onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border-dark)"}
+              style={{ display: "flex", alignItems: "center", gap: "0.3rem", backgroundColor: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", padding: "0.15rem 0.55rem 0.15rem 0.3rem", textDecoration: "none", transition: "border-color 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(212,175,55,0.5)"}
+              onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
             >
               <PlayerSignature name={p.name} size={20} />
-              <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)", whiteSpace: "nowrap", fontWeight: "600" }}>{p.name}</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)", whiteSpace: "nowrap", fontWeight: "600" }}>{p.name}</span>
             </Link>
           ))}
         </div>
       );
     };
 
-    const renderTeamRow = (teamObj, teamId, rankLabel, accentColor, borderColor) => (
-      <div style={{ backgroundColor: `rgba(${accentColor}, 0.04)`, padding: "0.9rem 1rem", borderRadius: "10px", border: `1px solid rgba(${accentColor}, 0.2)` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: teamObj ? "0.5rem" : "0" }}>
-          <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>{rankLabel}</span>
+    const renderTeamRow = (teamObj, teamId, rankLabel, accentColor) => (
+      <div style={{
+        backgroundColor: `rgba(${accentColor}, 0.05)`, padding: "1rem 1.25rem", borderRadius: "14px",
+        border: `1px solid rgba(${accentColor}, 0.25)`, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+          <span style={{ fontSize: "1.6rem", lineHeight: 1 }}>{rankLabel}</span>
           {teamObj ? (
             <Link href={`/teams?teamId=${teamId}&backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} className="no-zoom">
               <img
-                src={teamObj.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(teamObj.name, 36) : "")}
+                src={teamObj.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(teamObj.name, 40) : "")}
                 alt={teamObj.name}
                 className="no-zoom"
-                style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "6px", backgroundColor: "rgba(255,255,255,0.03)", padding: "2px", flexShrink: 0 }}
+                style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "8px", backgroundColor: "rgba(0,0,0,0.4)", padding: "2px", flexShrink: 0, border: `1px solid rgba(${accentColor}, 0.3)` }}
               />
             </Link>
           ) : (
-            <div style={{ width: "36px", height: "36px", borderRadius: "6px", backgroundColor: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>?</div>
+            <div style={{ width: "40px", height: "40px", borderRadius: "8px", backgroundColor: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>?</div>
           )}
-          <div style={{ minWidth: 0 }}>
+          <div style={{ textAlign: "left" }}>
             {teamObj ? (
-              <Link href={`/teams?teamId=${teamId}&backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} style={{ fontWeight: "700", color: `rgb(${accentColor})`, textDecoration: "none", fontSize: "1rem", display: "block" }}>
+              <Link href={`/teams?teamId=${teamId}&backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} style={{ fontWeight: "900", color: `rgb(${accentColor})`, textDecoration: "none", fontSize: "1.1rem", display: "block" }}>
                 {teamObj.name}
               </Link>
             ) : (
@@ -756,29 +1065,28 @@ function RankingsContent() {
     );
 
     return (
-      <div className="card" style={{
-        background: "linear-gradient(135deg, rgba(212, 175, 55, 0.06), rgba(0,0,0,0.7))",
-        border: "1px solid rgba(212, 175, 55, 0.3)",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(212, 175, 55, 0.05)",
-        padding: "2rem",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "420px",
-        transition: "transform 0.3s ease, border-color 0.3s ease",
-        borderRadius: "12px"
+      <div style={{
+        background: "linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(0,0,0,0.85) 100%)",
+        border: "1px solid rgba(212, 175, 55, 0.35)",
+        borderRadius: "20px", padding: "2rem", textAlign: "center",
+        boxShadow: "0 12px 36px rgba(0,0,0,0.5), inset 0 0 20px rgba(212, 175, 55, 0.05)"
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-          <span style={{ color: "var(--primary-gold)", fontWeight: "bold", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>🏆 Reward Category</span>
-          <span style={{ color: "var(--primary-gold-bright)", fontWeight: "900", fontSize: "1.2rem" }}>🥇 🥈 🥉</span>
+        <div style={{ marginBottom: "1.5rem" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: "900", color: "var(--primary-gold)", textTransform: "uppercase", letterSpacing: "0.15em", backgroundColor: "rgba(0,0,0,0.6)", padding: "0.25rem 0.8rem", borderRadius: "14px", border: "1px solid rgba(212,175,55,0.3)", display: "inline-block", marginBottom: "0.4rem" }}>
+            🏆 REWARD CATEGORY
+          </span>
+          <h2 style={{ fontSize: "1.8rem", fontWeight: "900", textTransform: "uppercase", color: "var(--primary-gold-bright)", margin: "0 0 0.3rem 0" }}>
+            Championship Standings
+          </h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: 0 }}>
+            Awarded to the top placing teams in the tournament playoffs.
+          </p>
         </div>
-        <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em", color: "var(--primary-gold-bright)" }}>Championship Standings</h3>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
-          Awarded to the top placing teams in the tournament playoffs.
-        </p>
+
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {renderTeamRow(champ, champId, "🥇", "212,175,55", "gold")}
-          {renderTeamRow(runner, runnerId, "🥈", "192,192,192", "silver")}
-          {renderTeamRow(third, thirdId, "🥉", "205,127,50", "bronze")}
+          {renderTeamRow(champ, champId, "🥇", "212,175,55")}
+          {renderTeamRow(runner, runnerId, "🥈", "192,192,192")}
+          {renderTeamRow(third, thirdId, "🥉", "205,127,50")}
         </div>
       </div>
     );
@@ -787,33 +1095,40 @@ function RankingsContent() {
   const renderMvpAwardCard = () => {
     const sortedGroupPlayers = [...rankedPlayers].sort((a, b) => {
       if (b.groupMvpCount !== a.groupMvpCount) return b.groupMvpCount - a.groupMvpCount;
-      return b.avgMvpScore - a.avgMvpScore;
+      if (b.groupMatchMvpCount !== a.groupMatchMvpCount) return b.groupMatchMvpCount - a.groupMatchMvpCount;
+      return b.groupAvgMvpScore - a.groupAvgMvpScore;
     });
     const topGroupMvp = sortedGroupPlayers[0];
-    const hasGroupMvp = topGroupMvp && topGroupMvp.groupMvpCount > 0;
+    const hasGroupMvp = topGroupMvp && (topGroupMvp.groupMvpCount > 0 || topGroupMvp.groupMatchMvpCount > 0);
 
     const sortedPlayoffPlayers = [...rankedPlayers].sort((a, b) => {
       if (b.playoffMvpCount !== a.playoffMvpCount) return b.playoffMvpCount - a.playoffMvpCount;
-      return b.avgMvpScore - a.avgMvpScore;
+      if (b.playoffMatchMvpCount !== a.playoffMatchMvpCount) return b.playoffMatchMvpCount - a.playoffMatchMvpCount;
+      return b.playoffAvgMvpScore - a.playoffAvgMvpScore;
     });
     const topPlayoffMvp = sortedPlayoffPlayers[0];
-    const hasPlayoffMvp = topPlayoffMvp && topPlayoffMvp.playoffMvpCount > 0;
+    const hasPlayoffMvp = topPlayoffMvp && (topPlayoffMvp.playoffMvpCount > 0 || topPlayoffMvp.playoffMatchMvpCount > 0);
 
     const sortedGfPlayers = [...rankedPlayers].sort((a, b) => {
       if (b.grandFinalMvpCount !== a.grandFinalMvpCount) return b.grandFinalMvpCount - a.grandFinalMvpCount;
-      return b.avgMvpScore - a.avgMvpScore;
+      if (b.grandFinalMatchMvpCount !== a.grandFinalMatchMvpCount) return b.grandFinalMatchMvpCount - a.grandFinalMatchMvpCount;
+      return b.grandFinalAvgMvpScore - a.grandFinalAvgMvpScore;
     });
     const topGfMvp = sortedGfPlayers[0];
-    const hasGfMvp = topGfMvp && topGfMvp.grandFinalMvpCount > 0;
+    const hasGfMvp = topGfMvp && (topGfMvp.grandFinalMvpCount > 0 || topGfMvp.grandFinalMatchMvpCount > 0);
 
     const stageColors = {
-      GP: { bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.3)", text: "#60a5fa", label: "Group Stage MVP" },
-      PO: { bg: "rgba(192,132,252,0.12)", border: "rgba(192,132,252,0.3)", text: "#c084fc", label: "Playoff MVP" },
-      GF: { bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.35)", text: "#fbbf24", label: "Grand Final MVP" },
+      GP: { bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.3)", text: "#60a5fa", label: "Group Stage MVP", seriesKey: "groupMvpCount", matchKey: "groupMatchMvpCount", avgKey: "groupAvgMvpScore" },
+      PO: { bg: "rgba(192,132,252,0.12)", border: "rgba(192,132,252,0.3)", text: "#c084fc", label: "Playoff MVP", seriesKey: "playoffMvpCount", matchKey: "playoffMatchMvpCount", avgKey: "playoffAvgMvpScore" },
+      GF: { bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.35)", text: "#fbbf24", label: "Grand Final MVP", seriesKey: "grandFinalMvpCount", matchKey: "grandFinalMatchMvpCount", avgKey: "grandFinalAvgMvpScore" },
     };
 
-    const renderMvpRow = (player, hasMvp, countKey, stage) => {
+    const renderMvpRow = (player, hasMvp, stage) => {
       const sc = stageColors[stage];
+      const seriesCount = player ? (player[sc.seriesKey] || 0) : 0;
+      const matchCount = player ? (player[sc.matchKey] || 0) : 0;
+      const avgScore = player ? (player[sc.avgKey] || 0) : 0;
+
       return (
         <div style={{ backgroundColor: sc.bg, padding: "0.9rem 1rem", borderRadius: "10px", border: `1px solid ${sc.border}` }}>
           {/* Stage label */}
@@ -835,24 +1150,32 @@ function RankingsContent() {
                 <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginTop: "0.15rem" }}>
                   {playerToTeamMap[player.playerName?.trim().toLowerCase()]?.name || "Free Agent"}
                 </span>
-                {/* Stats row — MVP count + Avg grouped, bold & prominent */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.45rem" }}>
+                {/* Combined Stats row — Series MVP + Match MVP + Avg Score */}
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.4rem", marginTop: "0.45rem" }}>
                   <span style={{
                     display: "inline-flex", alignItems: "center", gap: "0.25rem",
-                    fontWeight: "900", fontSize: "1rem", color: sc.text,
+                    fontWeight: "900", fontSize: "0.85rem", color: sc.text,
                     backgroundColor: `${sc.bg}`, border: `1px solid ${sc.border}`,
-                    padding: "0.15rem 0.6rem", borderRadius: "20px", letterSpacing: "0.01em"
+                    padding: "0.15rem 0.5rem", borderRadius: "20px"
                   }}>
                     <Award size={12} />
-                    {player[countKey]} MVP{player[countKey] !== 1 ? "s" : ""}
+                    {seriesCount} Series MVP{seriesCount !== 1 ? "s" : ""}
                   </span>
                   <span style={{
                     display: "inline-flex", alignItems: "center", gap: "0.25rem",
-                    fontWeight: "800", fontSize: "0.9rem", color: sc.text,
+                    fontWeight: "800", fontSize: "0.85rem", color: sc.text,
                     backgroundColor: `${sc.bg}`, border: `1px solid ${sc.border}`,
-                    padding: "0.15rem 0.6rem", borderRadius: "20px", opacity: 0.85
+                    padding: "0.15rem 0.5rem", borderRadius: "20px", opacity: 0.9
                   }}>
-                    Avg {player.avgMvpScore.toFixed(1)}
+                    {matchCount} Match MVP{matchCount !== 1 ? "s" : ""}
+                  </span>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: "0.25rem",
+                    fontWeight: "800", fontSize: "0.85rem", color: sc.text,
+                    backgroundColor: `${sc.bg}`, border: `1px solid ${sc.border}`,
+                    padding: "0.15rem 0.5rem", borderRadius: "20px", opacity: 0.85
+                  }}>
+                    Avg {avgScore.toFixed(1)}
                   </span>
                 </div>
               </div>
@@ -882,13 +1205,179 @@ function RankingsContent() {
         </div>
         <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em", color: "#c084fc" }}>Tournament MVPs</h3>
         <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
-          Rewarded by tournament stages based on Series MVP counts (tiebroken by average MVP score).
+          Ranked by Series MVPs, Match MVPs, and phase average MVP scores per stage.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-          {renderMvpRow(topGroupMvp, hasGroupMvp, "groupMvpCount", "GP")}
-          {renderMvpRow(topPlayoffMvp, hasPlayoffMvp, "playoffMvpCount", "PO")}
-          {renderMvpRow(topGfMvp, hasGfMvp, "grandFinalMvpCount", "GF")}
+          {renderMvpRow(topGroupMvp, hasGroupMvp, "GP")}
+          {renderMvpRow(topPlayoffMvp, hasPlayoffMvp, "PO")}
+          {renderMvpRow(topGfMvp, hasGfMvp, "GF")}
         </div>
+      </div>
+    );
+  };
+
+  const renderBentoMvpCards = () => {
+    const sortedGroupPlayers = [...rankedPlayers].sort((a, b) => {
+      if (b.groupMvpCount !== a.groupMvpCount) return b.groupMvpCount - a.groupMvpCount;
+      if (b.groupMatchMvpCount !== a.groupMatchMvpCount) return b.groupMatchMvpCount - a.groupMatchMvpCount;
+      return b.groupAvgMvpScore - a.groupAvgMvpScore;
+    });
+    const topGroupMvp = sortedGroupPlayers[0];
+
+    const sortedPlayoffPlayers = [...rankedPlayers].sort((a, b) => {
+      if (b.playoffMvpCount !== a.playoffMvpCount) return b.playoffMvpCount - a.playoffMvpCount;
+      if (b.playoffMatchMvpCount !== a.playoffMatchMvpCount) return b.playoffMatchMvpCount - a.playoffMatchMvpCount;
+      return b.playoffAvgMvpScore - a.playoffAvgMvpScore;
+    });
+    const topPlayoffMvp = sortedPlayoffPlayers[0];
+
+    const sortedGfPlayers = [...rankedPlayers].sort((a, b) => {
+      if (b.grandFinalMvpCount !== a.grandFinalMvpCount) return b.grandFinalMvpCount - a.grandFinalMvpCount;
+      if (b.grandFinalMatchMvpCount !== a.grandFinalMatchMvpCount) return b.grandFinalMatchMvpCount - a.grandFinalMatchMvpCount;
+      return b.grandFinalAvgMvpScore - a.grandFinalAvgMvpScore;
+    });
+    const topGfMvp = sortedGfPlayers[0];
+
+    const bentoItems = [
+      { title: "Grand Final MVP", player: topGfMvp, color: "#fbbf24", bg: "linear-gradient(135deg, rgba(251,191,36,0.15), rgba(0,0,0,0.85))", border: "rgba(251,191,36,0.45)", seriesKey: "grandFinalMvpCount", matchKey: "grandFinalMatchMvpCount", avgKey: "grandFinalAvgMvpScore" },
+      { title: "Playoff Stage MVP", player: topPlayoffMvp, color: "#c084fc", bg: "linear-gradient(135deg, rgba(192,132,252,0.15), rgba(0,0,0,0.85))", border: "rgba(192,132,252,0.45)", seriesKey: "playoffMvpCount", matchKey: "playoffMatchMvpCount", avgKey: "playoffAvgMvpScore" },
+      { title: "Group Stage MVP", player: topGroupMvp, color: "#60a5fa", bg: "linear-gradient(135deg, rgba(96,165,250,0.15), rgba(0,0,0,0.85))", border: "rgba(96,165,250,0.45)", seriesKey: "groupMvpCount", matchKey: "groupMatchMvpCount", avgKey: "groupAvgMvpScore" },
+    ];
+
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", width: "100%", gridColumn: "1 / -1", marginBottom: "1rem" }}>
+        {bentoItems.map((item, i) => {
+          const p = item.player;
+          const seriesVal = p ? (p[item.seriesKey] || 0) : 0;
+          const matchVal = p ? (p[item.matchKey] || 0) : 0;
+          const avgVal = p ? (p[item.avgKey] || 0) : 0;
+
+          return (
+            <div key={i} style={{
+              background: item.bg, border: `1px solid ${item.border}`,
+              borderRadius: "16px", padding: "1.5rem", backdropFilter: "blur(12px)",
+              display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "180px",
+              boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)`
+            }}>
+              <div>
+                <span style={{ fontSize: "0.7rem", fontWeight: "900", textTransform: "uppercase", letterSpacing: "0.12em", color: item.color }}>
+                  {item.title}
+                </span>
+                {p ? (
+                  <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <PlayerSignature name={p.playerName} size={54} />
+                    <div>
+                      <Link href={`/players/${encodeURIComponent(p.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} style={{ fontSize: "1.2rem", fontWeight: "900", color: "var(--text-primary)", textDecoration: "none", display: "block" }}>
+                        {p.playerName}
+                      </Link>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                        {playerToTeamMap[p.playerName?.trim().toLowerCase()]?.name || "Free Agent"}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: "1.5rem 0", color: "var(--text-muted)", fontStyle: "italic", fontSize: "0.85rem" }}>TBD – In Progress</div>
+                )}
+              </div>
+
+              {p && (
+                <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "1.2rem" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: "900", color: item.color, backgroundColor: "rgba(0,0,0,0.5)", border: `1px solid ${item.border}`, padding: "0.2rem 0.55rem", borderRadius: "12px" }}>
+                    👑 {seriesVal} Series
+                  </span>
+                  <span style={{ fontSize: "0.75rem", fontWeight: "800", color: item.color, backgroundColor: "rgba(0,0,0,0.5)", border: `1px solid ${item.border}`, padding: "0.2rem 0.55rem", borderRadius: "12px" }}>
+                    ⭐ {matchVal} Match
+                  </span>
+                  <span style={{ fontSize: "0.75rem", fontWeight: "800", color: item.color, backgroundColor: "rgba(0,0,0,0.5)", border: `1px solid ${item.border}`, padding: "0.2rem 0.55rem", borderRadius: "12px" }}>
+                    🔥 Avg {avgVal.toFixed(1)}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderTradingMvpCards = () => {
+    const sortedGroupPlayers = [...rankedPlayers].sort((a, b) => {
+      if (b.groupMvpCount !== a.groupMvpCount) return b.groupMvpCount - a.groupMvpCount;
+      if (b.groupMatchMvpCount !== a.groupMatchMvpCount) return b.groupMatchMvpCount - a.groupMatchMvpCount;
+      return b.groupAvgMvpScore - a.groupAvgMvpScore;
+    });
+    const topGroupMvp = sortedGroupPlayers[0];
+
+    const sortedPlayoffPlayers = [...rankedPlayers].sort((a, b) => {
+      if (b.playoffMvpCount !== a.playoffMvpCount) return b.playoffMvpCount - a.playoffMvpCount;
+      if (b.playoffMatchMvpCount !== a.playoffMatchMvpCount) return b.playoffMatchMvpCount - a.playoffMatchMvpCount;
+      return b.playoffAvgMvpScore - a.playoffAvgMvpScore;
+    });
+    const topPlayoffMvp = sortedPlayoffPlayers[0];
+
+    const sortedGfPlayers = [...rankedPlayers].sort((a, b) => {
+      if (b.grandFinalMvpCount !== a.grandFinalMvpCount) return b.grandFinalMvpCount - a.grandFinalMvpCount;
+      if (b.grandFinalMatchMvpCount !== a.grandFinalMatchMvpCount) return b.grandFinalMatchMvpCount - a.grandFinalMatchMvpCount;
+      return b.grandFinalAvgMvpScore - a.grandFinalAvgMvpScore;
+    });
+    const topGfMvp = sortedGfPlayers[0];
+
+    const cards = [
+      { title: "GRAND FINAL MVP", player: topGfMvp, color: "#fbbf24", foil: "linear-gradient(135deg, rgba(251,191,36,0.3) 0%, rgba(212,175,55,0.05) 50%, rgba(0,0,0,0.9) 100%)", border: "2px solid #fbbf24", seriesKey: "grandFinalMvpCount", matchKey: "grandFinalMatchMvpCount", avgKey: "grandFinalAvgMvpScore" },
+      { title: "PLAYOFF MVP", player: topPlayoffMvp, color: "#c084fc", foil: "linear-gradient(135deg, rgba(192,132,252,0.3) 0%, rgba(168,85,247,0.05) 50%, rgba(0,0,0,0.9) 100%)", border: "2px solid #c084fc", seriesKey: "playoffMvpCount", matchKey: "playoffMatchMvpCount", avgKey: "playoffAvgMvpScore" },
+      { title: "GROUP STAGE MVP", player: topGroupMvp, color: "#60a5fa", foil: "linear-gradient(135deg, rgba(96,165,250,0.3) 0%, rgba(59,130,246,0.05) 50%, rgba(0,0,0,0.9) 100%)", border: "2px solid #60a5fa", seriesKey: "groupMvpCount", matchKey: "groupMatchMvpCount", avgKey: "groupAvgMvpScore" },
+    ];
+
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", width: "100%", gridColumn: "1 / -1", marginBottom: "1rem" }}>
+        {cards.map((c, i) => {
+          const p = c.player;
+          const seriesVal = p ? (p[c.seriesKey] || 0) : 0;
+          const matchVal = p ? (p[c.matchKey] || 0) : 0;
+          const avgVal = p ? (p[c.avgKey] || 0) : 0;
+
+          return (
+            <div key={i} style={{
+              background: c.foil, border: c.border, borderRadius: "20px", padding: "1.75rem",
+              boxShadow: `0 12px 36px rgba(0,0,0,0.5), inset 0 0 20px ${c.color}22`,
+              display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative"
+            }}>
+              <span style={{ fontSize: "0.72rem", fontWeight: "900", letterSpacing: "0.15em", color: c.color, backgroundColor: "rgba(0,0,0,0.6)", padding: "0.25rem 0.8rem", borderRadius: "14px", border: `1px solid ${c.color}44`, marginBottom: "1.2rem" }}>
+                {c.title}
+              </span>
+
+              {p ? (
+                <>
+                  <div style={{ position: "relative", marginBottom: "0.75rem" }}>
+                    <PlayerSignature name={p.playerName} size={72} />
+                  </div>
+                  <Link href={`/players/${encodeURIComponent(p.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} style={{ fontSize: "1.25rem", fontWeight: "900", color: "#fff", textDecoration: "none", marginBottom: "0.2rem" }}>
+                    {p.playerName}
+                  </Link>
+                  <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "1.2rem" }}>
+                    {playerToTeamMap[p.playerName?.trim().toLowerCase()]?.name || "Free Agent"}
+                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", width: "100%", marginTop: "auto" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", backgroundColor: "rgba(0,0,0,0.4)", padding: "0.4rem 0.8rem", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Series MVPs</span>
+                      <span style={{ fontWeight: "900", color: c.color }}>{seriesVal}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", backgroundColor: "rgba(0,0,0,0.4)", padding: "0.4rem 0.8rem", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Match MVPs</span>
+                      <span style={{ fontWeight: "900", color: c.color }}>{matchVal}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", backgroundColor: "rgba(0,0,0,0.4)", padding: "0.4rem 0.8rem", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Won Game Avg Score</span>
+                      <span style={{ fontWeight: "900", color: c.color }}>{avgVal.toFixed(1)}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: "var(--text-muted)", fontStyle: "italic", margin: "2rem 0" }}>TBD – In Progress</div>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -898,77 +1387,438 @@ function RankingsContent() {
     const hasPentakills = pentakillPlayers.length > 0;
 
     return (
-      <div className="card" style={{
-        background: "linear-gradient(135deg, rgba(239, 68, 68, 0.06), rgba(0,0,0,0.7))",
-        border: "1px solid rgba(239, 68, 68, 0.3)",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(239, 68, 68, 0.05)",
-        padding: "2rem",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "420px",
-        maxHeight: "calc(80vh - 2rem)",
-        boxSizing: "border-box",
-        borderRadius: "12px"
+      <div style={{
+        background: "linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(0,0,0,0.85) 100%)",
+        border: "1px solid rgba(239, 68, 68, 0.35)",
+        borderRadius: "20px", padding: "2rem", textAlign: "center",
+        boxShadow: "0 12px 36px rgba(0,0,0,0.5), inset 0 0 20px rgba(239, 68, 68, 0.05)"
       }}>
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-            <span style={{ color: "#ef4444", fontWeight: "bold", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>⚡ Bounty Rewards</span>
-            <span style={{ color: "#ef4444", fontWeight: "900", fontSize: "1.2rem" }}>⚡</span>
-          </div>
-          <h3 style={{ fontSize: "1.5rem", textTransform: "uppercase", marginBottom: "0.5rem", fontWeight: "800", letterSpacing: "0.03em", color: "#ef4444" }}>Pentakill Slayers</h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "1.5rem" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: "900", color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.15em", backgroundColor: "rgba(0,0,0,0.6)", padding: "0.25rem 0.8rem", borderRadius: "14px", border: "1px solid rgba(239,68,68,0.3)", display: "inline-block", marginBottom: "0.4rem" }}>
+            ⚡ BOUNTY REWARDS
+          </span>
+          <h2 style={{ fontSize: "1.8rem", fontWeight: "900", textTransform: "uppercase", color: "#ef4444", margin: "0 0 0.3rem 0" }}>
+            Pentakill Slayers
+          </h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: 0 }}>
             Rewarded to players per pentakill secured during the tournament.
           </p>
+        </div>
 
-          {hasPentakills ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", overflowY: "auto", flex: 1, minHeight: 0, paddingRight: "2px" }}>
-              {pentakillPlayers.map(player => (
-                <div key={player.playerName} style={{ display: "flex", alignItems: "center", gap: "1rem", backgroundColor: "rgba(239, 68, 68, 0.05)", padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
-                  <PlayerSignature name={player.playerName} size={40} />
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <Link 
-                        href={`/players/${encodeURIComponent(player.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`} 
-                        style={{ fontWeight: "bold", color: "var(--text-primary)", fontSize: "0.95rem", textDecoration: "none", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", marginRight: "0.5rem" }}
-                      >
-                        {player.playerName}
-                      </Link>
-                      <span style={{ fontWeight: "bold", color: "#ef4444", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.25rem", whiteSpace: "nowrap", flexShrink: 0 }}>
-                        <span>{player.pentaKills}</span>
-                        <Zap size={14} style={{ color: "#ef4444" }} />
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
-                      <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", marginRight: "0.5rem" }}>
-                        {playerToTeamMap[player.playerName?.trim().toLowerCase()]?.name || "Free Agent"}
-                      </span>
-                      <span style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
-                        Total Kills: {player.kills}
-                      </span>
-                    </div>
+        {hasPentakills ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
+            {pentakillPlayers.map(player => (
+              <div key={player.playerName} style={{
+                display: "flex", alignItems: "center", gap: "1rem",
+                backgroundColor: "rgba(0,0,0,0.4)", padding: "0.9rem 1.1rem", borderRadius: "14px",
+                border: "1px solid rgba(239, 68, 68, 0.25)", boxShadow: "0 4px 16px rgba(0,0,0,0.3)"
+              }}>
+                <PlayerSignature name={player.playerName} size={44} />
+                <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <Link
+                      href={`/players/${encodeURIComponent(player.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=awards`)}`}
+                      style={{ fontWeight: "900", color: "var(--text-primary)", fontSize: "1rem", textDecoration: "none", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", marginRight: "0.5rem" }}
+                    >
+                      {player.playerName}
+                    </Link>
+                    <span style={{ fontWeight: "900", color: "#ef4444", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.25rem", whiteSpace: "nowrap", flexShrink: 0 }}>
+                      <span>{player.pentaKills}</span>
+                      <Zap size={14} style={{ color: "#ef4444" }} />
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
+                    <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", marginRight: "0.5rem" }}>
+                      {playerToTeamMap[player.playerName?.trim().toLowerCase()]?.name || "Free Agent"}
+                    </span>
+                    <span style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
+                      Total Kills: {player.kills}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", color: "var(--text-muted)", height: "200px", border: "1px dashed rgba(239, 68, 68, 0.2)", borderRadius: "8px" }}>
-              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⚡</div>
-              <div style={{ fontSize: "0.85rem", textAlign: "center", fontWeight: "bold", color: "var(--text-primary)" }}>Bounty Unclaimed!</div>
-              <div style={{ fontSize: "0.75rem", textAlign: "center", marginTop: "0.25rem" }}>No Pentakills recorded yet in this tournament.</div>
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 1rem", color: "var(--text-muted)", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "14px", border: "1px dashed rgba(239, 68, 68, 0.25)" }}>
+            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⚡</div>
+            <div style={{ fontSize: "0.9rem", textAlign: "center", fontWeight: "bold", color: "var(--text-primary)" }}>Bounty Unclaimed!</div>
+            <div style={{ fontSize: "0.78rem", textAlign: "center", marginTop: "0.25rem" }}>No Pentakills recorded yet in this tournament.</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderMultiColumnTable = () => {
+    const isTeam = rankingType === "team";
+    const isMvpMetric = ["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount"].includes(sortBy);
+    const isKdaGroup = ["kda", "kills", "deaths", "assists"].includes(sortBy) && !isTeam;
+    const isDmgMetric = ["damageDealt", "dpm", "dmgShare"].includes(sortBy) && !isTeam;
+    const isTakenMetric = ["damageTaken", "dtpm", "dmgTakenShare"].includes(sortBy) && !isTeam;
+    const isHealMetric = ["healing", "hpm", "healingShare"].includes(sortBy) && !isTeam;
+
+    const isTeamFinalPos = ["positionScore", "winRate", "kda"].includes(sortBy) && isTeam;
+    const isTeamFighting = ["avgDmg", "avgHealing", "avgTaken"].includes(sortBy) && isTeam;
+    const isTeamKdaGroup = ["avgKills", "avgDeaths", "avgAssists"].includes(sortBy) && isTeam;
+
+    let colTemplate = (sortBy === "kda" || sortBy === "avgKills") 
+      ? "70px 2.2fr 1fr 1fr 1fr 1fr 1fr" 
+      : "70px 2.2fr 1.2fr 1.2fr 1.2fr 1fr";
+
+    const renderSortableHeader = (label, colKey, alignment = "center") => {
+      const isSelected = sortColumn === colKey;
+      const arrow = isSelected ? (sortOrder === "asc" ? "▲" : "▼") : "↕";
+      const activeColor = rankingType === "player" ? "#c084fc" : "var(--primary-gold-bright)";
+
+      return (
+        <div
+          onClick={() => handleSort(colKey)}
+          style={{
+            textAlign: alignment,
+            cursor: "pointer",
+            userSelect: "none",
+            color: isSelected ? activeColor : "var(--text-muted)",
+            fontWeight: isSelected ? "900" : "700",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: alignment === "right" ? "flex-end" : alignment === "left" ? "flex-start" : "center",
+            gap: "0.25rem",
+            transition: "color 0.2s"
+          }}
+          title={`Sort by ${label} (${isSelected && sortOrder === "desc" ? "Click for Ascending" : "Click for Descending"})`}
+        >
+          <span>{label}</span>
+          <span style={{ fontSize: "0.75rem", opacity: isSelected ? 1 : 0.35 }}>{arrow}</span>
+        </div>
+      );
+    };
+
+    return (
+      <div style={{ backgroundColor: "rgba(0,0,0,0.4)", border: "1px solid var(--border-dark)", borderRadius: "16px", overflow: "hidden", boxShadow: "0 12px 36px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: colTemplate, padding: "1rem 1.25rem", backgroundColor: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border-dark)", fontSize: "0.75rem", fontWeight: "900", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <div>RANK</div>
+          <div>{isTeam ? "TEAM" : "PLAYER & TEAM"}</div>
+          {sortBy === "seriesMvpCount" ? (
+            <>
+              {renderSortableHeader("SERIES MVPS", "seriesMvpCount")}
+              {renderSortableHeader("MATCH MVPS", "matchMvpCount")}
+              {renderSortableHeader("AVG SCORE", "avgMvpScore")}
+              {renderSortableHeader("GAMES", "gamesPlayed")}
+            </>
+          ) : sortBy === "kda" ? (
+            <>
+              {renderSortableHeader("KDA RATIO", "kda")}
+              {renderSortableHeader("KILLS", "kills")}
+              {renderSortableHeader("DEATHS", "deaths")}
+              {renderSortableHeader("ASSISTS", "assists")}
+              {renderSortableHeader("GAMES", "gamesPlayed")}
+            </>
+          ) : sortBy === "damageDealt" ? (
+            <>
+              {renderSortableHeader("TOTAL DAMAGE", "damageDealt")}
+              {renderSortableHeader("DMG / MIN", "dpm")}
+              {renderSortableHeader("DMG SHARE %", "dmgShare")}
+              {renderSortableHeader("GAMES", "gamesPlayed")}
+            </>
+          ) : sortBy === "damageTaken" ? (
+            <>
+              {renderSortableHeader("TOTAL TAKEN", "damageTaken")}
+              {renderSortableHeader("TAKEN / MIN", "dtpm")}
+              {renderSortableHeader("TAKEN SHARE %", "dmgTakenShare")}
+              {renderSortableHeader("GAMES", "gamesPlayed")}
+            </>
+          ) : sortBy === "healing" ? (
+            <>
+              {renderSortableHeader("TOTAL HEALING", "healing")}
+              {renderSortableHeader("HEAL / MIN", "hpm")}
+              {renderSortableHeader("HEAL SHARE %", "healingShare")}
+              {renderSortableHeader("GAMES", "gamesPlayed")}
+            </>
+          ) : sortBy === "positionScore" ? (
+            <>
+              {renderSortableHeader("FINAL POSITION", "positionScore")}
+              {renderSortableHeader("WIN RATE", "winRate")}
+              {renderSortableHeader("KDA RATIO", "kda")}
+              {renderSortableHeader("GAMES", "gamesPlayed")}
+            </>
+          ) : sortBy === "avgDmg" ? (
+            <>
+              {renderSortableHeader("AVG DAMAGE", "avgDmg")}
+              {renderSortableHeader("AVG HEALING", "avgHealing")}
+              {renderSortableHeader("AVG TAKEN", "avgTaken")}
+              {renderSortableHeader("GAMES", "gamesPlayed")}
+            </>
+          ) : sortBy === "avgKills" ? (
+            <>
+              {renderSortableHeader("AVG KILLS", "avgKills")}
+              {renderSortableHeader("AVG DEATHS", "avgDeaths")}
+              {renderSortableHeader("AVG ASSISTS", "avgAssists")}
+              {renderSortableHeader("KDA RATIO", "kda")}
+              {renderSortableHeader("GAMES", "gamesPlayed")}
+            </>
+          ) : null}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {rankedItems.map((item, idx) => {
+            const rank = idx + 1;
+            return (
+              <div key={idx} style={{ display: "grid", gridTemplateColumns: colTemplate, alignItems: "center", padding: "0.9rem 1.25rem", borderBottom: idx < rankedItems.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                <div style={{ fontWeight: "900", fontSize: "1.1rem", color: rank === 1 ? "#fbbf24" : rank === 2 ? "#e2e8f0" : rank === 3 ? "#f97316" : "var(--text-muted)" }}>
+                  {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", minWidth: 0 }}>
+                  {isTeam ? (
+                    <img src={item.logo} alt={item.teamName} style={{ width: "36px", height: "36px", borderRadius: "8px" }} />
+                  ) : (
+                    <PlayerSignature name={item.playerName} size={36} />
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: "800", color: "#fff" }}>{isTeam ? item.teamName : item.playerName}</div>
+                    {!isTeam && <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{playerToTeamMap[item.playerName?.trim().toLowerCase()]?.name || "Free Agent"}</div>}
+                  </div>
+                </div>
+                {sortBy === "seriesMvpCount" ? (
+                  <>
+                    <div style={{ textAlign: "center", color: "#fbbf24", fontWeight: "800" }}>{item.seriesMvpCount || 0}</div>
+                    <div style={{ textAlign: "center", color: "#c084fc", fontWeight: "800" }}>{item.matchMvpCount || 0}</div>
+                    <div style={{ textAlign: "center", color: "#60a5fa", fontWeight: "800" }}>{(item.avgMvpScore || 0).toFixed(1)}</div>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)" }}>{item.gamesPlayed || 0}</div>
+                  </>
+                ) : sortBy === "kda" ? (
+                  <>
+                    <div style={{ textAlign: "center", color: "#c084fc", fontWeight: "900" }}>{(item.kda || 0).toFixed(2)}</div>
+                    <div style={{ textAlign: "center", color: "#fbbf24", fontWeight: "800" }}>{item.kills || 0}</div>
+                    <div style={{ textAlign: "center", color: "#ef4444", fontWeight: "800" }}>{item.deaths || 0}</div>
+                    <div style={{ textAlign: "center", color: "#34d399", fontWeight: "800" }}>{item.assists || 0}</div>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)" }}>{item.gamesPlayed || 0}</div>
+                  </>
+                ) : sortBy === "damageDealt" ? (
+                  <>
+                    <div style={{ textAlign: "center", color: "#ef4444", fontWeight: "800" }}>{(item.damageDealt || 0).toLocaleString()}</div>
+                    <div style={{ textAlign: "center", color: "#fbbf24", fontWeight: "800" }}>{(item.dpm || 0).toFixed(0)}</div>
+                    <div style={{ textAlign: "center", color: "#c084fc", fontWeight: "900" }}>{(item.dmgShare || 0).toFixed(1)}%</div>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)" }}>{item.gamesPlayed || 0}</div>
+                  </>
+                ) : sortBy === "damageTaken" ? (
+                  <>
+                    <div style={{ textAlign: "center", color: "#60a5fa", fontWeight: "800" }}>{(item.damageTaken || 0).toLocaleString()}</div>
+                    <div style={{ textAlign: "center", color: "#fbbf24", fontWeight: "800" }}>{(item.dtpm || 0).toFixed(0)}</div>
+                    <div style={{ textAlign: "center", color: "#c084fc", fontWeight: "900" }}>{(item.dmgTakenShare || 0).toFixed(1)}%</div>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)" }}>{item.gamesPlayed || 0}</div>
+                  </>
+                ) : sortBy === "healing" ? (
+                  <>
+                    <div style={{ textAlign: "center", color: "#34d399", fontWeight: "800" }}>{(item.healing || 0).toLocaleString()}</div>
+                    <div style={{ textAlign: "center", color: "#fbbf24", fontWeight: "800" }}>{(item.hpm || 0).toFixed(0)}</div>
+                    <div style={{ textAlign: "center", color: "#c084fc", fontWeight: "900" }}>{(item.healingShare || 0).toFixed(1)}%</div>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)" }}>{item.gamesPlayed || 0}</div>
+                  </>
+                ) : sortBy === "positionScore" ? (
+                  <>
+                    <div style={{ textAlign: "center" }}>{getPositionBadge(item.position)}</div>
+                    <div style={{ textAlign: "center", color: "#60a5fa", fontWeight: "800" }}>{(item.winRate || 0).toFixed(1)}%</div>
+                    <div style={{ textAlign: "center", color: "#c084fc", fontWeight: "800" }}>{(item.kda || 0).toFixed(2)}</div>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)" }}>{item.gamesPlayed || 0}</div>
+                  </>
+                ) : sortBy === "avgDmg" ? (
+                  <>
+                    <div style={{ textAlign: "center", color: "#ef4444", fontWeight: "800" }}>{Math.round(item.avgDmg || 0).toLocaleString()}</div>
+                    <div style={{ textAlign: "center", color: "#34d399", fontWeight: "800" }}>{Math.round(item.avgHealing || 0).toLocaleString()}</div>
+                    <div style={{ textAlign: "center", color: "#60a5fa", fontWeight: "800" }}>{Math.round(item.avgTaken || 0).toLocaleString()}</div>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)" }}>{item.gamesPlayed || 0}</div>
+                  </>
+                ) : sortBy === "avgKills" ? (
+                  <>
+                    <div style={{ textAlign: "center", color: "#fbbf24", fontWeight: "800" }}>{(item.avgKills || 0).toFixed(1)}</div>
+                    <div style={{ textAlign: "center", color: "#ef4444", fontWeight: "800" }}>{(item.avgDeaths || 0).toFixed(1)}</div>
+                    <div style={{ textAlign: "center", color: "#c084fc", fontWeight: "800" }}>{(item.avgAssists || 0).toFixed(1)}</div>
+                    <div style={{ textAlign: "center", color: "#34d399", fontWeight: "800" }}>{(item.kda || 0).toFixed(2)}</div>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)" }}>{item.gamesPlayed || 0}</div>
+                  </>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
   };
 
-  const activeMetric = metrics.find(m => m.id === sortBy) || metrics.find(m => m.id === "seriesMvpCount");
+  const renderSpotlightLeaderboard = () => {
+    const heroItem = rankedItems[0];
+    if (!heroItem) {
+      return (
+        <div style={{
+          backgroundColor: "rgba(0,0,0,0.4)", border: "1px dashed var(--border-dark)",
+          borderRadius: "16px", padding: "3rem 1.5rem", textAlign: "center", color: "var(--text-muted)"
+        }}>
+          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🏆</div>
+          <div style={{ fontSize: "1rem", fontWeight: "700", color: "#fff", marginBottom: "0.25rem" }}>No Stats Available</div>
+          <div style={{ fontSize: "0.85rem" }}>No {rankingType === "player" ? "players" : "teams"} have recorded stats for this category yet.</div>
+        </div>
+      );
+    }
+
+    const isTeam = rankingType === "team";
+    const accentColor = isTeam ? "#fbbf24" : "#c084fc";
+    const gradientBg = isTeam
+      ? "linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(15,23,42,0.95) 70%)"
+      : "linear-gradient(135deg, rgba(192,132,252,0.18) 0%, rgba(15,23,42,0.95) 70%)";
+    const borderColor = isTeam ? "rgba(212,175,55,0.4)" : "rgba(192,132,252,0.4)";
+
+    const isMvpMetric = ["seriesMvpCount", "groupMvpCount", "playoffMvpCount", "grandFinalMvpCount"].includes(sortBy);
+
+    const titleName = isTeam ? heroItem.teamName : heroItem.playerName;
+    const subTitle = isTeam
+      ? (heroItem.position || "Group Stage")
+      : (playerToTeamMap[heroItem.playerName?.trim().toLowerCase()]?.name || "Free Agent");
+
+    // Dynamic stats to highlight in hero banner
+    let statCards = [];
+
+    if (isMvpMetric && !isTeam) {
+      statCards = [
+        { label: "SERIES MVPS", value: heroItem.seriesMvpCount || 0, color: "#fbbf24", border: "rgba(251,191,36,0.3)" },
+        { label: "MATCH MVPS", value: heroItem.matchMvpCount || 0, color: "#c084fc", border: "rgba(192,132,252,0.3)" },
+        { label: "AVG SCORE", value: (heroItem.avgMvpScore || 0).toFixed(1), color: "#60a5fa", border: "rgba(96,165,250,0.3)" },
+      ];
+    } else if (["kda", "kills", "deaths", "assists"].includes(sortBy) && !isTeam) {
+      const highlightVal = sortBy === "kills" ? heroItem.kills
+        : sortBy === "deaths" ? heroItem.deaths
+        : sortBy === "assists" ? heroItem.assists
+        : (heroItem.kda || 0).toFixed(2);
+      const highlightLabel = sortBy === "kills" ? "KILLS" : sortBy === "deaths" ? "DEATHS" : sortBy === "assists" ? "ASSISTS" : "KDA RATIO";
+      statCards = [
+        { label: highlightLabel, value: highlightVal, color: "#c084fc", border: "rgba(192,132,252,0.3)" },
+        { label: "K / D / A", value: `${heroItem.kills} / ${heroItem.deaths} / ${heroItem.assists}`, color: "#fbbf24", border: "rgba(251,191,36,0.3)" },
+        { label: "GAMES PLAYED", value: heroItem.gamesPlayed || 0, color: "#60a5fa", border: "rgba(96,165,250,0.3)" },
+      ];
+    } else if (["damageDealt", "dpm", "dmgShare"].includes(sortBy) && !isTeam) {
+      statCards = [
+        { label: "TOTAL DAMAGE", value: (heroItem.damageDealt || 0).toLocaleString(), color: "#ef4444", border: "rgba(239,68,68,0.3)" },
+        { label: "DMG / MIN", value: (heroItem.dpm || 0).toFixed(0), color: "#fbbf24", border: "rgba(251,191,36,0.3)" },
+        { label: "DMG SHARE %", value: `${(heroItem.dmgShare || 0).toFixed(1)}%`, color: "#c084fc", border: "rgba(192,132,252,0.3)" },
+      ];
+    } else if (["damageTaken", "dtpm", "dmgTakenShare"].includes(sortBy) && !isTeam) {
+      statCards = [
+        { label: "TOTAL TAKEN", value: (heroItem.damageTaken || 0).toLocaleString(), color: "#60a5fa", border: "rgba(96,165,250,0.3)" },
+        { label: "TAKEN / MIN", value: (heroItem.dtpm || 0).toFixed(0), color: "#fbbf24", border: "rgba(251,191,36,0.3)" },
+        { label: "TAKEN SHARE %", value: `${(heroItem.dmgTakenShare || 0).toFixed(1)}%`, color: "#c084fc", border: "rgba(192,132,252,0.3)" },
+      ];
+    } else if (["healing", "hpm", "healingShare"].includes(sortBy) && !isTeam) {
+      statCards = [
+        { label: "TOTAL HEALING", value: (heroItem.healing || 0).toLocaleString(), color: "#34d399", border: "rgba(52,211,153,0.3)" },
+        { label: "HEAL / MIN", value: (heroItem.hpm || 0).toFixed(0), color: "#fbbf24", border: "rgba(251,191,36,0.3)" },
+        { label: "HEAL SHARE %", value: `${(heroItem.healingShare || 0).toFixed(1)}%`, color: "#c084fc", border: "rgba(192,132,252,0.3)" },
+      ];
+    } else if (isTeam) {
+      if (["positionScore", "winRate", "kda"].includes(sortBy)) {
+        statCards = [
+          { label: "FINAL POSITION", value: heroItem.position || "Group Stage", color: "#fbbf24", border: "rgba(251,191,36,0.3)" },
+          { label: "WIN RATE", value: `${(heroItem.winRate || 0).toFixed(1)}%`, color: "#60a5fa", border: "rgba(96,165,250,0.3)" },
+          { label: "TEAM KDA", value: (heroItem.kda || 0).toFixed(2), color: "#c084fc", border: "rgba(192,132,252,0.3)" },
+        ];
+      } else if (["avgDmg", "avgHealing", "avgTaken"].includes(sortBy)) {
+        statCards = [
+          { label: "AVG DAMAGE", value: Math.round(heroItem.avgDmg || 0).toLocaleString(), color: "#ef4444", border: "rgba(239,68,68,0.3)" },
+          { label: "AVG HEALING", value: Math.round(heroItem.avgHealing || 0).toLocaleString(), color: "#34d399", border: "rgba(52,211,153,0.3)" },
+          { label: "AVG TAKEN", value: Math.round(heroItem.avgTaken || 0).toLocaleString(), color: "#60a5fa", border: "rgba(96,165,250,0.3)" },
+        ];
+      } else if (["avgKills", "avgDeaths", "avgAssists"].includes(sortBy)) {
+        statCards = [
+          { label: "AVG KILLS / GAME", value: (heroItem.avgKills || 0).toFixed(1), color: "#fbbf24", border: "rgba(251,191,36,0.3)" },
+          { label: "AVG DEATHS / GAME", value: (heroItem.avgDeaths || 0).toFixed(1), color: "#ef4444", border: "rgba(239,68,68,0.3)" },
+          { label: "AVG ASSISTS / GAME", value: (heroItem.avgAssists || 0).toFixed(1), color: "#c084fc", border: "rgba(192,132,252,0.3)" },
+        ];
+      }
+    }
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+        {/* Spotlight Hero Card */}
+        <div style={{
+          background: gradientBg, border: `1px solid ${borderColor}`,
+          borderRadius: "20px", padding: "2rem",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15)",
+          display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "2rem"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+            <div style={{ filter: `drop-shadow(0 0 20px ${accentColor}88)` }}>
+              {isTeam ? (
+                <Link href={`/teams?teamId=${heroItem.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
+                  <img
+                    src={heroItem.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(heroItem.teamName, 80) : "")}
+                    alt={heroItem.teamName} className="no-zoom"
+                    style={{ width: "80px", height: "80px", borderRadius: "14px", border: `3px solid ${accentColor}`, objectFit: "contain", padding: "4px", backgroundColor: "rgba(255,255,255,0.04)" }}
+                  />
+                </Link>
+              ) : (
+                <PlayerSignature name={heroItem.playerName} size={84} />
+              )}
+            </div>
+            <div>
+              <span style={{ fontSize: "0.75rem", fontWeight: "900", color: accentColor, textTransform: "uppercase", letterSpacing: "0.15em", backgroundColor: "rgba(0,0,0,0.6)", padding: "0.25rem 0.75rem", borderRadius: "14px", border: `1px solid ${accentColor}44` }}>
+                👑 #1 {isTeam ? "TEAM" : "PLAYER"} SPOTLIGHT
+              </span>
+              <h2 style={{ fontSize: "2.2rem", fontWeight: "900", color: "#fff", margin: "0.5rem 0 0.2rem" }}>
+                {isTeam ? (
+                  <Link href={`/teams?teamId=${heroItem.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} style={{ color: "#fff", textDecoration: "none" }}>
+                    {titleName}
+                  </Link>
+                ) : (
+                  <Link href={`/players/${encodeURIComponent(titleName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`} style={{ color: "#fff", textDecoration: "none" }}>
+                    {titleName}
+                  </Link>
+                )}
+              </h2>
+              <span style={{ fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: "600" }}>
+                {subTitle}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            {statCards.map((sc, idx) => (
+              <div key={idx} style={{ backgroundColor: "rgba(0,0,0,0.5)", border: `1px solid ${sc.border}`, borderRadius: "14px", padding: "0.75rem 1.25rem", textAlign: "center" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700" }}>{sc.label}</div>
+                <div style={{ fontSize: "1.8rem", fontWeight: "900", color: sc.color }}>{sc.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Multi-Column Table Grid for All Items */}
+        {renderMultiColumnTable()}
+      </div>
+    );
+  };
 
   const getMetricLabel = (metricId) => {
     if (metricId === "seriesMvpCount") return "Total Series MVPs";
     if (metricId === "groupMvpCount") return "Group Stage MVPs";
     if (metricId === "playoffMvpCount") return "Playoff MVPs";
     if (metricId === "grandFinalMvpCount") return "Grand Final MVP";
+    if (metricId === "damageDealt") return "Total Damage Dealt";
+    if (metricId === "dpm") return "Damage Per Minute";
+    if (metricId === "dmgShare") return "Damage Share %";
+    if (metricId === "damageTaken") return "Total Damage Taken";
+    if (metricId === "dtpm") return "Damage Taken / Min";
+    if (metricId === "dmgTakenShare") return "Damage Taken Share %";
+    if (metricId === "healing") return "Total Healing";
+    if (metricId === "hpm") return "Healing Per Minute";
+    if (metricId === "healingShare") return "Healing Share %";
+    if (metricId === "kills") return "Total Kills";
+    if (metricId === "deaths") return "Total Deaths";
+    if (metricId === "assists") return "Total Assists";
+    if (metricId === "positionScore") return "Final Position";
+    if (metricId === "winRate") return "Win Rate";
+    if (metricId === "avgDmg") return "Avg Damage";
+    if (metricId === "avgHealing") return "Avg Healing / Game";
+    if (metricId === "avgTaken") return "Avg Damage Taken / Game";
+    if (metricId === "avgKills") return "Avg Kills / Game";
+    if (metricId === "avgDeaths") return "Avg Deaths / Game";
+    if (metricId === "avgAssists") return "Avg Assists / Game";
     return metrics.find(m => m.id === metricId)?.label || "Stat";
   };
 
@@ -997,6 +1847,8 @@ function RankingsContent() {
               setActiveTab("players");
               setRankingType("player");
               setSortBy("seriesMvpCount");
+              setSortColumn("seriesMvpCount");
+              setSortOrder("desc");
             }}
           >
             📊 Player Stats
@@ -1008,6 +1860,8 @@ function RankingsContent() {
               setActiveTab("teams");
               setRankingType("team");
               setSortBy("positionScore");
+              setSortColumn("positionScore");
+              setSortOrder("desc");
             }}
           >
             👥 Team Stats
@@ -1016,19 +1870,35 @@ function RankingsContent() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "4rem" }}>Loading tournament stats...</div>
+        <div style={{ textAlign: "center", padding: "4rem", color: "var(--text-muted)", fontSize: "1.1rem" }}>
+          Loading statistics...
+        </div>
       ) : (
         <>
           {activeTab === "awards" && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2rem", marginTop: "2rem" }}>
-              {/* Championship Standings Card */}
-              {renderChampionshipCard()}
+            <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+              {/* 1. Championship Standings (Top) */}
+              <div style={{ width: "100%" }}>
+                {renderChampionshipCard()}
+              </div>
 
-              {/* Series MVP Award Card */}
-              {renderMvpAwardCard()}
+              {/* 2. MVP Trading Cards (Middle) */}
+              <div>
+                <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+                  <span style={{ color: "#c084fc", fontWeight: "bold", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.12em", display: "inline-block", marginBottom: "0.3rem" }}>
+                    👑 TOURNAMENT HONOR ROLL
+                  </span>
+                  <h2 style={{ fontSize: "1.8rem", fontWeight: "900", color: "#c084fc", textTransform: "uppercase", margin: 0 }}>
+                    MVP Trading Cards
+                  </h2>
+                </div>
+                {renderTradingMvpCards()}
+              </div>
 
-              {/* Pentakill Slayer Card */}
-              {renderPentakillSlayerCard()}
+              {/* 3. Pentakill Slayers (Bottom) */}
+              <div style={{ width: "100%" }}>
+                {renderPentakillSlayerCard()}
+              </div>
             </div>
           )}
 
@@ -1071,12 +1941,15 @@ function RankingsContent() {
                     borderRadius: "12px", padding: "6px"
                   }}>
                     {metrics.map(m => {
-                      const isActive = sortBy === m.id ||
-                        (m.id === "seriesMvpCount" && ["seriesMvpCount","groupMvpCount","playoffMvpCount","grandFinalMvpCount"].includes(sortBy));
+                      const isActive = sortBy === m.id;
                       return (
                         <button
                           key={m.id}
-                          onClick={() => setSortBy(m.id)}
+                          onClick={() => {
+                            setSortBy(m.id);
+                            setSortColumn(m.id);
+                            setSortOrder("desc");
+                          }}
                           style={{
                             display: "flex", alignItems: "center", gap: "0.4rem",
                             padding: "0.45rem 1rem", borderRadius: "8px", border: "none",
@@ -1105,258 +1978,17 @@ function RankingsContent() {
                   </div>
                 </div>
 
-                {/* ── Sub-selector for MVP stages ── */}
-                {activeTab === "players" && ["seriesMvpCount","groupMvpCount","playoffMvpCount","grandFinalMvpCount"].includes(sortBy) && (
-                  <div style={{ display: "flex", justifyContent: "center", marginBottom: "2.5rem" }}>
-                    <div style={{ display: "flex", gap: "0.4rem", backgroundColor: "rgba(192,132,252,0.06)", border: "1px solid rgba(192,132,252,0.2)", borderRadius: "8px", padding: "5px" }}>
-                      {[
-                        { id: "seriesMvpCount", label: "All Stages" },
-                        { id: "groupMvpCount", label: "Group Stage" },
-                        { id: "playoffMvpCount", label: "Playoffs" },
-                        { id: "grandFinalMvpCount", label: "Grand Final" },
-                      ].map(s => (
-                        <button key={s.id} onClick={() => setSortBy(s.id)} style={{
-                          padding: "0.3rem 0.9rem", borderRadius: "5px", border: "none", cursor: "pointer",
-                          background: sortBy === s.id ? "rgba(192,132,252,0.25)" : "transparent",
-                          color: sortBy === s.id ? "#c084fc" : "var(--text-muted)",
-                          fontWeight: sortBy === s.id ? "800" : "500",
-                          fontSize: "0.75rem", transition: "all 0.2s",
-                          boxShadow: sortBy === s.id ? "0 0 8px rgba(192,132,252,0.2)" : "none"
-                        }}>
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {concept === "concept2" && renderMultiColumnTable()}
+                {concept === "concept3" && renderSpotlightLeaderboard()}
 
-                {/* ── Top 3 Podium ── */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "3rem" }}>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: "1.5rem", marginBottom: "0" }}>
-
-                    {/* 2nd Place */}
-                    {top2 && (
-                      <div
-                        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "150px", cursor: "pointer" }}
-                        onClick={e => { if (!e.target.closest("a")) router.push(rankingType === "team" ? `/teams?teamId=${top2.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}` : `/players/${encodeURIComponent(top2.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`); }}
-                      >
-                        <div style={{ marginBottom: "0.75rem", filter: "drop-shadow(0 0 10px rgba(192,192,192,0.4))" }}>
-                          {rankingType === "player" ? (
-                            <PlayerSignature name={top2.playerName} size={60} />
-                          ) : (
-                            <Link href={`/teams?teamId=${top2.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
-                              <img src={top2.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top2.teamName, 60) : "")} alt={top2.teamName} className="no-zoom"
-                                style={{ width: "60px", height: "60px", borderRadius: "10px", border: "2px solid #C0C0C0", objectFit: "contain", padding: "4px", backgroundColor: "rgba(255,255,255,0.04)" }} />
-                            </Link>
-                          )}
-                        </div>
-                        <Link href={rankingType === "player" ? `/players/${encodeURIComponent(top2.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}` : `/teams?teamId=${top2.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`}
-                          style={{ fontWeight: "700", fontSize: "0.85rem", textAlign: "center", textDecoration: "none", color: "#C0C0C0", marginBottom: "0.2rem", display: "block" }}>
-                          {rankingType === "player" ? top2.playerName : top2.teamName}
-                        </Link>
-                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top2.gamesPlayed} Games</div>
-                        {/* Pedestal */}
-                        <div style={{
-                          width: "100%", height: "120px", borderRadius: "8px 8px 0 0",
-                          background: "linear-gradient(180deg, rgba(192,192,192,0.15) 0%, rgba(192,192,192,0.04) 100%)",
-                          border: "1px solid rgba(192,192,192,0.35)", borderBottom: "none",
-                          boxShadow: "0 -6px 20px rgba(192,192,192,0.12)",
-                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.3rem"
-                        }}>
-                          <div style={{ fontSize: "2rem", fontWeight: "900", color: "#C0C0C0", lineHeight: 1 }}>2</div>
-                          <div style={{ fontSize: "0.85rem", fontWeight: "800", color: "#C0C0C0", textAlign: "center", padding: "0 8px" }}>
-                            {formatStat(top2[sortBy], sortBy, top2)}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 1st Place */}
-                    {top1 && (
-                      <div
-                        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "170px", cursor: "pointer" }}
-                        onClick={e => { if (!e.target.closest("a")) router.push(rankingType === "team" ? `/teams?teamId=${top1.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}` : `/players/${encodeURIComponent(top1.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`); }}
-                      >
-                        <div style={{ position: "relative", marginBottom: "0.75rem" }}>
-                          <SummonersCup size={28} style={{ color: "var(--primary-gold)", position: "absolute", top: "-28px", left: "50%", transform: "translateX(-50%)", filter: "drop-shadow(0 0 8px var(--primary-gold))" }} />
-                          <div style={{ filter: "drop-shadow(0 0 16px rgba(212,175,55,0.6))" }}>
-                            {rankingType === "player" ? (
-                              <PlayerSignature name={top1.playerName} size={80} />
-                            ) : (
-                              <Link href={`/teams?teamId=${top1.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
-                                <img src={top1.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top1.teamName, 80) : "")} alt={top1.teamName} className="no-zoom"
-                                  style={{ width: "80px", height: "80px", borderRadius: "12px", border: "3px solid var(--primary-gold)", objectFit: "contain", padding: "6px", backgroundColor: "rgba(255,255,255,0.04)" }} />
-                              </Link>
-                            )}
-                          </div>
-                        </div>
-                        <Link href={rankingType === "player" ? `/players/${encodeURIComponent(top1.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}` : `/teams?teamId=${top1.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`}
-                          style={{ fontWeight: "800", fontSize: "1rem", textAlign: "center", textDecoration: "none", color: "var(--primary-gold-bright)", marginBottom: "0.2rem", display: "block" }}>
-                          {rankingType === "player" ? top1.playerName : top1.teamName}
-                        </Link>
-                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top1.gamesPlayed} Games</div>
-                        {/* Pedestal */}
-                        <div style={{
-                          width: "100%", height: "165px", borderRadius: "8px 8px 0 0",
-                          background: "linear-gradient(180deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.05) 100%)",
-                          border: "1px solid rgba(212,175,55,0.5)", borderBottom: "none",
-                          boxShadow: "0 -12px 40px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem"
-                        }}>
-                          <div style={{ fontSize: "2.8rem", fontWeight: "900", color: "var(--primary-gold)", lineHeight: 1, textShadow: "0 0 20px rgba(212,175,55,0.5)" }}>1</div>
-                          <div style={{ fontSize: "1rem", fontWeight: "900", color: "var(--primary-gold-bright)", textAlign: "center", padding: "0 8px", textShadow: "0 0 12px rgba(212,175,55,0.3)" }}>
-                            {formatStat(top1[sortBy], sortBy, top1)}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 3rd Place */}
-                    {top3 && (
-                      <div
-                        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "150px", cursor: "pointer" }}
-                        onClick={e => { if (!e.target.closest("a")) router.push(rankingType === "team" ? `/teams?teamId=${top3.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}` : `/players/${encodeURIComponent(top3.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`); }}
-                      >
-                        <div style={{ marginBottom: "0.75rem", filter: "drop-shadow(0 0 8px rgba(205,127,50,0.35))" }}>
-                          {rankingType === "player" ? (
-                            <PlayerSignature name={top3.playerName} size={60} />
-                          ) : (
-                            <Link href={`/teams?teamId=${top3.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
-                              <img src={top3.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(top3.teamName, 60) : "")} alt={top3.teamName} className="no-zoom"
-                                style={{ width: "60px", height: "60px", borderRadius: "10px", border: "2px solid #CD7F32", objectFit: "contain", padding: "4px", backgroundColor: "rgba(255,255,255,0.04)" }} />
-                            </Link>
-                          )}
-                        </div>
-                        <Link href={rankingType === "player" ? `/players/${encodeURIComponent(top3.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}` : `/teams?teamId=${top3.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`}
-                          style={{ fontWeight: "700", fontSize: "0.85rem", textAlign: "center", textDecoration: "none", color: "#CD7F32", marginBottom: "0.2rem", display: "block" }}>
-                          {rankingType === "player" ? top3.playerName : top3.teamName}
-                        </Link>
-                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>{top3.gamesPlayed} Games</div>
-                        {/* Pedestal */}
-                        <div style={{
-                          width: "100%", height: "95px", borderRadius: "8px 8px 0 0",
-                          background: "linear-gradient(180deg, rgba(205,127,50,0.12) 0%, rgba(205,127,50,0.03) 100%)",
-                          border: "1px solid rgba(205,127,50,0.3)", borderBottom: "none",
-                          boxShadow: "0 -4px 16px rgba(205,127,50,0.1)",
-                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.25rem"
-                        }}>
-                          <div style={{ fontSize: "1.4rem", fontWeight: "900", color: "#CD7F32", lineHeight: 1 }}>3</div>
-                          <div style={{ fontSize: "0.85rem", fontWeight: "800", color: "#CD7F32", textAlign: "center", padding: "0 8px" }}>
-                            {formatStat(top3[sortBy], sortBy, top3)}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Podium ground line */}
-                  <div style={{ width: "100%", maxWidth: "560px", height: "2px", background: "linear-gradient(90deg, transparent, var(--border-dark), var(--primary-gold), var(--border-dark), transparent)" }} />
-                </div>
-
-                {/* ── Ranking list (4th+) ── */}
-                {rankedItems.slice(3).length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    {rankedItems.slice(3).map((item, idx) => {
-                      const rank = idx + 4;
-                      const pct = maxVal > 0 ? ((item[sortBy] || 0) / maxVal) * 100 : 0;
-                      const accentColor = rankingType === "player" ? "rgba(192,132,252," : "rgba(212,175,55,";
-
-                      return (
-                        <div
-                          key={idx}
-                          style={{
-                            display: "flex", alignItems: "center", gap: "1rem",
-                            backgroundColor: "rgba(255,255,255,0.02)",
-                            border: "1px solid var(--border-dark)",
-                            borderLeft: `3px solid ${rankingType === "player" ? "rgba(192,132,252,0.35)" : "rgba(212,175,55,0.35)"}`,
-                            borderRadius: "10px", padding: "0.8rem 1.1rem",
-                            transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
-                            cursor: "pointer"
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = `${accentColor}0.05)`;
-                            e.currentTarget.style.borderColor = `${accentColor}0.4)`;
-                            e.currentTarget.style.boxShadow = `0 2px 16px ${accentColor}0.08)`;
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.02)";
-                            e.currentTarget.style.borderColor = "var(--border-dark)";
-                            e.currentTarget.style.boxShadow = "none";
-                          }}
-                          onClick={e => {
-                            if (e.target.closest("a")) return; // let inner Links handle their own navigation
-                            if (rankingType === "team") {
-                              router.push(`/teams?teamId=${item.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`);
-                            } else {
-                              router.push(`/players/${encodeURIComponent(item.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}`);
-                            }
-                          }}
-                        >
-                          {/* Rank badge */}
-                          <div style={{
-                            minWidth: "32px", height: "32px", borderRadius: "8px",
-                            backgroundColor: "rgba(255,255,255,0.04)",
-                            border: "1px solid var(--border-dark)",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontWeight: "800", fontSize: "0.8rem", color: "var(--text-muted)"
-                          }}>
-                            {rank}
-                          </div>
-
-                          {/* Avatar / logo */}
-                          {rankingType === "player" ? (
-                            <PlayerSignature name={item.playerName} size={36} />
-                          ) : (
-                            <Link href={`/teams?teamId=${item.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`} className="no-zoom">
-                              <img src={item.logo || (typeof teamLogoPlaceholder === "function" ? teamLogoPlaceholder(item.teamName, 36) : "")} alt={item.teamName} className="no-zoom"
-                                style={{ width: "36px", height: "36px", borderRadius: "6px", objectFit: "contain", padding: "2px", backgroundColor: "rgba(255,255,255,0.04)" }} />
-                            </Link>
-                          )}
-
-                          {/* Name + stat bar */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
-                              <Link
-                                href={rankingType === "player" ? `/players/${encodeURIComponent(item.playerName)}?backUrl=${encodeURIComponent(`/rankings?tab=players`)}` : `/teams?teamId=${item.teamId}&backUrl=${encodeURIComponent(`/rankings?tab=teams`)}`}
-                                style={{ fontWeight: "700", textDecoration: "none", color: "var(--text-primary)", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
-                              >
-                                {rankingType === "player" ? item.playerName : item.teamName}
-                                {rankingType === "team" && getPositionBadge(item.position)}
-                              </Link>
-                              {/* Stat pill */}
-                              <span style={{
-                                fontWeight: "800", fontSize: "0.88rem", whiteSpace: "nowrap", flexShrink: 0,
-                                color: rankingType === "player" ? "#c084fc" : "var(--primary-gold-bright)",
-                                backgroundColor: rankingType === "player" ? "rgba(192,132,252,0.1)" : "rgba(212,175,55,0.08)",
-                                border: `1px solid ${rankingType === "player" ? "rgba(192,132,252,0.25)" : "rgba(212,175,55,0.2)"}`,
-                                padding: "0.15rem 0.6rem", borderRadius: "20px"
-                              }}>
-                                {formatStat(item[sortBy], sortBy, item)}
-                              </span>
-                            </div>
-                            {/* Comparison bar */}
-                            <div style={{ marginTop: "0.35rem", height: "3px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-                              <div style={{
-                                height: "100%", borderRadius: "2px", width: `${pct}%`,
-                                background: rankingType === "player"
-                                  ? "linear-gradient(90deg, rgba(192,132,252,0.4), #c084fc)"
-                                  : "linear-gradient(90deg, rgba(212,175,55,0.4), var(--primary-gold))",
-                                transition: "width 0.6s ease"
-                              }} />
-                            </div>
-                            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
-                              {item.gamesPlayed} games played
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {rankedItems.length <= 3 && (
-                  <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)", fontSize: "0.85rem" }}>
-                    No other {rankingType === "player" ? "players" : "teams"} to display.
+                {rankedItems.length === 0 && (
+                  <div style={{
+                    backgroundColor: "rgba(0,0,0,0.4)", border: "1px dashed var(--border-dark)",
+                    borderRadius: "16px", padding: "3rem 1.5rem", textAlign: "center", color: "var(--text-muted)"
+                  }}>
+                    <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🏆</div>
+                    <div style={{ fontSize: "1rem", fontWeight: "700", color: "#fff", marginBottom: "0.25rem" }}>No Stats Available</div>
+                    <div style={{ fontSize: "0.85rem" }}>No {rankingType === "player" ? "players" : "teams"} have recorded stats for this category yet.</div>
                   </div>
                 )}
               </>

@@ -62,6 +62,7 @@ For each player, extract:
 8. "damageDealt": Integer total damage dealt to champions.
 9. "damageTaken": Integer total damage taken.
 10. "healing": Integer representing the total ally heal/shield value. This MUST be the sum of "Ally Healing" and "Ally Shielding" shown in the screenshots under the 'DAMAGE TAKEN AND HEALED' section (DO NOT include 'Damage Healed'; if a row is missing or has no value, treat it as 0). For example, if a player has 22474 Damage Healed, 17157 Ally Healing, and 11013 Ally Shielding, the "healing" value should be 17157 + 11013 = 28170.
+11. "pentaKills": Integer count of Pentakills. Inspect the screenshots for the "CHỈ SỐ" (STATS) tab under the "GIAO TRANH" (COMBAT) section. Look specifically for the row titled "Hạ gục một lúc nhiều nhất" (Vietnamese) or "Largest Multi-Kill" (English). IMPORTANT WARNING: DO NOT use "Thành tích cao nhất" (which means Largest Killing Spree). ONLY use "Hạ gục một lúc nhiều nhất". If a player has a value of 5 in "Hạ gục một lúc nhiều nhất", they secured a Pentakill (set pentaKills to 1). If value is < 5 or not found, set pentaKills to 0.
 
 Format response strictly as JSON. Ensure exactly 10 player records are returned in "playerStats".
 `;
@@ -104,9 +105,10 @@ Format response strictly as JSON. Ensure exactly 10 player records are returned 
                   cs: { type: "INTEGER" },
                   damageDealt: { type: "INTEGER" },
                   damageTaken: { type: "INTEGER" },
-                  healing: { type: "INTEGER" }
+                  healing: { type: "INTEGER" },
+                  pentaKills: { type: "INTEGER" }
                 },
-                required: ["summonerName", "champion", "kills", "deaths", "assists", "gold", "cs", "damageDealt", "damageTaken", "healing"]
+                required: ["summonerName", "champion", "kills", "deaths", "assists", "gold", "cs", "damageDealt", "damageTaken", "healing", "pentaKills"]
               }
             }
           },

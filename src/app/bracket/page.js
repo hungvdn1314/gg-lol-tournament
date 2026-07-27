@@ -66,9 +66,9 @@ export default function Bracket() {
 
     const teamA = teams[match.teamAId];
     const teamB = teams[match.teamBId];
-    const isCompleted = match.status === "completed";
+    const isCompleted = match.status === "completed" || (match.scoreA !== undefined && match.scoreB !== undefined && match.scoreA !== match.scoreB && (match.scoreA > 0 || match.scoreB > 0));
+    const winnerId = match.winnerId || (match.scoreA > match.scoreB ? match.teamAId : match.scoreB > match.scoreA ? match.teamBId : null);
     const isLive = match.status === "live" || match.status === "in_progress";
-    const winnerId = match.winnerId;
 
     return (
       <motion.div 
@@ -257,11 +257,11 @@ export default function Bracket() {
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-around", height: "620px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>Upper Finals</span>
-                  {renderMatchNode("match-playoff-5", true, true)}
+                  {renderMatchNode("match-playoff-5", "Match 5", true, true)}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>LB Semis</span>
-                  {renderMatchNode("match-playoff-6", true, true)}
+                  {renderMatchNode("match-playoff-6", "Match 6", true, true)}
                 </div>
               </div>
 
