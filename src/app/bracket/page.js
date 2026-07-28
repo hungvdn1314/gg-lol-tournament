@@ -7,6 +7,48 @@ import { subscribeToData } from "@/lib/db";
 import { teamLogoPlaceholder } from "@/lib/placeholders";
 import MatchStatsModal from "@/components/MatchStatsModal";
 
+const MATCH_SCHEDULE_FALLBACKS = {
+  "match-playoff-1": "Jul 27 | 7:00 - 8:30pm",
+  "match-playoff-2": "Jul 27 | 7:00 - 8:30pm",
+  "match-playoff-3": "Jul 28 | 7:00 - 8:30pm",
+  "match-playoff-4": "Jul 28 | 7:00 - 8:30pm",
+  "match-playoff-5": "Jul 29 | 7:00 - 8:30pm",
+  "match-playoff-6": "Jul 29 | 7:00 - 8:30pm",
+  "match-playoff-7": "Jul 30 | 7:00 - 9:30pm",
+  "match-playoff-8": "Aug 3 | 7:00 - 9:30pm",
+};
+
+const getMatchDateInfo = (match, matchId) => {
+  if (match?.scheduledTime) {
+    try {
+      const d = new Date(match.scheduledTime);
+      if (!isNaN(d.getTime())) {
+        const month = d.toLocaleDateString("en-US", { month: "short" });
+        const day = d.getDate();
+        
+        let startHours = d.getHours();
+        const startMins = d.getMinutes();
+        const start12 = startHours % 12 || 12;
+        const startStr = `${start12}:${startMins < 10 ? "0" : ""}${startMins}`;
+        
+        const bo = match.bestOf || 3;
+        const durationMins = bo === 5 ? 150 : 90;
+        const endD = new Date(d.getTime() + durationMins * 60 * 1000);
+        let endHours = endD.getHours();
+        const endMins = endD.getMinutes();
+        const endAmpm = endHours >= 12 ? "pm" : "am";
+        const end12 = endHours % 12 || 12;
+        const endStr = `${end12}:${endMins < 10 ? "0" : ""}${endMins}${endAmpm}`;
+        
+        return `${month} ${day} | ${startStr} - ${endStr}`;
+      }
+    } catch (e) {
+      // Fall back below
+    }
+  }
+  return MATCH_SCHEDULE_FALLBACKS[matchId] || "";
+};
+
 export default function Bracket() {
   const [matches, setMatches] = useState({});
   const [teams, setTeams] = useState({});
@@ -27,6 +69,8 @@ export default function Bracket() {
 
   const renderMatchNode = (matchId, label, hasRightLine = false, hasLeftLine = false) => {
     const match = getMatch(matchId);
+    const dateInfo = getMatchDateInfo(match, matchId);
+    const bestOf = match?.bestOf || (matchId === "match-playoff-7" || matchId === "match-playoff-8" ? 5 : 3);
     
     // Inactive placeholder if match doesn't exist yet
     if (!match) {
@@ -37,7 +81,7 @@ export default function Bracket() {
             background: "rgba(255, 255, 255, 0.01)", 
             borderRadius: "8px", 
             overflow: "hidden", 
-            minWidth: "220px", 
+            minWidth: "240px", 
             display: "flex", 
             flexDirection: "column",
             position: "relative",
@@ -48,9 +92,16 @@ export default function Bracket() {
           {hasRightLine && <div style={{ position: "absolute", right: "-20px", top: "50%", width: "20px", height: "2px", backgroundColor: "var(--border-dark)" }} />}
           {hasLeftLine && <div style={{ position: "absolute", left: "-20px", top: "50%", width: "20px", height: "2px", backgroundColor: "var(--border-dark)" }} />}
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 0.75rem", fontSize: "0.7rem", borderBottom: "1px dashed var(--border-dark)", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold" }}>
-            <span>{label}</span>
-            <span>TBD</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 0.65rem", fontSize: "0.68rem", borderBottom: "1px dashed var(--border-dark)", color: "var(--text-muted)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", overflow: "hidden" }}>
+              <span style={{ fontWeight: "800", color: "var(--primary-gold-bright)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</span>
+              {dateInfo && (
+                <span style={{ color: "rgba(255, 255, 255, 0.55)", fontSize: "0.64rem", fontWeight: "500", whiteSpace: "nowrap" }}>{dateInfo}</span>
+              )}
+            </div>
+            <span style={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: "3px", padding: "1px 4px", fontSize: "0.6rem", fontWeight: "700", color: "var(--text-muted)", letterSpacing: "0.03em" }}>
+              BO{bestOf}
+            </span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.6rem 0.75rem", borderBottom: "1px dashed var(--border-dark)", color: "var(--text-muted)", fontSize: "0.8rem" }}>
             <span>TBD</span>
@@ -77,7 +128,7 @@ export default function Bracket() {
           background: isLive ? "rgba(245, 176, 65, 0.02)" : "var(--bg-secondary)", 
           borderRadius: "8px", 
           overflow: "hidden", 
-          minWidth: "220px", 
+          minWidth: "240px", 
           display: "flex", 
           flexDirection: "column",
           position: "relative",
@@ -97,15 +148,24 @@ export default function Bracket() {
         {hasLeftLine && <div style={{ position: "absolute", left: "-20px", top: "50%", width: "20px", height: "2px", backgroundColor: isCompleted ? "var(--primary-gold-dim)" : "var(--border-dark)" }} />}
 
         {/* Match Header Info */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: isLive ? "rgba(245, 176, 65, 0.12)" : "rgba(255, 255, 255, 0.02)", padding: "0.4rem 0.75rem", fontSize: "0.7rem", borderBottom: "1px solid var(--border-dark)", color: "var(--text-muted)" }}>
-          <span style={{ fontWeight: "700", color: isLive ? "var(--primary-gold)" : "var(--primary-gold-bright)", textTransform: "uppercase" }}>{label}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            {isLive && (
-              <span style={{ display: "inline-block", width: "6px", height: "6px", backgroundColor: "#ff4655", borderRadius: "50%", animation: "pulse 1s infinite" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: isLive ? "rgba(245, 176, 65, 0.12)" : "rgba(255, 255, 255, 0.02)", padding: "0.4rem 0.65rem", fontSize: "0.68rem", borderBottom: "1px solid var(--border-dark)", color: "var(--text-muted)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", overflow: "hidden" }}>
+            <span style={{ fontWeight: "800", color: isLive ? "var(--primary-gold)" : "var(--primary-gold-bright)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</span>
+            {dateInfo && (
+              <span style={{ color: "rgba(255, 255, 255, 0.55)", fontSize: "0.64rem", fontWeight: "500", whiteSpace: "nowrap" }}>{dateInfo}</span>
             )}
-            <span style={{ fontWeight: "bold", textTransform: "uppercase", fontSize: "0.65rem", color: isLive ? "#ff4655" : "var(--text-muted)" }}>
-              {isLive ? "LIVE" : `Bo${match.bestOf}`}
-            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
+            {isLive ? (
+              <>
+                <span style={{ display: "inline-block", width: "6px", height: "6px", backgroundColor: "#ff4655", borderRadius: "50%", animation: "pulse 1s infinite" }} />
+                <span style={{ fontWeight: "bold", textTransform: "uppercase", fontSize: "0.6rem", color: "#ff4655" }}>LIVE</span>
+              </>
+            ) : (
+              <span style={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: "3px", padding: "1px 4px", fontSize: "0.6rem", fontWeight: "700", color: "var(--text-muted)", letterSpacing: "0.03em" }}>
+                BO{match.bestOf || bestOf}
+              </span>
+            )}
           </div>
         </div>
 

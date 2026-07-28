@@ -210,6 +210,7 @@ function RankingsContent() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [version, setVersion] = useState("16.13.1");
   const [concept, setConcept] = useState(searchParams.get("concept") || "concept3");
+  const [stageFilter, setStageFilter] = useState("all"); // all, group, playoff, grandFinal
 
 
 
@@ -387,6 +388,13 @@ function RankingsContent() {
     const isGroup = matchId.startsWith("match-g-");
     const isPlayoff = matchId.startsWith("match-playoff-") && matchId !== "match-playoff-8";
     const isGrandFinal = matchId === "match-playoff-8";
+
+    // Apply stage filter for stats tabs
+    if (stageFilter !== "all") {
+      if (stageFilter === "group" && !isGroup) return;
+      if (stageFilter === "playoff" && !isPlayoff) return;
+      if (stageFilter === "grandFinal" && !isGrandFinal) return;
+    }
 
     // To calculate Series MVP, we need a separate aggregator for just this series
     const seriesScores = {};
@@ -1849,6 +1857,7 @@ function RankingsContent() {
               setSortBy("seriesMvpCount");
               setSortColumn("seriesMvpCount");
               setSortOrder("desc");
+              setStageFilter("all");
             }}
           >
             📊 Player Stats
@@ -1862,6 +1871,7 @@ function RankingsContent() {
               setSortBy("positionScore");
               setSortColumn("positionScore");
               setSortOrder("desc");
+              setStageFilter("all");
             }}
           >
             👥 Team Stats
@@ -1928,9 +1938,43 @@ function RankingsContent() {
                   </h2>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
                     {rankingType === "player"
-                      ? "Ranked by performance across all tournament matches."
-                      : "Ranked by team results throughout the tournament."}
+                      ? `Ranked by performance across ${stageFilter === "all" ? "all tournament" : stageFilter === "group" ? "Group Stage" : stageFilter === "playoff" ? "Playoff" : "Grand Final"} matches.`
+                      : `Ranked by team results across ${stageFilter === "all" ? "the entire tournament" : stageFilter === "group" ? "Group Stage" : stageFilter === "playoff" ? "Playoff" : "Grand Final"} matches.`}
                   </p>
+                </div>
+
+                {/* ── Stage Filter ── */}
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
+                  <div style={{
+                    display: "inline-flex", gap: "0",
+                    backgroundColor: "rgba(0,0,0,0.3)", border: "1px solid var(--border-dark)",
+                    borderRadius: "10px", padding: "4px"
+                  }}>
+                    {[
+                      { id: "all", label: "All Stages" },
+                      { id: "group", label: "Group Stage" },
+                      { id: "playoff", label: "Playoff" },
+                      { id: "grandFinal", label: "Grand Final" }
+                    ].map(stage => {
+                      const isActive = stageFilter === stage.id;
+                      return (
+                        <button
+                          key={stage.id}
+                          onClick={() => setStageFilter(stage.id)}
+                          style={{
+                            padding: "0.35rem 0.9rem", borderRadius: "7px", border: "none",
+                            background: isActive ? "rgba(255,255,255,0.1)" : "transparent",
+                            color: isActive ? "#fff" : "var(--text-muted)",
+                            fontWeight: isActive ? "700" : "500",
+                            fontSize: "0.78rem", cursor: "pointer", whiteSpace: "nowrap",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          {stage.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* ── Metric selector strip ── */}
