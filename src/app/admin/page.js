@@ -288,21 +288,6 @@ export default function Admin() {
         await saveMatch(updatedMatch);
         await saveMatchDetails(matchId, existingDetails);
 
-        // Advance knockout bracket
-        if (status === "completed" && match.type === "knockout") {
-          if (matchId === "match-semi1") {
-            const finalMatch = matches["match-final"];
-            if (finalMatch) { finalMatch.teamAId = winnerId; await saveMatch(finalMatch); }
-            const thirdMatch = matches["match-third"];
-            if (thirdMatch) { thirdMatch.teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
-          } else if (matchId === "match-semi2") {
-            const finalMatch = matches["match-final"];
-            if (finalMatch) { finalMatch.teamBId = winnerId; await saveMatch(finalMatch); }
-            const thirdMatch = matches["match-third"];
-            if (thirdMatch) { thirdMatch.teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
-          }
-        }
-
         await recalculateLeaderboard();
         alert("Mock Webhook Sim completed! Match scores updated, stats saved, standings updated.");
       } else {
@@ -472,20 +457,6 @@ export default function Admin() {
       
       await saveMatch(updatedMatch);
       
-      if (status === "completed" && match.type === "knockout") {
-        if (matchId === "match-semi1") {
-          const finalMatch = matches["match-final"];
-          if (finalMatch) { finalMatch.teamAId = winnerId; await saveMatch(finalMatch); }
-          const thirdMatch = matches["match-third"];
-          if (thirdMatch) { thirdMatch.teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
-        } else if (matchId === "match-semi2") {
-          const finalMatch = matches["match-final"];
-          if (finalMatch) { finalMatch.teamBId = winnerId; await saveMatch(finalMatch); }
-          const thirdMatch = matches["match-third"];
-          if (thirdMatch) { thirdMatch.teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId; await saveMatch(thirdMatch); }
-        }
-      }
-      
       const { recalculateLeaderboard } = await import("@/lib/db");
       await recalculateLeaderboard();
       alert(`Successfully imported match! Winner of this game: ${data.winnerSide === 100 ? "Blue Side" : "Red Side"}. Database and stats updated.`);
@@ -608,37 +579,6 @@ export default function Admin() {
 
     try {
       await saveMatch(updatedMatch);
-
-      // AUTOMATED KNOCKOUT ADVANCEMENT LOGIC
-      if (match.status === "completed" && match.type === "knockout") {
-        const updatedMatches = { ...matches, [match.id]: updatedMatch };
-        
-        if (match.id === "match-semi1") {
-          const finalMatch = matches["match-final"];
-          const thirdMatch = matches["match-third"];
-          
-          if (finalMatch) {
-            finalMatch.teamAId = winnerId;
-            await saveMatch(finalMatch);
-          }
-          if (thirdMatch) {
-            thirdMatch.teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId;
-            await saveMatch(thirdMatch);
-          }
-        } else if (match.id === "match-semi2") {
-          const finalMatch = matches["match-final"];
-          const thirdMatch = matches["match-third"];
-          
-          if (finalMatch) {
-            finalMatch.teamBId = winnerId;
-            await saveMatch(finalMatch);
-          }
-          if (thirdMatch) {
-            thirdMatch.teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId;
-            await saveMatch(thirdMatch);
-          }
-        }
-      }
 
       setScoreManagingMatch(null);
       alert("Match score and status updated successfully!");

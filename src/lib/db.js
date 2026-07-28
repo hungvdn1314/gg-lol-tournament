@@ -2329,64 +2329,76 @@ export async function deleteTeam(teamId) {
   }
 }
 
+export async function advancePlayoffBracket(match) {
+  if (!match || match.status !== "completed" || !match.winnerId) return;
+  const matchId = match.id;
+  const loserId = match.winnerId === match.teamAId ? match.teamBId : match.teamAId;
+
+  if (isMockMode) {
+    const matches = getMockStorage("matches", {});
+    let changed = false;
+
+    if (matchId === "match-playoff-1") {
+      if (matches["match-playoff-5"]) { matches["match-playoff-5"].teamAId = match.winnerId; changed = true; }
+      if (matches["match-playoff-3"] && loserId) { matches["match-playoff-3"].teamBId = loserId; changed = true; }
+    } else if (matchId === "match-playoff-2") {
+      if (matches["match-playoff-5"]) { matches["match-playoff-5"].teamBId = match.winnerId; changed = true; }
+      if (matches["match-playoff-4"] && loserId) { matches["match-playoff-4"].teamBId = loserId; changed = true; }
+    } else if (matchId === "match-playoff-3") {
+      if (matches["match-playoff-6"]) { matches["match-playoff-6"].teamAId = match.winnerId; changed = true; }
+    } else if (matchId === "match-playoff-4") {
+      if (matches["match-playoff-6"]) { matches["match-playoff-6"].teamBId = match.winnerId; changed = true; }
+    } else if (matchId === "match-playoff-5") {
+      if (matches["match-playoff-8"]) { matches["match-playoff-8"].teamAId = match.winnerId; changed = true; }
+      if (matches["match-playoff-7"] && loserId) { matches["match-playoff-7"].teamAId = loserId; changed = true; }
+    } else if (matchId === "match-playoff-6") {
+      if (matches["match-playoff-7"]) { matches["match-playoff-7"].teamBId = match.winnerId; changed = true; }
+    } else if (matchId === "match-playoff-7") {
+      if (matches["match-playoff-8"]) { matches["match-playoff-8"].teamBId = match.winnerId; changed = true; }
+    }
+
+    if (changed) {
+      setMockStorage("matches", matches);
+    }
+  } else {
+    const { database: db } = await import("@/lib/firebase");
+    const { ref: dbRef, set: dbSet } = await import("firebase/database");
+
+    if (matchId === "match-playoff-1") {
+      await dbSet(dbRef(db, "matches/match-playoff-5/teamAId"), match.winnerId);
+      if (loserId) await dbSet(dbRef(db, "matches/match-playoff-3/teamBId"), loserId);
+    } else if (matchId === "match-playoff-2") {
+      await dbSet(dbRef(db, "matches/match-playoff-5/teamBId"), match.winnerId);
+      if (loserId) await dbSet(dbRef(db, "matches/match-playoff-4/teamBId"), loserId);
+    } else if (matchId === "match-playoff-3") {
+      await dbSet(dbRef(db, "matches/match-playoff-6/teamAId"), match.winnerId);
+    } else if (matchId === "match-playoff-4") {
+      await dbSet(dbRef(db, "matches/match-playoff-6/teamBId"), match.winnerId);
+    } else if (matchId === "match-playoff-5") {
+      await dbSet(dbRef(db, "matches/match-playoff-8/teamAId"), match.winnerId);
+      if (loserId) await dbSet(dbRef(db, "matches/match-playoff-7/teamAId"), loserId);
+    } else if (matchId === "match-playoff-6") {
+      await dbSet(dbRef(db, "matches/match-playoff-7/teamBId"), match.winnerId);
+    } else if (matchId === "match-playoff-7") {
+      await dbSet(dbRef(db, "matches/match-playoff-8/teamBId"), match.winnerId);
+    }
+  }
+}
+
 export async function saveMatch(match) {
   if (isMockMode) {
     const matches = getMockStorage("matches", {});
     matches[match.id] = match;
-    
-    // Double Elimination Playoff Bracket Automation
-    if (match.status === "completed" && match.winnerId) {
-      const loserId = match.winnerId === match.teamAId ? match.teamBId : match.teamAId;
-      if (match.id === "match-playoff-1") {
-        if (matches["match-playoff-5"]) matches["match-playoff-5"].teamAId = match.winnerId;
-        if (matches["match-playoff-3"]) matches["match-playoff-3"].teamBId = loserId;
-      } else if (match.id === "match-playoff-2") {
-        if (matches["match-playoff-5"]) matches["match-playoff-5"].teamBId = match.winnerId;
-        if (matches["match-playoff-4"]) matches["match-playoff-4"].teamBId = loserId;
-      } else if (match.id === "match-playoff-3") {
-        if (matches["match-playoff-6"]) matches["match-playoff-6"].teamAId = match.winnerId;
-      } else if (match.id === "match-playoff-4") {
-        if (matches["match-playoff-6"]) matches["match-playoff-6"].teamBId = match.winnerId;
-      } else if (match.id === "match-playoff-5") {
-        if (matches["match-playoff-8"]) matches["match-playoff-8"].teamAId = match.winnerId;
-        if (matches["match-playoff-7"]) matches["match-playoff-7"].teamAId = loserId;
-      } else if (match.id === "match-playoff-6") {
-        if (matches["match-playoff-7"]) matches["match-playoff-7"].teamBId = match.winnerId;
-      } else if (match.id === "match-playoff-7") {
-        if (matches["match-playoff-8"]) matches["match-playoff-8"].teamBId = match.winnerId;
-      }
-    }
-
     setMockStorage("matches", matches);
+    
+    await advancePlayoffBracket(match);
     await recalculateLeaderboard();
     return match;
   } else {
     const dbRef = ref(database, `matches/${match.id}`);
     await set(dbRef, match);
     
-    // Double Elimination Playoff Bracket Automation
-    if (match.status === "completed" && match.winnerId) {
-      const loserId = match.winnerId === match.teamAId ? match.teamBId : match.teamAId;
-      if (match.id === "match-playoff-1") {
-        await set(ref(database, `matches/match-playoff-5/teamAId`), match.winnerId);
-        await set(ref(database, `matches/match-playoff-3/teamBId`), loserId);
-      } else if (match.id === "match-playoff-2") {
-        await set(ref(database, `matches/match-playoff-5/teamBId`), match.winnerId);
-        await set(ref(database, `matches/match-playoff-4/teamBId`), loserId);
-      } else if (match.id === "match-playoff-3") {
-        await set(ref(database, `matches/match-playoff-6/teamAId`), match.winnerId);
-      } else if (match.id === "match-playoff-4") {
-        await set(ref(database, `matches/match-playoff-6/teamBId`), match.winnerId);
-      } else if (match.id === "match-playoff-5") {
-        await set(ref(database, `matches/match-playoff-8/teamAId`), match.winnerId);
-        await set(ref(database, `matches/match-playoff-7/teamAId`), loserId);
-      } else if (match.id === "match-playoff-6") {
-        await set(ref(database, `matches/match-playoff-7/teamBId`), match.winnerId);
-      } else if (match.id === "match-playoff-7") {
-        await set(ref(database, `matches/match-playoff-8/teamBId`), match.winnerId);
-      }
-    }
-
+    await advancePlayoffBracket(match);
     await recalculateLeaderboard();
     return match;
   }
@@ -3089,37 +3101,13 @@ export async function submitCaptainGameScore(matchId, gameIndex, gameDetails) {
   if (isMockMode) {
     const matches = getMockStorage("matches", DEFAULT_MATCHES);
     matches[matchId] = updatedMatch;
-    
-    // Playoff Bracket Advancement
-    if (status === "completed" && match.type === "knockout") {
-      if (matchId === "match-semi1" && matches["match-final"]) {
-        matches["match-final"].teamAId = winnerId;
-        if (matches["match-third"]) {
-          matches["match-third"].teamAId = winnerId === match.teamAId ? match.teamBId : match.teamAId;
-        }
-      } else if (matchId === "match-semi2" && matches["match-final"]) {
-        matches["match-final"].teamBId = winnerId;
-        if (matches["match-third"]) {
-          matches["match-third"].teamBId = winnerId === match.teamAId ? match.teamBId : match.teamAId;
-        }
-      }
-    }
     setMockStorage("matches", matches);
+    await advancePlayoffBracket(updatedMatch);
   } else {
     const { database: db } = await import("@/lib/firebase");
     const { ref: dbRef, set: dbSet } = await import("firebase/database");
     await dbSet(dbRef(db, `matches/${matchId}`), updatedMatch);
-    
-    // Playoff Bracket Advancement
-    if (status === "completed" && match.type === "knockout") {
-      if (matchId === "match-semi1") {
-        await dbSet(dbRef(db, "matches/match-final/teamAId"), winnerId);
-        await dbSet(dbRef(db, "matches/match-third/teamAId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
-      } else if (matchId === "match-semi2") {
-        await dbSet(dbRef(db, "matches/match-final/teamBId"), winnerId);
-        await dbSet(dbRef(db, "matches/match-third/teamBId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
-      }
-    }
+    await advancePlayoffBracket(updatedMatch);
   }
 
   // 6. Recalculate standings leaderboard

@@ -121,7 +121,7 @@ export async function POST(request) {
     if (!isMockMode) {
       const { database: db } = await import("@/lib/firebase");
       const { ref, get, set } = await import("firebase/database");
-      const { recalculateLeaderboard, getGameWinnerTeamId } = await import("@/lib/db");
+      const { recalculateLeaderboard, getGameWinnerTeamId, advancePlayoffBracket } = await import("@/lib/db");
 
       // A. Fetch current match configuration
       const matchRef = ref(db, `matches/${matchId}`);
@@ -222,19 +222,7 @@ export async function POST(request) {
       await set(matchRef, updatedMatch);
 
       // F. Handle Playoff Bracket Advancement
-      if (status === "completed" && match.type === "knockout") {
-        if (matchId === "match-semi1") {
-          const finalSnap = await get(ref(db, "matches/match-final"));
-          if (finalSnap.exists()) await set(ref(db, "matches/match-final/teamAId"), winnerId);
-          const thirdSnap = await get(ref(db, "matches/match-third"));
-          if (thirdSnap.exists()) await set(ref(db, "matches/match-third/teamAId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
-        } else if (matchId === "match-semi2") {
-          const finalSnap = await get(ref(db, "matches/match-final"));
-          if (finalSnap.exists()) await set(ref(db, "matches/match-final/teamBId"), winnerId);
-          const thirdSnap = await get(ref(db, "matches/match-third"));
-          if (thirdSnap.exists()) await set(ref(db, "matches/match-third/teamBId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
-        }
-      }
+      await advancePlayoffBracket(updatedMatch);
 
       // G. Standings recalculation
       await recalculateLeaderboard();

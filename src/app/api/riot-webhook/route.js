@@ -154,7 +154,7 @@ export async function POST(request) {
       // Dynamic imports of firebase admin or client SDK to update values
       const { database: db } = await import("@/lib/firebase");
       const { ref, get, set } = await import("firebase/database");
-      const { recalculateLeaderboard } = await import("@/lib/db");
+      const { recalculateLeaderboard, advancePlayoffBracket } = await import("@/lib/db");
 
       // Fetch teams to map player names
       const teamsRef = ref(db, "teams");
@@ -251,33 +251,7 @@ export async function POST(request) {
         await set(matchRef, updatedMatch);
 
         // 6. Handle Playoff Bracket Advancement
-        if (status === "completed" && match.type === "knockout") {
-          if (internalMatchId === "match-semi1") {
-            const finalRef = ref(db, "matches/match-final");
-            const thirdRef = ref(db, "matches/match-third");
-            
-            const finalSnap = await get(finalRef);
-            if (finalSnap.exists()) {
-              await set(ref(db, "matches/match-final/teamAId"), winnerId);
-            }
-            const thirdSnap = await get(thirdRef);
-            if (thirdSnap.exists()) {
-              await set(ref(db, "matches/match-third/teamAId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
-            }
-          } else if (internalMatchId === "match-semi2") {
-            const finalRef = ref(db, "matches/match-final");
-            const thirdRef = ref(db, "matches/match-third");
-            
-            const finalSnap = await get(finalRef);
-            if (finalSnap.exists()) {
-              await set(ref(db, "matches/match-final/teamBId"), winnerId);
-            }
-            const thirdSnap = await get(thirdRef);
-            if (thirdSnap.exists()) {
-              await set(ref(db, "matches/match-third/teamBId"), winnerId === match.teamAId ? match.teamBId : match.teamAId);
-            }
-          }
-        }
+        await advancePlayoffBracket(updatedMatch);
 
         // 7. Trigger leaderboard standings update
         await recalculateLeaderboard();
