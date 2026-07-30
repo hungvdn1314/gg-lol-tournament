@@ -2830,6 +2830,7 @@ export function sortGroupTeams(teamList, matches) {
 
     matchesList.forEach((m) => {
       if (
+        m.type === "group" &&
         m.status === "completed" &&
         clusterIds.has(m.teamAId) &&
         clusterIds.has(m.teamBId) &&
