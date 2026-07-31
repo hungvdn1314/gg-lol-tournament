@@ -3248,7 +3248,12 @@ export async function saveGrandFinalConfig(configData) {
 
 export function subscribeToGrandFinalConfig(callback) {
   if (isMockMode) {
-    callback(getMockStorage("grandFinalConfig", {}));
+    const defaultConfig = {
+      isPageVisible: true,
+      isVotingOpen: false,
+      isVotingFinished: false,
+    };
+    callback(getMockStorage("grandFinalConfig", defaultConfig));
     if (!subscribers.grandFinalConfig) subscribers.grandFinalConfig = [];
     subscribers.grandFinalConfig.push(callback);
     return () => {

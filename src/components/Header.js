@@ -7,11 +7,13 @@ import { usePathname } from "next/navigation";
 import { Menu, X, LogOut } from "lucide-react";
 import { SummonersCup, HextechCrest } from "@/components/Icons";
 import { isMockMode } from "@/lib/firebase";
+import { subscribeToGrandFinalConfig } from "@/lib/db";
 
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [gfConfig, setGfConfig] = useState({});
 
   useEffect(() => {
     // Check if admin is logged in (mock or real)
@@ -33,9 +35,13 @@ export default function Header() {
     // Custom event listener for same-window logins
     window.addEventListener("admin_auth_changed", checkLoginStatus);
 
+    // Subscribe to Grand Final config
+    const unsubGf = subscribeToGrandFinalConfig(setGfConfig);
+
     return () => {
       window.removeEventListener("storage", checkLoginStatus);
       window.removeEventListener("admin_auth_changed", checkLoginStatus);
+      if (unsubGf) unsubGf();
     };
   }, []);
 
@@ -45,9 +51,11 @@ export default function Header() {
     window.location.href = "/";
   };
 
+  const isGfVisible = gfConfig.isPageVisible !== false || isAdminLoggedIn;
+
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/grand-final", label: "🏆 Grand Final", isGold: true },
+    ...(isGfVisible ? [{ href: "/grand-final", label: "Finals", isGold: true }] : []),
     { href: "/teams", label: "Teams" },
     { href: "/schedule", label: "Schedule" },
     { href: "/leaderboard", label: "Leaderboard" },

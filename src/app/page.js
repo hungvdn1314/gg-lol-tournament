@@ -5,26 +5,29 @@ import Link from "next/link";
 import Image from "next/image";
 import { Calendar, ChevronRight } from "lucide-react";
 import { LoLWard, ZhonyaHourglass, CrossedSwords } from "@/components/Icons";
-import { subscribeToData } from "@/lib/db";
+import { subscribeToData, subscribeToGrandFinalConfig } from "@/lib/db";
 import { teamLogoPlaceholder } from "@/lib/placeholders";
 
 export default function Home() {
   const [config, setConfig] = useState(null);
   const [matches, setMatches] = useState({});
   const [teams, setTeams] = useState({});
+  const [gfConfig, setGfConfig] = useState({});
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [nextMatch, setNextMatch] = useState(null);
 
   useEffect(() => {
-    // Subscribe to tournament configurations, matches, and teams
+    // Subscribe to tournament configurations, matches, teams, and gfConfig
     const unsubConfig = subscribeToData("config", setConfig);
     const unsubMatches = subscribeToData("matches", setMatches);
     const unsubTeams = subscribeToData("teams", setTeams);
+    const unsubGfConfig = subscribeToGrandFinalConfig(setGfConfig);
 
     return () => {
-      unsubConfig();
-      unsubMatches();
-      unsubTeams();
+      if (unsubConfig) unsubConfig();
+      if (unsubMatches) unsubMatches();
+      if (unsubTeams) unsubTeams();
+      if (unsubGfConfig) unsubGfConfig();
     };
   }, []);
 
@@ -123,9 +126,11 @@ export default function Home() {
         </div>
 
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
-          <Link href="/grand-final" className="btn btn-primary" style={{ backgroundColor: "var(--primary-gold)", color: "#0a0a0c", fontWeight: 800, border: "2px solid var(--primary-gold-bright)", boxShadow: "0 0 20px rgba(245, 176, 65, 0.4)" }}>
-            🏆 Grand Final Hub
-          </Link>
+          {gfConfig.isPageVisible !== false && (
+            <Link href="/grand-final" className="btn btn-primary" style={{ backgroundColor: "var(--primary-gold)", color: "#0a0a0c", fontWeight: 800, border: "2px solid var(--primary-gold-bright)", boxShadow: "0 0 20px rgba(245, 176, 65, 0.4)" }}>
+              Grand Final Hub
+            </Link>
+          )}
           <Link href="/schedule" className="btn btn-secondary">
             View Schedule
           </Link>

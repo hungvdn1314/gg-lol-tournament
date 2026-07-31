@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Settings, Calendar, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info, Activity, Trophy, Tv, Award
+  Settings, Calendar, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info, Activity, Trophy, Tv, Award, Eye, EyeOff
 } from "lucide-react";
 import { HextechCrest, LoLMinion, CrossedSwords } from "@/components/Icons";
 import { isMockMode, auth } from "@/lib/firebase";
@@ -746,7 +746,7 @@ export default function Admin() {
             className={`admin-nav-item ${activeTab === "grand-final" ? "active" : ""}`}
             style={{ color: "var(--primary-gold)", borderColor: "var(--border-gold)" }}
           >
-            <Trophy size={18} /> Grand Final Controls
+            Grand Final Controls
           </button>
 
         </aside>
@@ -1508,6 +1508,68 @@ export default function Admin() {
               <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)" }}>
                 <Trophy size={22} /> Grand Final Broadcast & MVP Voting Controls
               </h2>
+
+              {/* 0. Grand Final Page Public Visibility Toggle */}
+              <div className="card" style={{ marginBottom: "2rem", border: "1px solid var(--border-gold)" }}>
+                <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Eye size={18} style={{ color: "var(--primary-gold)" }} /> Grand Final Page Public Visibility
+                </h3>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1.25rem" }}>
+                  Control whether the <strong>/grand-final</strong> page is publicly accessible or hidden behind a locked screen.
+                </p>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => saveGrandFinalConfig({ isPageVisible: true })}
+                    className="btn"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      backgroundColor: gfConfig.isPageVisible !== false ? "#10b981" : "rgba(255,255,255,0.05)",
+                      borderColor: gfConfig.isPageVisible !== false ? "#10b981" : "var(--border-dark)",
+                      color: "#fff",
+                      fontWeight: 800,
+                      padding: "0.65rem 1.25rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Eye size={16} /> SHOW PAGE (PUBLIC)
+                  </button>
+
+                  <button
+                    onClick={() => saveGrandFinalConfig({ isPageVisible: false })}
+                    className="btn"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      backgroundColor: gfConfig.isPageVisible === false ? "#ef4444" : "rgba(255,255,255,0.05)",
+                      borderColor: gfConfig.isPageVisible === false ? "#ef4444" : "var(--border-dark)",
+                      color: "#fff",
+                      fontWeight: 800,
+                      padding: "0.65rem 1.25rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <EyeOff size={16} /> HIDE PAGE (LOCKED)
+                  </button>
+
+                  <span
+                    style={{
+                      fontSize: "0.8rem",
+                      padding: "0.4rem 0.9rem",
+                      borderRadius: "20px",
+                      backgroundColor: gfConfig.isPageVisible !== false ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                      border: `1px solid ${gfConfig.isPageVisible !== false ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)"}`,
+                      color: gfConfig.isPageVisible !== false ? "#34d399" : "#f87171",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {gfConfig.isPageVisible !== false ? "STATUS: PUBLICLY VISIBLE" : "STATUS: HIDDEN"}
+                  </span>
+                </div>
+              </div>
 
               {/* 1. YouTube Stream Settings */}
               <div className="card" style={{ marginBottom: "2rem", border: "1px solid var(--border-gold)" }}>

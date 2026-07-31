@@ -58,7 +58,7 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
       if (Object.keys(changes).length > 0) {
         setRankChanges(changes);
         if (overtaker) {
-          setOvertakeMsg(`⚡ NEW VOTE LEADER: ${overtaker.ign} (${overtaker.realName}) OVERTOOK 1ST PLACE!`);
+          setOvertakeMsg(`⚡ NEW VOTE LEADER: ${overtaker.realName || overtaker.ign} (${overtaker.ign}) OVERTOOK 1ST PLACE!`);
           setTimeout(() => setOvertakeMsg(null), 4000);
         }
         setTimeout(() => setRankChanges({}), 3500);
@@ -462,11 +462,13 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <strong style={{ fontFamily: "var(--font-family), sans-serif", fontSize: "1.05rem", color: "#fff", fontWeight: 800 }}>
-                          {candidate.ign} {candidate.riotTag && <span style={{ fontSize: "0.75em", color: "var(--text-muted)", fontWeight: "normal" }}>{candidate.riotTag}</span>}
+                          {candidate.realName || candidate.ign}
                         </strong>
-                        <span style={{ fontSize: "0.85rem", color: "var(--primary-gold-bright)", fontWeight: 600 }}>
-                          ({candidate.realName})
-                        </span>
+                        {candidate.realName && candidate.ign && (
+                          <span style={{ fontSize: "0.85rem", color: "var(--primary-gold-bright)", fontWeight: 600 }}>
+                            ({candidate.ign}{candidate.riotTag ? ` ${candidate.riotTag}` : ""})
+                          </span>
+                        )}
 
                         {rankChange === "UP" && (
                           <span
@@ -648,14 +650,16 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
                 )}
               </div>
 
-              {/* Dual Name Display: IGN + Real Name */}
-              <h4 style={{ fontFamily: "var(--font-family), sans-serif", fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", margin: "0 0 2px 0" }}>
-                {candidate.ign} {candidate.riotTag && <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "normal" }}>{candidate.riotTag}</span>}
+              {/* Dual Name Display: Real Name (Primary) + IGN (Secondary) */}
+              <h4 style={{ fontFamily: "var(--font-family), sans-serif", fontSize: "1.05rem", fontWeight: 800, color: "var(--text-primary)", margin: "0 0 2px 0" }}>
+                {candidate.realName || candidate.ign}
               </h4>
 
-              <div style={{ fontSize: "0.8rem", color: "var(--primary-gold-bright)", fontWeight: 600, marginBottom: "0.35rem" }}>
-                {candidate.realName}
-              </div>
+              {candidate.realName && candidate.ign && (
+                <div style={{ fontSize: "0.82rem", color: "var(--primary-gold-bright)", fontWeight: 700, marginBottom: "0.35rem" }}>
+                  ({candidate.ign}{candidate.riotTag ? ` ${candidate.riotTag}` : ""})
+                </div>
+              )}
 
               <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "1rem" }}>
                 ARAM MAYHEM STARTER

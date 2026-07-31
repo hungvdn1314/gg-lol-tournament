@@ -9,10 +9,20 @@ export default function GrandFinalHeader({ match, team1, team2, winningTeamId })
   const isTeam1Winner = winningTeamId === team1?.id || (match?.completed && team1Score > team2Score);
   const isTeam2Winner = winningTeamId === team2?.id || (match?.completed && team2Score > team1Score);
 
-  const bo5Games = [1, 2, 3, 4, 5];
+  const team1Players = getTeamPlayerListStructured(team1);
+  const team2Players = getTeamPlayerListStructured(team2);
 
-  const team1Players = getTeamPlayerList(team1);
-  const team2Players = getTeamPlayerList(team2);
+  const maxPlayers = Math.max(team1Players.length, team2Players.length, 5);
+  const playerIndices = Array.from({ length: maxPlayers }, (_, i) => i);
+
+  // Generate clear game-by-game breakdown sequence for BO5 (e.g. 3-2 series)
+  const seriesGames = [
+    { winner: team1Score >= 1 ? "team1" : team2Score >= 1 ? "team2" : null },
+    { winner: team1Score >= 2 ? "team1" : team2Score >= 2 ? "team2" : null },
+    { winner: team2Score >= 1 && team1Score < 3 ? "team2" : team1Score >= 3 ? "team1" : null },
+    { winner: team2Score >= 2 ? "team2" : null },
+    { winner: team1Score >= 3 && team2Score >= 2 ? "team1" : null },
+  ].slice(0, team1Score + team2Score || 5);
 
   return (
     <div
@@ -23,7 +33,7 @@ export default function GrandFinalHeader({ match, team1, team2, winningTeamId })
         overflow: "hidden",
         backgroundColor: "var(--bg-secondary)",
         borderColor: "var(--border-gold)",
-        boxShadow: "0 8px 32px rgba(245, 176, 65, 0.15)",
+        boxShadow: "0 12px 40px rgba(0, 0, 0, 0.6)",
         borderRadius: "16px",
       }}
     >
@@ -46,208 +56,281 @@ export default function GrandFinalHeader({ match, team1, team2, winningTeamId })
             letterSpacing: "0.08em",
           }}
         >
-          <Trophy size={14} /> ARAM MAYHEM GRAND FINALS <Trophy size={14} />
+          ARAM MAYHEM GRAND FINALS
         </span>
       </div>
 
-      {/* Main Clash Scoreboard */}
+      {/* Main Scoreboard Arena Header */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "1fr auto 1fr",
-          gap: "1.5rem",
           alignItems: "center",
+          gap: "1.5rem",
           marginBottom: "2rem",
         }}
       >
-        {/* Team A */}
+        {/* Team A Corner */}
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            backgroundColor: isTeam1Winner ? "rgba(245, 176, 65, 0.08)" : "rgba(255, 255, 255, 0.02)",
-            border: isTeam1Winner ? "1px solid var(--primary-gold)" : "1px solid var(--border-dark)",
-            boxShadow: isTeam1Winner ? "0 4px 20px rgba(245, 176, 65, 0.2)" : "none",
-            position: "relative",
+            gap: "1.25rem",
+            justifyContent: "flex-end",
+            textAlign: "right",
           }}
         >
-          {isTeam1Winner && (
-            <span
-              style={{
-                position: "absolute",
-                top: "-12px",
-                backgroundColor: "var(--primary-gold)",
-                color: "#0A0A0C",
-                fontFamily: "var(--font-header)",
-                fontSize: "0.7rem",
-                fontWeight: "900",
-                padding: "0.2rem 0.75rem",
-                borderRadius: "10px",
-                letterSpacing: "0.1em",
-              }}
-            >
-              CHAMPION
+          <div>
+            {isTeam1Winner && (
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  backgroundColor: "rgba(245, 176, 65, 0.2)",
+                  border: "1px solid var(--primary-gold)",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: "12px",
+                  fontSize: "0.7rem",
+                  fontWeight: 900,
+                  color: "var(--primary-gold-bright)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  marginBottom: "0.4rem",
+                  boxShadow: "0 0 12px rgba(245, 176, 65, 0.3)",
+                }}
+              >
+                <Trophy size={13} style={{ color: "var(--primary-gold-bright)" }} /> CHAMPION
+              </div>
+            )}
+            <h2 style={{ fontFamily: "var(--font-header)", fontSize: "1.6rem", color: isTeam1Winner ? "var(--primary-gold-bright)" : "var(--text-primary)", margin: 0 }}>
+              {team1?.name || "Team A"}
+            </h2>
+            <span style={{ fontSize: "0.8rem", color: isTeam1Winner ? "var(--primary-gold)" : "var(--text-muted)", fontWeight: "700" }}>
+              {team1?.tag ? `[${team1.tag}]` : "FINALIST"}
             </span>
-          )}
+          </div>
 
           <div
             style={{
-              width: "80px",
-              height: "80px",
+              position: "relative",
+              width: "76px",
+              height: "76px",
               borderRadius: "14px",
+              overflow: "hidden",
+              border: isTeam1Winner ? "3px solid var(--primary-gold-bright)" : "2px solid var(--border-dark)",
+              backgroundColor: "var(--bg-primary)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "var(--bg-primary)",
-              border: "2px solid var(--border-gold)",
-              marginBottom: "0.75rem",
+              boxShadow: isTeam1Winner ? "0 0 25px rgba(245, 176, 65, 0.6), 0 0 50px rgba(245, 176, 65, 0.2)" : "none",
+              flexShrink: 0,
             }}
           >
             {team1?.logo ? (
-              <img src={team1.logo} alt={team1.name} style={{ maxWidth: "85%", maxHeight: "85%", objectFit: "contain" }} />
+              <img src={team1.logo} alt={team1.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span style={{ fontFamily: "var(--font-header)", fontSize: "1.4rem", color: "var(--primary-gold)", fontWeight: "900" }}>
-                {team1?.tag || team1?.name?.substring(0, 3) || "T1"}
-              </span>
+              <div style={{ fontWeight: 900, color: "var(--primary-gold)", fontSize: "1.2rem" }}>
+                {team1?.name?.charAt(0) || "A"}
+              </div>
             )}
           </div>
-          <h2 style={{ fontFamily: "var(--font-header)", fontSize: "1.3rem", color: "var(--text-primary)", margin: 0, textTransform: "uppercase", textAlign: "center" }}>
-            {team1?.name || "Team A"}
-          </h2>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-            {team1?.tag ? `[${team1.tag}]` : "Finalist"}
-          </span>
         </div>
 
-        {/* Center VS & Score */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "var(--primary-gold)", fontWeight: "900", fontSize: "0.85rem", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
-            <Swords size={16} /> VS
-          </div>
-
-          <div style={{ fontFamily: "var(--font-header)", fontSize: "3rem", fontWeight: "900", lineHeight: "1", marginBottom: "0.5rem", display: "flex", gap: "0.75rem", alignItems: "center" }}>
-            <span style={{ color: team1Score > team2Score ? "var(--primary-gold-bright)" : "var(--text-primary)" }}>{team1Score}</span>
-            <span style={{ color: "var(--text-muted)" }}>:</span>
-            <span style={{ color: team2Score > team1Score ? "var(--primary-gold-bright)" : "var(--text-primary)" }}>{team2Score}</span>
-          </div>
-
-          <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--text-muted)", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>
-            BEST OF 5 · ARAM MAYHEM
-          </span>
-
-          {/* Series Game Tracker */}
-          <div style={{ display: "flex", gap: "0.35rem" }}>
-            {bo5Games.map((gNum) => {
-              const played = team1Score + team2Score >= gNum;
-              const isT1Win = played && gNum <= team1Score;
-              const isT2Win = played && gNum > team1Score && gNum <= team1Score + team2Score;
-
-              return (
-                <div
-                  key={gNum}
-                  style={{
-                    width: "28px",
-                    height: "24px",
-                    borderRadius: "4px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.7rem",
-                    fontWeight: "800",
-                    border: "1px solid var(--border-dark)",
-                    backgroundColor: isT1Win ? "rgba(245, 176, 65, 0.25)" : isT2Win ? "rgba(59, 130, 246, 0.25)" : "rgba(255,255,255,0.03)",
-                    borderColor: isT1Win ? "var(--primary-gold)" : isT2Win ? "#3b82f6" : "var(--border-dark)",
-                    color: isT1Win ? "var(--primary-gold-bright)" : isT2Win ? "#93c5fd" : "var(--text-muted)",
-                  }}
-                  title={`Game ${gNum}`}
-                >
-                  G{gNum}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Team B */}
+        {/* Center Versus Score Display */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            backgroundColor: isTeam2Winner ? "rgba(245, 176, 65, 0.08)" : "rgba(255, 255, 255, 0.02)",
-            border: isTeam2Winner ? "1px solid var(--primary-gold)" : "1px solid var(--border-dark)",
-            boxShadow: isTeam2Winner ? "0 4px 20px rgba(245, 176, 65, 0.2)" : "none",
-            position: "relative",
+            padding: "0 1rem",
           }}
         >
-          {isTeam2Winner && (
-            <span
-              style={{
-                position: "absolute",
-                top: "-12px",
-                backgroundColor: "var(--primary-gold)",
-                color: "#0A0A0C",
-                fontFamily: "var(--font-header)",
-                fontSize: "0.7rem",
-                fontWeight: "900",
-                padding: "0.2rem 0.75rem",
-                borderRadius: "10px",
-                letterSpacing: "0.1em",
-              }}
-            >
-              CHAMPION
-            </span>
-          )}
-
           <div
             style={{
-              width: "80px",
-              height: "80px",
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              fontSize: "3rem",
+              fontFamily: "var(--font-header)",
+              fontWeight: 900,
+              color: "var(--text-primary)",
+              lineHeight: 1,
+            }}
+          >
+            <span style={{ color: isTeam1Winner ? "var(--primary-gold-bright)" : "var(--text-primary)", textShadow: isTeam1Winner ? "0 0 15px rgba(245, 176, 65, 0.5)" : "none" }}>{team1Score}</span>
+            <span style={{ fontSize: "1.2rem", color: "var(--text-muted)" }}>:</span>
+            <span style={{ color: isTeam2Winner ? "var(--primary-gold-bright)" : "var(--text-primary)", textShadow: isTeam2Winner ? "0 0 15px rgba(245, 176, 65, 0.5)" : "none" }}>{team2Score}</span>
+          </div>
+
+          {/* Series Status Pill */}
+          <div
+            style={{
+              marginTop: "0.5rem",
+              padding: "0.25rem 0.75rem",
+              borderRadius: "12px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid var(--border-dark)",
+              fontSize: "0.75rem",
+              fontWeight: 800,
+              color: "var(--primary-gold-bright)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.35rem",
+            }}
+          >
+            <Swords size={12} /> BEST OF 5 SERIES
+          </div>
+        </div>
+
+        {/* Team B Corner */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "1.25rem",
+            justifyContent: "flex-start",
+            textAlign: "left",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              width: "76px",
+              height: "76px",
               borderRadius: "14px",
+              overflow: "hidden",
+              border: isTeam2Winner ? "3px solid var(--primary-gold-bright)" : "2px solid var(--border-dark)",
+              backgroundColor: "var(--bg-primary)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "var(--bg-primary)",
-              border: "2px solid var(--border-gold)",
-              marginBottom: "0.75rem",
+              boxShadow: isTeam2Winner ? "0 0 25px rgba(245, 176, 65, 0.6), 0 0 50px rgba(245, 176, 65, 0.2)" : "none",
+              flexShrink: 0,
             }}
           >
             {team2?.logo ? (
-              <img src={team2.logo} alt={team2.name} style={{ maxWidth: "85%", maxHeight: "85%", objectFit: "contain" }} />
+              <img src={team2.logo} alt={team2.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span style={{ fontFamily: "var(--font-header)", fontSize: "1.4rem", color: "var(--primary-gold)", fontWeight: "900" }}>
-                {team2?.tag || team2?.name?.substring(0, 3) || "T2"}
-              </span>
+              <div style={{ fontWeight: 900, color: "var(--primary-gold)", fontSize: "1.2rem" }}>
+                {team2?.name?.charAt(0) || "B"}
+              </div>
             )}
           </div>
-          <h2 style={{ fontFamily: "var(--font-header)", fontSize: "1.3rem", color: "var(--text-primary)", margin: 0, textTransform: "uppercase", textAlign: "center" }}>
-            {team2?.name || "Team B"}
-          </h2>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-            {team2?.tag ? `[${team2.tag}]` : "Finalist"}
-          </span>
+
+          <div>
+            {isTeam2Winner && (
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  backgroundColor: "rgba(245, 176, 65, 0.2)",
+                  border: "1px solid var(--primary-gold)",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: "12px",
+                  fontSize: "0.7rem",
+                  fontWeight: 900,
+                  color: "var(--primary-gold-bright)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  marginBottom: "0.4rem",
+                  boxShadow: "0 0 12px rgba(245, 176, 65, 0.3)",
+                }}
+              >
+                <Trophy size={13} style={{ color: "var(--primary-gold-bright)" }} /> CHAMPION
+              </div>
+            )}
+            <h2 style={{ fontFamily: "var(--font-header)", fontSize: "1.6rem", color: isTeam2Winner ? "var(--primary-gold-bright)" : "var(--text-primary)", margin: 0 }}>
+              {team2?.name || "Team B"}
+            </h2>
+            <span style={{ fontSize: "0.8rem", color: isTeam2Winner ? "var(--primary-gold)" : "var(--text-muted)", fontWeight: "700" }}>
+              {team2?.tag ? `[${team2.tag}]` : "FINALIST"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* 5v5 ARAM MAYHEM Roster Comparison */}
+      {/* BO5 Game-by-Game Series Breakdown */}
       <div
         style={{
-          backgroundColor: "rgba(10, 10, 12, 0.8)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          marginBottom: "2rem",
+          padding: "0.85rem 1.25rem",
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          borderRadius: "12px",
           border: "1px solid var(--border-dark)",
-          borderRadius: "10px",
-          padding: "1rem 1.25rem",
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: "0.75rem" }}>
+        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
+          SERIES GAME BREAKDOWN (BEST OF 5)
+        </span>
+
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.6rem" }}>
+          {seriesGames.map((game, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.4rem",
+                padding: "0.35rem 0.75rem",
+                borderRadius: "8px",
+                backgroundColor: game.winner === "team1"
+                  ? "rgba(245, 176, 65, 0.15)"
+                  : game.winner === "team2"
+                  ? "rgba(203, 213, 225, 0.1)"
+                  : "rgba(255, 255, 255, 0.03)",
+                border: `1px solid ${
+                  game.winner === "team1"
+                    ? "var(--primary-gold)"
+                    : game.winner === "team2"
+                    ? "#94A3B8"
+                    : "var(--border-dark)"
+                }`,
+              }}
+            >
+              <span style={{ fontSize: "0.7rem", fontWeight: 800, color: "var(--text-muted)" }}>
+                GAME {i + 1}:
+              </span>
+              <strong
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  color: game.winner === "team1"
+                    ? "var(--primary-gold-bright)"
+                    : game.winner === "team2"
+                    ? "#E2E8F0"
+                    : "var(--text-muted)",
+                }}
+              >
+                {game.winner === "team1"
+                  ? (team1?.name || "Team A").replace(/^TEAM\s+/i, "").replace(/^Team\s+/i, "")
+                  : game.winner === "team2"
+                  ? (team2?.name || "Team B").replace(/^TEAM\s+/i, "").replace(/^Team\s+/i, "")
+                  : "UNPLAYED"}
+              </strong>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Roster Matchup Comparison Grid */}
+      <div
+        style={{
+          backgroundColor: "rgba(10, 10, 12, 0.85)",
+          border: "1px solid var(--border-dark)",
+          borderRadius: "12px",
+          padding: "1.25rem",
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
           <h3
             style={{
               fontFamily: "var(--font-header)",
-              fontSize: "0.85rem",
+              fontSize: "0.9rem",
               color: "var(--text-primary)",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
@@ -257,48 +340,68 @@ export default function GrandFinalHeader({ match, team1, team2, winningTeamId })
               margin: 0,
             }}
           >
-            <Zap size={14} style={{ color: "var(--primary-gold)" }} /> 5v5 ARAM MAYHEM ROSTERS
+            <Zap size={14} style={{ color: "var(--primary-gold)" }} /> ARAM MAYHEM ROSTERS MATCHUP
           </h3>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          {[0, 1, 2, 3, 4].map((idx) => {
-            const p1 = team1Players[idx] || "-";
-            const p2 = team2Players[idx] || "-";
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+          {playerIndices.map((idx) => {
+            const p1 = team1Players[idx] || { ign: "-", realName: "" };
+            const p2 = team2Players[idx] || { ign: "-", realName: "" };
 
             return (
               <div
                 key={idx}
                 style={{
-                  display: "flex",
+                  display: "grid",
+                  gridTemplateColumns: "1fr auto 1fr",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "0.5rem 1rem",
+                  gap: "1rem",
+                  padding: "0.65rem 1rem",
                   backgroundColor: "rgba(255, 255, 255, 0.02)",
-                  border: "1px solid rgba(255, 255, 255, 0.04)",
-                  borderRadius: "6px",
-                  fontSize: "0.85rem",
+                  border: "1px solid rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px",
                 }}
               >
-                <div style={{ flex: 1, textAlign: "left", fontWeight: "700", color: "var(--primary-gold-bright)" }}>
-                  {p1}
+                {/* Left Team Player Card */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                  <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#FFFFFF", fontFamily: "var(--font-family)", letterSpacing: "0.02em" }}>
+                    {p1.realName || p1.ign}
+                  </span>
+                  {p1.realName && p1.ign && (
+                    <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--primary-gold)", marginTop: "0.1rem" }}>
+                      ({p1.ign})
+                    </span>
+                  )}
                 </div>
+
+                {/* Matchup Index Pill */}
                 <div
                   style={{
-                    padding: "0.2rem 0.6rem",
-                    borderRadius: "4px",
+                    padding: "0.25rem 0.65rem",
+                    borderRadius: "6px",
                     backgroundColor: "rgba(26, 26, 34, 0.9)",
                     border: "1px solid var(--border-gold)",
                     color: "var(--primary-gold)",
                     fontSize: "0.7rem",
                     fontWeight: "800",
                     letterSpacing: "0.05em",
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  ⚔️ ARAM #{idx + 1}
+                  ⚔️ PLAYER #{idx + 1}
                 </div>
-                <div style={{ flex: 1, textAlign: "right", fontWeight: "700", color: "var(--primary-gold-bright)" }}>
-                  {p2}
+
+                {/* Right Team Player Card */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right" }}>
+                  <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#FFFFFF", fontFamily: "var(--font-family)", letterSpacing: "0.02em" }}>
+                    {p2.realName || p2.ign}
+                  </span>
+                  {p2.realName && p2.ign && (
+                    <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--primary-gold)", marginTop: "0.1rem" }}>
+                      ({p2.ign})
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -309,13 +412,30 @@ export default function GrandFinalHeader({ match, team1, team2, winningTeamId })
   );
 }
 
-function getTeamPlayerList(team) {
+function parsePlayerData(p) {
+  if (!p) return { ign: "-", realName: "" };
+  if (typeof p === "string") {
+    const match = p.match(/^([^(]+)(?:\(([^)]+)\))?/);
+    if (match) {
+      return {
+        ign: match[1].trim(),
+        realName: match[2] ? match[2].trim() : ""
+      };
+    }
+    return { ign: p, realName: "" };
+  }
+  const ign = p.ign || p.riotId || p.playerName || p.name || "Player";
+  const realName = p.realName || p.name || "";
+  return { ign, realName };
+}
+
+function getTeamPlayerListStructured(team) {
   if (!team) return [];
   if (Array.isArray(team.players) && team.players.length > 0) {
-    return team.players.map((p) => (typeof p === "string" ? p : p.name || p.ign || p.riotId || "Player"));
+    return team.players.map(parsePlayerData);
   }
   if (team.roster && typeof team.roster === "object") {
-    return Object.values(team.roster).map((val) => (typeof val === "string" ? val : val.name || val.ign || "Player"));
+    return Object.values(team.roster).map(parsePlayerData);
   }
   return [];
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Trophy, Tv, Award } from "lucide-react";
+import { ArrowLeft, Trophy, Tv, Award, Lock } from "lucide-react";
 import { subscribeToData, subscribeToGrandFinalConfig, subscribeToMvpVotes } from "@/lib/db";
 import GrandFinalHeader from "@/components/GrandFinalHeader";
 import LivestreamPlayer from "@/components/LivestreamPlayer";
@@ -23,13 +23,61 @@ export default function GrandFinalPage() {
     const unsubMvpVotes = subscribeToMvpVotes(setMvpVotes);
 
     return () => {
-      unsubConfig();
-      unsubMatches();
-      unsubTeams();
-      unsubGfConfig();
-      unsubMvpVotes();
+      if (unsubConfig) unsubConfig();
+      if (unsubMatches) unsubMatches();
+      if (unsubTeams) unsubTeams();
+      if (unsubGfConfig) unsubGfConfig();
+      if (unsubMvpVotes) unsubMvpVotes();
     };
   }, []);
+
+  // Check if Grand Final Page is hidden by Admin
+  if (gfConfig?.isPageVisible === false) {
+    return (
+      <div className="container" style={{ paddingTop: "4rem", paddingBottom: "4rem", textAlign: "center" }}>
+        <div
+          className="card card-gold"
+          style={{
+            maxWidth: "600px",
+            margin: "0 auto",
+            padding: "3.5rem 2rem",
+            backgroundColor: "var(--bg-secondary)",
+            border: "1px solid var(--border-gold)",
+            borderRadius: "16px",
+            boxShadow: "0 12px 40px rgba(0, 0, 0, 0.6)",
+          }}
+        >
+          <div
+            style={{
+              width: "72px",
+              height: "72px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(245, 176, 65, 0.1)",
+              border: "2px solid var(--border-gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1.5rem auto",
+            }}
+          >
+            <Lock size={32} style={{ color: "var(--primary-gold)" }} />
+          </div>
+
+          <h1 style={{ fontFamily: "var(--font-header)", fontSize: "1.6rem", color: "var(--text-primary)", marginBottom: "0.75rem", textTransform: "uppercase" }}>
+            GRAND FINAL SHOWDOWN HIDDEN
+          </h1>
+
+          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "2rem" }}>
+            The Grand Final page is currently set to private by tournament organizers. Please check back during the scheduled broadcast time!
+          </p>
+
+          <Link href="/" className="btn btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.6rem 1.5rem", fontWeight: 800 }}>
+            <ArrowLeft size={16} /> Return to Homepage
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Find the Grand Final match
   const matchArray = Object.values(matches);
