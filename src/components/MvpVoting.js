@@ -1,168 +1,704 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Award, CheckCircle2, Lock, Sparkles, User, Trophy, BarChart2 } from "lucide-react";
+import { Award, CheckCircle2, Lock, Sparkles, Trophy, BarChart2, Crown, Flame, TrendingUp, Zap } from "lucide-react";
 import { submitMvpVote } from "@/lib/db";
+import PlayerSignature from "@/components/PlayerSignature";
+import GoldParticleCanvas from "@/components/GoldParticleCanvas";
 
 export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished, votes = {} }) {
   const [votedPlayerId, setVotedPlayerId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [clientMounted, setClientMounted] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  
+  // Real-time rank position tracking for overtake FX
+  const [prevRanks, setPrevRanks] = useState({});
+  const [rankChanges, setRankChanges] = useState({});
+  const [overtakeMsg, setOvertakeMsg] = useState(null);
 
   useEffect(() => {
-    setClientMounted(true);
     const saved = localStorage.getItem("gg_lol_mvp_voted_player");
     if (saved) {
       setVotedPlayerId(saved);
     }
   }, []);
 
-  // Compute roster candidates
   const candidates = getRosterCandidates(winningTeam);
-
-  // Compute vote totals
   const totalVotes = Object.values(votes).reduce((acc, curr) => acc + (Number(curr) || 0), 0);
 
-  // Determine top MVP player
-  let topMvpCandidate = null;
-  if (candidates.length > 0) {
-    let maxVotes = -1;
-    candidates.forEach((candidate) => {
-      const pVotes = votes[candidate.id] || 0;
-      if (pVotes > maxVotes) {
-        maxVotes = pVotes;
-        topMvpCandidate = candidate;
-      }
+  // Sorted candidates by votes descending for live ranking chart
+  const rankedCandidates = [...candidates].sort((a, b) => (Number(votes[b.id]) || 0) - (Number(votes[a.id]) || 0));
+  const leaderCandidate = rankedCandidates[0] || null;
+
+  // Rank Overtake & Position Change Effect Trigger
+  useEffect(() => {
+    if (rankedCandidates.length === 0) return;
+
+    const currentRankMap = {};
+    rankedCandidates.forEach((c, idx) => {
+      currentRankMap[c.id] = idx;
     });
-  }
+
+    if (Object.keys(prevRanks).length > 0) {
+      const changes = {};
+      let overtaker = null;
+
+      rankedCandidates.forEach((c, idx) => {
+        const oldRank = prevRanks[c.id];
+        if (oldRank !== undefined && oldRank !== idx) {
+          if (idx < oldRank) {
+            changes[c.id] = "UP";
+            if (idx === 0) overtaker = c;
+          } else {
+            changes[c.id] = "DOWN";
+          }
+        }
+      });
+
+      if (Object.keys(changes).length > 0) {
+        setRankChanges(changes);
+        if (overtaker) {
+          setOvertakeMsg(`⚡ NEW VOTE LEADER: ${overtaker.ign} (${overtaker.realName}) OVERTOOK 1ST PLACE!`);
+          setTimeout(() => setOvertakeMsg(null), 4000);
+        }
+        setTimeout(() => setRankChanges({}), 3500);
+      }
+    }
+
+    setPrevRanks(currentRankMap);
+  }, [votes]);
 
   const handleVote = async (playerId) => {
+    // Production Guard: 1 vote per device & must be open
     if (!isVotingOpen || votedPlayerId || submitting) return;
     setSubmitting(true);
     try {
       await submitMvpVote(playerId);
       setVotedPlayerId(playerId);
+      setShowConfetti(false);
+      setTimeout(() => setShowConfetti(true), 10);
       if (typeof window !== "undefined") {
         localStorage.setItem("gg_lol_mvp_voted_player", playerId);
       }
+      setTimeout(() => setShowConfetti(false), 2500);
     } catch (e) {
-      console.error("Error submitting vote:", e);
+      console.error("Error submitting MVP vote:", e);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const showResults = votedPlayerId || isVotingFinished || !isVotingOpen;
-
+  // State 1: No Champion declared yet
   if (!winningTeam) {
     return (
-      <div className="mvp-card-empty">
-        <Lock className="w-8 h-8 text-amber-400 opacity-60 mb-2 mx-auto" />
-        <h4 className="text-lg font-bold text-white mb-1">FINALS MVP VOTING LOCKED</h4>
-        <p className="text-slate-400 text-sm">
-          MVP Voting unlocks once the admin declares the Grand Final champion team. Check back during the live match!
+      <div
+        className="card card-gold metallic-sheen-card"
+        style={{
+          padding: "3rem 2rem",
+          textAlign: "center",
+          backgroundColor: "var(--bg-secondary)",
+          borderColor: "var(--border-dark)",
+          borderRadius: "16px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <GoldParticleCanvas />
+        <div
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "50%",
+            backgroundColor: "rgba(245, 176, 65, 0.08)",
+            border: "1px solid var(--border-gold)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 1.25rem auto",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <Lock size={28} style={{ color: "var(--primary-gold)" }} />
+        </div>
+        <h3 style={{ fontFamily: "var(--font-header)", fontSize: "1.3rem", color: "var(--text-primary)", marginBottom: "0.5rem", textTransform: "uppercase", position: "relative", zIndex: 2 }}>
+          FINALS MVP FAN VOTE LOCKED
+        </h3>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", maxWidth: "500px", margin: "0 auto 1.5rem auto", lineHeight: "1.6", position: "relative", zIndex: 2 }}>
+          Voting will be unlocked by tournament officials once the Grand Final champion team is declared. Check back during the live broadcast!
         </p>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            padding: "0.35rem 1rem",
+            borderRadius: "20px",
+            backgroundColor: "rgba(255,255,255,0.03)",
+            border: "1px solid var(--border-dark)",
+            color: "var(--text-muted)",
+            fontSize: "0.8rem",
+            fontWeight: 700,
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <Flame size={14} style={{ color: "var(--primary-gold)" }} /> ARAM MAYHEM CHAMPIONSHIP MVP
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mvp-voting-container">
-      {/* Header */}
-      <div className="mvp-header">
-        <div className="flex items-center gap-3">
-          <div className="award-icon-wrap">
-            <Award className="w-6 h-6 text-amber-400 animate-pulse" />
+    <div
+      className="card card-gold metallic-sheen-card"
+      style={{
+        padding: "2rem",
+        backgroundColor: "var(--bg-secondary)",
+        borderColor: "var(--border-gold)",
+        borderRadius: "16px",
+        boxShadow: "0 12px 40px rgba(245, 176, 65, 0.12)",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <GoldParticleCanvas />
+
+      {/* Confetti Explosion FX */}
+      {showConfetti && (
+        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 99 }}>
+          {Array.from({ length: 35 }).map((_, i) => {
+            const tx = (Math.random() - 0.5) * 500;
+            const ty = -100 - Math.random() * 250;
+            const tr = Math.random() * 720;
+            const bgColors = ["#F5B041", "#FFE082", "#34D399", "#D68910", "#FFFFFF"];
+            const bg = bgColors[i % bgColors.length];
+
+            return (
+              <div
+                key={i}
+                className="confetti-piece"
+                style={{
+                  left: `${15 + Math.random() * 70}%`,
+                  top: "35%",
+                  backgroundColor: bg,
+                  borderRadius: i % 2 === 0 ? "50%" : "2px",
+                  width: `${6 + Math.random() * 8}px`,
+                  height: `${8 + Math.random() * 10}px`,
+                  "--tx": `${tx}px`,
+                  "--ty": `${ty}px`,
+                  "--tr": `${tr}deg`,
+                  animationDelay: `${Math.random() * 0.2}s`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Header Bar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "1.75rem",
+          paddingBottom: "1.25rem",
+          borderBottom: "1px solid var(--border-dark)",
+          flexWrap: "wrap",
+          gap: "1rem",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div
+            style={{
+              width: "52px",
+              height: "52px",
+              borderRadius: "12px",
+              backgroundColor: "rgba(245, 176, 65, 0.12)",
+              border: "2px solid var(--border-gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 15px rgba(245, 176, 65, 0.2)",
+            }}
+          >
+            <Award size={26} style={{ color: "var(--primary-gold)" }} />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              FINALS MVP VOTING
-              <span className="team-winner-tag">CHAMPION: {winningTeam.name}</span>
-            </h3>
-            <p className="text-xs text-slate-400">
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+              <h3 style={{ fontFamily: "var(--font-header)", fontSize: "1.2rem", color: "var(--text-primary)", margin: 0, textTransform: "uppercase" }}>
+                FINALS MVP FAN VOTE
+              </h3>
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: "6px",
+                  backgroundColor: "rgba(245, 176, 65, 0.15)",
+                  border: "1px solid var(--border-gold)",
+                  color: "var(--primary-gold-bright)",
+                  fontWeight: 800,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                }}
+              >
+                <Trophy size={12} /> CHAMPION: {winningTeam.name}
+              </span>
+            </div>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "0.25rem 0 0 0" }}>
               {isVotingFinished
-                ? "Voting is closed. Official Finals MVP declared below!"
+                ? "Official MVP voting has concluded. Crown winner highlighted below!"
                 : isVotingOpen
-                ? "Vote for the most valuable player of the winning team!"
-                : "Voting is currently paused by admin."}
+                ? "Cast your vote for the most valuable player of the winning team!"
+                : "Voting status is currently in standby mode."}
             </p>
           </div>
         </div>
 
-        <div className="total-votes-pill flex items-center gap-1.5">
-          <BarChart2 className="w-3.5 h-3.5 text-amber-400" />
-          <span>{totalVotes} Total Votes</span>
+        {/* Right Header: Status Badge & Total Vote Pill */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+          {isVotingOpen ? (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.4rem",
+                padding: "0.35rem 0.85rem",
+                borderRadius: "20px",
+                backgroundColor: "rgba(16, 185, 129, 0.12)",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+                color: "#34d399",
+                fontSize: "0.75rem",
+                fontWeight: 800,
+              }}
+            >
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#10b981", boxShadow: "0 0 8px #10b981" }} />
+              VOTING OPEN
+            </span>
+          ) : (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.4rem",
+                padding: "0.35rem 0.85rem",
+                borderRadius: "20px",
+                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid var(--border-dark)",
+                color: "var(--text-muted)",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+              }}
+            >
+              {isVotingFinished ? "VOTING CLOSED" : "VOTING STANDBY"}
+            </span>
+          )}
+
+          <div
+            style={{
+              padding: "0.35rem 0.85rem",
+              borderRadius: "20px",
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid var(--border-dark)",
+              color: "var(--text-secondary)",
+              fontSize: "0.8rem",
+              fontWeight: 800,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
+            }}
+          >
+            <BarChart2 size={14} style={{ color: "var(--primary-gold)" }} />
+            <span>{totalVotes} Total Votes</span>
+          </div>
         </div>
       </div>
 
-      {/* Top Winner Highlight Card if Voting Finished */}
-      {isVotingFinished && topMvpCandidate && (
-        <div className="mvp-crown-banner">
-          <Sparkles className="w-5 h-5 text-amber-300" />
-          <span>OFFICIAL FINALS MVP: </span>
-          <strong className="text-amber-300 underline">{topMvpCandidate.name}</strong>
-          <Trophy className="w-5 h-5 text-amber-300" />
+      {/* Rank Overtake Announcement Flash Banner */}
+      {overtakeMsg && (
+        <div
+          style={{
+            padding: "0.85rem 1.25rem",
+            borderRadius: "10px",
+            backgroundColor: "rgba(245, 176, 65, 0.18)",
+            border: "2px solid var(--primary-gold)",
+            color: "var(--primary-gold-bright)",
+            fontFamily: "var(--font-header)",
+            fontSize: "0.95rem",
+            textAlign: "center",
+            marginBottom: "1.5rem",
+            boxShadow: "0 0 25px rgba(245, 176, 65, 0.3)",
+            position: "relative",
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <Zap size={18} style={{ color: "var(--primary-gold)" }} />
+          <span>{overtakeMsg}</span>
+          <Zap size={18} style={{ color: "var(--primary-gold)" }} />
         </div>
       )}
 
-      {/* Player Candidate Cards Grid */}
-      <div className="candidates-grid">
+      {/* Broadcast-Quality Live Leaderboard Standings */}
+      {candidates.length > 0 && (
+        <div
+          style={{
+            backgroundColor: "rgba(10, 10, 12, 0.85)",
+            border: "1px solid var(--border-dark)",
+            borderRadius: "16px",
+            padding: "1.75rem",
+            marginBottom: "2.5rem",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <h4
+              style={{
+                fontFamily: "var(--font-header)",
+                fontSize: "1.05rem",
+                color: "var(--text-primary)",
+                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.6rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              <Crown size={20} style={{ color: "var(--primary-gold)" }} /> LIVE MVP VOTING STANDINGS
+            </h4>
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 700 }}>
+              Real-time Vote Percentages & Rankings
+            </span>
+          </div>
+
+          {/* Ranked Progress Bar Rows List */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+            {rankedCandidates.map((candidate, rankIdx) => {
+              const pVotes = Number(votes[candidate.id]) || 0;
+              const pct = totalVotes > 0 ? Math.round((pVotes / totalVotes) * 100) : 0;
+              const is1st = rankIdx === 0 && totalVotes > 0;
+              const is2nd = rankIdx === 1;
+              const is3rd = rankIdx === 2;
+              const rankChange = rankChanges[candidate.id];
+
+              const rankBadges = [
+                { color: "#0A0A0C", bg: "linear-gradient(135deg, #FFE082, #F5B041)", border: "var(--primary-gold)", icon: "🥇" },
+                { color: "#0F172A", bg: "linear-gradient(135deg, #FFFFFF, #CBD5E1)", border: "#94A3B8", icon: "🥈" },
+                { color: "#FFFFFF", bg: "linear-gradient(135deg, #D97706, #78350F)", border: "#D97706", icon: "🥉" },
+              ];
+
+              const badge = rankBadges[rankIdx] || { color: "var(--text-muted)", bg: "rgba(255,255,255,0.05)", border: "var(--border-dark)", icon: "" };
+
+              return (
+                <div
+                  key={candidate.id}
+                  className={is1st ? "gold-pulse-aura" : ""}
+                  style={{
+                    backgroundColor: is1st
+                      ? "rgba(245, 176, 65, 0.08)"
+                      : "rgba(255, 255, 255, 0.02)",
+                    border: is1st
+                      ? "2px solid var(--primary-gold)"
+                      : "1px solid var(--border-dark)",
+                    borderRadius: "12px",
+                    padding: "0.9rem 1.25rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1.25rem",
+                    position: "relative",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  {/* Rank Badge Emblem */}
+                  <div
+                    style={{
+                      width: "44px",
+                      height: "44px",
+                      borderRadius: "12px",
+                      background: badge.bg,
+                      border: `1px solid ${badge.border}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      boxShadow: is1st ? "0 0 15px rgba(245, 176, 65, 0.4)" : "none",
+                    }}
+                  >
+                    <span style={{ fontSize: badge.icon ? "1.4rem" : "0.95rem", fontFamily: badge.icon ? "inherit" : "var(--font-header)", fontWeight: 900, color: badge.color, lineHeight: 1 }}>
+                      {badge.icon || `#${rankIdx + 1}`}
+                    </span>
+                  </div>
+
+                  {/* Player Avatar / Signature */}
+                  <div style={{ flexShrink: 0 }}>
+                    {candidate.avatar ? (
+                      <div
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          borderRadius: "10px",
+                          overflow: "hidden",
+                          border: `2px solid ${badge.border}`,
+                        }}
+                      >
+                        <img src={candidate.avatar} alt={candidate.ign} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                    ) : (
+                      <PlayerSignature name={candidate.realName} size={48} />
+                    )}
+                  </div>
+
+                  {/* Player Details & Progress Meter */}
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.35rem", minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <strong style={{ fontFamily: "var(--font-family), sans-serif", fontSize: "1.05rem", color: "#fff", fontWeight: 800 }}>
+                          {candidate.ign} {candidate.riotTag && <span style={{ fontSize: "0.75em", color: "var(--text-muted)", fontWeight: "normal" }}>{candidate.riotTag}</span>}
+                        </strong>
+                        <span style={{ fontSize: "0.85rem", color: "var(--primary-gold-bright)", fontWeight: 600 }}>
+                          ({candidate.realName})
+                        </span>
+
+                        {rankChange === "UP" && (
+                          <span
+                            style={{
+                              backgroundColor: "#10b981",
+                              color: "#0a0a0c",
+                              fontSize: "0.65rem",
+                              fontWeight: 900,
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "2px",
+                            }}
+                          >
+                            <TrendingUp size={10} /> CLIMBED!
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <span style={{ fontFamily: "var(--font-header)", fontSize: "1.15rem", color: is1st ? "var(--primary-gold)" : "#fff", fontWeight: 900 }}>
+                          {pct}%
+                        </span>
+                        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                          {pVotes} votes
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Animated Progress Bar */}
+                    <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden" }}>
+                      <div
+                        style={{
+                          height: "100%",
+                          width: `${pct}%`,
+                          background: is1st
+                            ? "linear-gradient(90deg, #F5B041 0%, #FFE082 100%)"
+                            : is2nd
+                            ? "linear-gradient(90deg, #94A3B8 0%, #CBD5E1 100%)"
+                            : is3rd
+                            ? "linear-gradient(90deg, #78350F 0%, #D97706 100%)"
+                            : "rgba(245, 176, 65, 0.4)",
+                          borderRadius: "4px",
+                          transition: "width 0.6s ease",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Full Roster Voting Cards Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1.25rem", position: "relative", zIndex: 2 }}>
         {candidates.map((candidate) => {
-          const pVotes = votes[candidate.id] || 0;
+          const pVotes = Number(votes[candidate.id]) || 0;
           const percentage = totalVotes > 0 ? Math.round((pVotes / totalVotes) * 100) : 0;
           const isUserVotedThis = votedPlayerId === candidate.id;
-          const isTopMvp = topMvpCandidate?.id === candidate.id && isVotingFinished;
+          const isCurrentLeader = leaderCandidate?.id === candidate.id && totalVotes > 0;
+          const rankChange = rankChanges[candidate.id];
 
           return (
             <div
               key={candidate.id}
-              className={`candidate-card ${isUserVotedThis ? "user-voted" : ""} ${isTopMvp ? "top-mvp" : ""}`}
+              className={isCurrentLeader ? "gold-pulse-aura" : ""}
+              style={{
+                position: "relative",
+                backgroundColor: isUserVotedThis
+                  ? "rgba(16, 185, 129, 0.06)"
+                  : isCurrentLeader
+                  ? "rgba(245, 176, 65, 0.06)"
+                  : "rgba(255, 255, 255, 0.02)",
+                border: isUserVotedThis
+                  ? "2px solid #10b981"
+                  : isCurrentLeader
+                  ? "2px solid var(--primary-gold)"
+                  : "1px solid var(--border-dark)",
+                borderRadius: "12px",
+                padding: "1.5rem 1.25rem",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                transition: "all 0.25s ease",
+              }}
             >
+              {/* Rank Change Indicator */}
+              {rankChange === "UP" && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    left: "8px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "2px",
+                    fontSize: "0.65rem",
+                    fontWeight: 900,
+                    color: "#10b981",
+                    backgroundColor: "rgba(16, 185, 129, 0.15)",
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <TrendingUp size={10} /> UP!
+                </span>
+              )}
+
+              {/* Voted Badge */}
               {isUserVotedThis && (
-                <div className="voted-badge">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>YOUR VOTE</span>
-                </div>
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "3px",
+                    fontSize: "0.65rem",
+                    fontWeight: 900,
+                    color: "#34d399",
+                    backgroundColor: "rgba(16, 185, 129, 0.15)",
+                    padding: "2px 8px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                  }}
+                >
+                  <CheckCircle2 size={11} /> VOTED
+                </span>
               )}
 
-              {isTopMvp && (
-                <div className="mvp-winner-badge">
-                  <Trophy className="w-3.5 h-3.5 text-amber-950" />
-                  <span>MVP WINNER</span>
-                </div>
+              {isCurrentLeader && !isUserVotedThis && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-12px",
+                    backgroundColor: "var(--primary-gold)",
+                    color: "#0A0A0C",
+                    fontSize: "0.65rem",
+                    fontFamily: "var(--font-header)",
+                    fontWeight: 900,
+                    padding: "3px 10px",
+                    borderRadius: "8px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    letterSpacing: "0.05em",
+                    boxShadow: "0 2px 8px rgba(245, 176, 65, 0.4)",
+                  }}
+                >
+                  <Crown size={11} /> {isVotingFinished ? "FINALS MVP" : "VOTE LEADER"}
+                </span>
               )}
 
-              {/* Avatar / Champion Image */}
-              <div className="candidate-avatar-wrap">
+              {/* Player Avatar or Signature */}
+              <div style={{ marginBottom: "0.85rem" }}>
                 {candidate.avatar ? (
-                  <img src={candidate.avatar} alt={candidate.name} className="candidate-avatar-img" />
-                ) : (
-                  <div className="candidate-avatar-fallback">
-                    <User className="w-8 h-8 text-amber-400 opacity-80" />
+                  <div
+                    style={{
+                      width: "68px",
+                      height: "68px",
+                      borderRadius: "14px",
+                      overflow: "hidden",
+                      backgroundColor: "var(--bg-primary)",
+                      border: isCurrentLeader ? "2px solid var(--primary-gold)" : "2px solid var(--border-dark)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <img src={candidate.avatar} alt={candidate.ign} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
+                ) : (
+                  <PlayerSignature name={candidate.realName} size={68} />
                 )}
               </div>
 
-              <h4 className="candidate-name">{candidate.name}</h4>
-              <p className="candidate-role">{candidate.role || "Player"}</p>
+              {/* Dual Name Display: IGN + Real Name */}
+              <h4 style={{ fontFamily: "var(--font-family), sans-serif", fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", margin: "0 0 2px 0" }}>
+                {candidate.ign} {candidate.riotTag && <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "normal" }}>{candidate.riotTag}</span>}
+              </h4>
 
-              {/* Voting Button or Results Progress Bar */}
+              <div style={{ fontSize: "0.8rem", color: "var(--primary-gold-bright)", fontWeight: 600, marginBottom: "0.35rem" }}>
+                {candidate.realName}
+              </div>
+
+              <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "1rem" }}>
+                ARAM MAYHEM STARTER
+              </span>
+
+              {/* Vote Button or Real-time Progress Bar */}
               {isVotingOpen && !votedPlayerId && !isVotingFinished ? (
                 <button
                   onClick={() => handleVote(candidate.id)}
                   disabled={submitting}
-                  className="vote-action-btn"
+                  className="btn btn-primary"
+                  style={{
+                    width: "100%",
+                    padding: "0.6rem",
+                    fontSize: "0.8rem",
+                    fontWeight: 900,
+                    letterSpacing: "0.05em",
+                    marginTop: "auto",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.4rem",
+                    cursor: "pointer",
+                  }}
                 >
-                  {submitting ? "Voting..." : "VOTE MVP"}
+                  <Sparkles size={14} /> {submitting ? "Casting Vote..." : "VOTE MVP"}
                 </button>
               ) : (
-                <div className="results-progress-wrap">
-                  <div className="progress-bar-bg">
-                    <div className="progress-bar-fill" style={{ width: `${percentage}%` }} />
+                <div style={{ width: "100%", marginTop: "auto", paddingTop: "0.5rem" }}>
+                  <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden", marginBottom: "6px" }}>
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${percentage}%`,
+                        backgroundColor: isCurrentLeader ? "var(--primary-gold)" : "rgba(245, 176, 65, 0.6)",
+                        borderRadius: "4px",
+                        transition: "width 0.6s ease",
+                      }}
+                    />
                   </div>
-                  <div className="progress-stats">
-                    <span className="text-amber-400 font-bold">{percentage}%</span>
-                    <span className="text-slate-400 text-xs">{pVotes} votes</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem" }}>
+                    <span style={{ color: "var(--primary-gold-bright)", fontWeight: 900 }}>{percentage}%</span>
+                    <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>{pVotes} votes</span>
                   </div>
                 </div>
               )}
@@ -170,223 +706,6 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
           );
         })}
       </div>
-
-      <style jsx>{`
-        .mvp-voting-container {
-          background: rgba(18, 18, 22, 0.95);
-          border: 1px solid rgba(245, 176, 65, 0.3);
-          border-radius: 16px;
-          padding: 24px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .mvp-card-empty {
-          background: rgba(18, 18, 22, 0.8);
-          border: 1px border-slate-800;
-          border-radius: 16px;
-          padding: 32px;
-          text-align: center;
-        }
-
-        .mvp-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 20px;
-          padding-bottom: 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .award-icon-wrap {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: rgba(245, 176, 65, 0.12);
-          border: 1px solid rgba(245, 176, 65, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .team-winner-tag {
-          font-size: 11px;
-          padding: 2px 8px;
-          border-radius: 4px;
-          background: rgba(245, 176, 65, 0.15);
-          border: 1px solid rgba(245, 176, 65, 0.3);
-          color: #f5b041;
-          font-weight: 700;
-        }
-
-        .total-votes-pill {
-          padding: 4px 12px;
-          border-radius: 20px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: #e2e8f0;
-          font-size: 12px;
-          font-weight: 600;
-        }
-
-        .mvp-crown-banner {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          padding: 12px;
-          background: linear-gradient(135deg, rgba(245, 176, 65, 0.25) 0%, rgba(214, 137, 16, 0.25) 100%);
-          border: 1px solid rgba(245, 176, 65, 0.5);
-          border-radius: 10px;
-          color: #fff;
-          font-weight: 800;
-          font-size: 15px;
-          margin-bottom: 20px;
-        }
-
-        .candidates-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 16px;
-        }
-
-        .candidate-card {
-          position: relative;
-          background: rgba(26, 26, 34, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          transition: all 0.3s ease;
-        }
-
-        .candidate-card:hover {
-          border-color: rgba(245, 176, 65, 0.4);
-          transform: translateY(-2px);
-        }
-
-        .candidate-card.user-voted {
-          border-color: rgba(16, 185, 129, 0.5);
-          background: rgba(16, 185, 129, 0.05);
-        }
-
-        .candidate-card.top-mvp {
-          border-color: rgba(245, 176, 65, 0.8);
-          background: rgba(245, 176, 65, 0.1);
-          box-shadow: 0 0 20px rgba(245, 176, 65, 0.2);
-        }
-
-        .voted-badge {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 9px;
-          font-weight: 800;
-          color: #34d399;
-          background: rgba(16, 185, 129, 0.15);
-          padding: 2px 6px;
-          border-radius: 4px;
-        }
-
-        .mvp-winner-badge {
-          position: absolute;
-          top: -10px;
-          background: #f5b041;
-          color: #0a0a0c;
-          font-size: 9px;
-          font-weight: 900;
-          padding: 2px 8px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .candidate-avatar-wrap {
-          width: 64px;
-          height: 64px;
-          border-radius: 50%;
-          overflow: hidden;
-          background: rgba(10, 10, 12, 0.8);
-          border: 2px solid rgba(245, 176, 65, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 10px;
-        }
-
-        .candidate-avatar-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .candidate-name {
-          font-size: 14px;
-          font-weight: 700;
-          color: #fff;
-          margin-bottom: 2px;
-        }
-
-        .candidate-role {
-          font-size: 11px;
-          color: #94a3b8;
-          font-weight: 600;
-          text-transform: uppercase;
-          margin-bottom: 12px;
-        }
-
-        .vote-action-btn {
-          width: 100%;
-          padding: 8px;
-          border-radius: 6px;
-          background: linear-gradient(135deg, #f5b041 0%, #d68910 100%);
-          border: none;
-          color: #0a0a0c;
-          font-weight: 800;
-          font-size: 12px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .vote-action-btn:hover {
-          opacity: 0.9;
-          transform: scale(1.02);
-        }
-
-        .results-progress-wrap {
-          width: 100%;
-          margin-top: 4px;
-        }
-
-        .progress-bar-bg {
-          width: 100%;
-          height: 6px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 3px;
-          overflow: hidden;
-          margin-bottom: 4px;
-        }
-
-        .progress-bar-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #f5b041 0%, #ffe082 100%);
-          border-radius: 3px;
-          transition: width 0.5s ease;
-        }
-
-        .progress-stats {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          font-size: 11px;
-        }
-      `}</style>
     </div>
   );
 }
@@ -394,38 +713,55 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
 function getRosterCandidates(team) {
   if (!team) return [];
   
-  // If team has roster object (e.g. { top: "Player1", mid: "Player2" })
-  if (team.roster && typeof team.roster === "object") {
-    const roles = ["top", "jungle", "mid", "adc", "support"];
-    return roles
-      .filter((r) => team.roster[r])
-      .map((r) => {
-        const val = team.roster[r];
-        return {
-          id: typeof val === "string" ? `${team.id}_${r}_${val}` : val.id || val.ign,
-          name: typeof val === "string" ? val : val.ign || val.name,
-          role: r.toUpperCase(),
-          avatar: typeof val === "object" ? val.avatar : null,
-        };
-      });
-  }
-
-  // If team has players array
   if (Array.isArray(team.players) && team.players.length > 0) {
-    return team.players.map((p, idx) => ({
-      id: p.id || p.ign || `p_${idx}`,
-      name: p.ign || p.name || p,
-      role: p.role || "Roster Player",
-      avatar: p.avatar || null,
-    }));
+    return team.players.map((p, idx) => {
+      const realName = typeof p === "string" ? p : p.name || p.ign || `Player ${idx + 1}`;
+      let ign = typeof p === "string" ? p : p.ign || p.riotId || p.name || `Player ${idx + 1}`;
+      let riotTag = "";
+      if (ign.includes("#")) {
+        const parts = ign.split("#");
+        ign = parts[0];
+        riotTag = `#${parts[1]}`;
+      } else if (typeof p === "object" && p.riotId && p.riotId.includes("#")) {
+        riotTag = `#${p.riotId.split("#")[1]}`;
+      }
+
+      return {
+        id: typeof p === "string" ? `${team.id}_${idx}` : p.id || p.name || p.ign || `p_${idx}`,
+        realName: realName,
+        ign: ign,
+        riotTag: riotTag,
+        avatar: typeof p === "object" ? p.avatar || p.image : null,
+      };
+    });
   }
 
-  // Fallback 5 default player slots if roster is empty
+  if (team.roster && typeof team.roster === "object") {
+    return Object.entries(team.roster).map(([key, val], idx) => {
+      const realName = typeof val === "string" ? val : val.name || val.ign || `Player ${idx + 1}`;
+      let ign = typeof val === "string" ? val : val.ign || val.riotId || val.name || `Player ${idx + 1}`;
+      let riotTag = "";
+      if (ign.includes("#")) {
+        const parts = ign.split("#");
+        ign = parts[0];
+        riotTag = `#${parts[1]}`;
+      }
+
+      return {
+        id: typeof val === "string" ? `${team.id}_${idx}` : val.id || val.ign || `p_${idx}`,
+        realName: realName,
+        ign: ign,
+        riotTag: riotTag,
+        avatar: typeof val === "object" ? val.avatar || val.image : null,
+      };
+    });
+  }
+
   return [
-    { id: `${team.id}_top`, name: `${team.name} Top`, role: "TOP" },
-    { id: `${team.id}_jungle`, name: `${team.name} Jungle`, role: "JUNGLE" },
-    { id: `${team.id}_mid`, name: `${team.name} Mid`, role: "MID" },
-    { id: `${team.id}_adc`, name: `${team.name} ADC`, role: "ADC" },
-    { id: `${team.id}_support`, name: `${team.name} Support`, role: "SUPPORT" },
+    { id: `${team.id}_1`, realName: `${team.name} Player 1`, ign: "Player1", riotTag: "#VN1", avatar: null },
+    { id: `${team.id}_2`, realName: `${team.name} Player 2`, ign: "Player2", riotTag: "#VN1", avatar: null },
+    { id: `${team.id}_3`, realName: `${team.name} Player 3`, ign: "Player3", riotTag: "#VN1", avatar: null },
+    { id: `${team.id}_4`, realName: `${team.name} Player 4`, ign: "Player4", riotTag: "#VN1", avatar: null },
+    { id: `${team.id}_5`, realName: `${team.name} Player 5`, ign: "Player5", riotTag: "#VN1", avatar: null },
   ];
 }

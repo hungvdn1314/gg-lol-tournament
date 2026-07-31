@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Tv, Play, Radio, Maximize2, ExternalLink } from "lucide-react";
+import { Tv, Radio, Maximize2, ExternalLink } from "lucide-react";
 
 export function getYoutubeEmbedUrl(url) {
   if (!url) return null;
   let videoId = "";
   
-  // Handles youtube.com/watch?v=ID, youtube.com/live/ID, youtu.be/ID, or direct ID
   const watchMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|live\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (watchMatch && watchMatch[1]) {
     videoId = watchMatch[1];
@@ -23,208 +22,153 @@ export default function LivestreamPlayer({ youtubeUrl, isLive = true, matchTitle
   const embedUrl = getYoutubeEmbedUrl(youtubeUrl);
 
   return (
-    <div className={`livestream-card ${isTheater ? "theater-mode" : ""}`}>
+    <div
+      className="card card-gold"
+      style={{
+        padding: 0,
+        overflow: "hidden",
+        backgroundColor: "var(--bg-secondary)",
+        borderColor: "var(--border-gold)",
+        borderRadius: "12px",
+        position: isTheater ? "fixed" : "relative",
+        top: isTheater ? 0 : "auto",
+        left: isTheater ? 0 : "auto",
+        right: isTheater ? 0 : "auto",
+        bottom: isTheater ? 0 : "auto",
+        zIndex: isTheater ? 9999 : "auto",
+        height: isTheater ? "100vh" : "auto",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Header Bar */}
-      <div className="livestream-header">
-        <div className="flex items-center gap-3">
-          <span className="live-status-pill">
-            <span className="live-dot animated-pulse"></span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0.75rem 1.25rem",
+          backgroundColor: "rgba(26, 26, 34, 0.9)",
+          borderBottom: "1px solid var(--border-dark)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              padding: "0.2rem 0.6rem",
+              borderRadius: "12px",
+              backgroundColor: "rgba(239, 68, 68, 0.15)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              color: "#f87171",
+              fontSize: "0.7rem",
+              fontWeight: 800,
+              letterSpacing: "0.05em",
+            }}
+          >
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#ef4444" }} />
             {isLive ? "LIVE NOW" : "OFFLINE"}
           </span>
-          <h3 className="livestream-title flex items-center gap-2">
-            <Tv className="w-4 h-4 text-amber-400" />
+          <h3 style={{ fontFamily: "var(--font-header)", fontSize: "0.9rem", color: "var(--text-primary)", margin: 0, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <Tv size={14} style={{ color: "var(--primary-gold)" }} />
             {matchTitle}
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {youtubeUrl && (
             <a
               href={youtubeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="livestream-btn-secondary"
-              title="Open on YouTube"
+              className="btn btn-secondary"
+              style={{ padding: "0.25rem 0.6rem", fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink size={12} />
               <span>YouTube</span>
             </a>
           )}
           <button
             onClick={() => setIsTheater(!isTheater)}
-            className="livestream-btn-secondary"
-            title="Toggle Theater Mode"
+            className="btn btn-secondary"
+            style={{ padding: "0.25rem 0.6rem", fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
           >
-            <Maximize2 className="w-3.5 h-3.5" />
-            <span>{isTheater ? "Normal View" : "Theater"}</span>
+            <Maximize2 size={12} />
+            <span>{isTheater ? "Exit Theater" : "Theater"}</span>
           </button>
         </div>
       </div>
 
       {/* Video Container */}
-      <div className="video-aspect-container">
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          paddingTop: isTheater ? 0 : "56.25%",
+          height: isTheater ? "calc(100vh - 50px)" : "auto",
+          backgroundColor: "#050507",
+          flexGrow: 1,
+        }}
+      >
         {embedUrl ? (
           <iframe
             src={embedUrl}
             title="Grand Final Livestream"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
-            className="video-iframe"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              border: "none",
+            }}
           />
         ) : (
-          <div className="video-placeholder">
-            <div className="placeholder-content">
-              <div className="placeholder-icon-wrap">
-                <Radio className="w-12 h-12 text-amber-400 opacity-60" />
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(10, 10, 12, 0.95)",
+              textAlign: "center",
+              padding: "2rem",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "64px",
+                  height: "64px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(245, 176, 65, 0.08)",
+                  border: "1px solid var(--border-gold)",
+                  marginBottom: "1rem",
+                }}
+              >
+                <Radio size={28} style={{ color: "var(--primary-gold)" }} />
               </div>
-              <h4 className="text-xl font-bold text-white mb-2">LIVESTREAM STANDBY</h4>
-              <p className="text-slate-400 text-sm max-w-md mx-auto mb-4">
-                The broadcast stream for the Grand Final match will be linked soon by the admin. Stay tuned for kickoff!
+              <h4 style={{ fontFamily: "var(--font-header)", fontSize: "1.1rem", color: "var(--text-primary)", marginBottom: "0.5rem" }}>
+                LIVESTREAM STANDBY
+              </h4>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", maxWidth: "420px", margin: "0 auto" }}>
+                The stream link for the Grand Final match will be posted shortly. Stay tuned for live coverage!
               </p>
             </div>
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .livestream-card {
-          background: rgba(18, 18, 22, 0.95);
-          border: 1px solid rgba(245, 176, 65, 0.25);
-          border-radius: 12px;
-          overflow: hidden;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(245, 176, 65, 0.1);
-          transition: all 0.3s ease;
-        }
-
-        .livestream-card.theater-mode {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 9999;
-          border-radius: 0;
-          border: none;
-          display: flex;
-          flex-direction: column;
-          background: #000;
-        }
-
-        .livestream-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 20px;
-          background: rgba(26, 26, 34, 0.8);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .live-status-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 4px 10px;
-          border-radius: 20px;
-          background: rgba(239, 68, 68, 0.2);
-          border: 1px solid rgba(239, 68, 68, 0.4);
-          color: #f87171;
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.05em;
-        }
-
-        .live-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: #ef4444;
-        }
-
-        .animated-pulse {
-          animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.2); }
-        }
-
-        .livestream-title {
-          font-size: 14px;
-          font-weight: 700;
-          color: #fff;
-          margin: 0;
-        }
-
-        .livestream-btn-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          border-radius: 6px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: #cbd5e1;
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .livestream-btn-secondary:hover {
-          background: rgba(245, 176, 65, 0.15);
-          border-color: rgba(245, 176, 65, 0.4);
-          color: #f5b041;
-        }
-
-        .video-aspect-container {
-          position: relative;
-          width: 100%;
-          padding-top: 56.25%; /* 16:9 Aspect Ratio */
-          background: #050507;
-          flex-grow: 1;
-        }
-
-        .theater-mode .video-aspect-container {
-          padding-top: 0;
-          height: calc(100vh - 50px);
-        }
-
-        .video-iframe {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border: none;
-        }
-
-        .video-placeholder {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: radial-gradient(circle at center, rgba(26, 26, 34, 0.8) 0%, rgba(10, 10, 12, 0.95) 100%);
-          text-align: center;
-          padding: 24px;
-        }
-
-        .placeholder-icon-wrap {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          background: rgba(245, 176, 65, 0.08);
-          border: 1px solid rgba(245, 176, 65, 0.2);
-          margin-bottom: 16px;
-        }
-      `}</style>
     </div>
   );
 }

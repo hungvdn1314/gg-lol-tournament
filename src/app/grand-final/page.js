@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Trophy, Sparkles, Tv, Award, Calendar } from "lucide-react";
+import { ArrowLeft, Trophy, Tv, Award } from "lucide-react";
 import { subscribeToData, subscribeToGrandFinalConfig, subscribeToMvpVotes } from "@/lib/db";
 import GrandFinalHeader from "@/components/GrandFinalHeader";
 import LivestreamPlayer from "@/components/LivestreamPlayer";
@@ -38,85 +38,130 @@ export default function GrandFinalPage() {
   if (gfConfig?.grandFinalMatchId && matches[gfConfig.grandFinalMatchId]) {
     grandFinalMatch = matches[gfConfig.grandFinalMatchId];
   } else {
-    // Fallback: search by stage or round
+    // Search by stage or type or fallback to last match
     grandFinalMatch = matchArray.find(
       (m) =>
         m.stage === "grand_final" ||
         m.round === "Grand Finals" ||
+        m.type === "grand_final" ||
         m.title?.toLowerCase().includes("grand final")
-    ) || matchArray[matchArray.length - 1]; // Fallback to last match
+    ) || matchArray[matchArray.length - 1];
   }
 
-  // Identify Team 1 and Team 2
-  const team1 = grandFinalMatch?.team1Id ? teams[grandFinalMatch.team1Id] : null;
-  const team2 = grandFinalMatch?.team2Id ? teams[grandFinalMatch.team2Id] : null;
+  // Identify Team A and Team B
+  const team1Id = grandFinalMatch?.teamAId || grandFinalMatch?.team1Id;
+  const team2Id = grandFinalMatch?.teamBId || grandFinalMatch?.team2Id;
 
-  // Identify Winning Team (from gfConfig or match result)
+  const team1 = team1Id ? teams[team1Id] : null;
+  const team2 = team2Id ? teams[team2Id] : null;
+
+  // Identify Winning Team
   let winningTeam = null;
   if (gfConfig?.winningTeamId && teams[gfConfig.winningTeamId]) {
     winningTeam = teams[gfConfig.winningTeamId];
-  } else if (grandFinalMatch?.completed) {
-    if ((grandFinalMatch.team1Score || 0) > (grandFinalMatch.team2Score || 0)) {
-      winningTeam = team1;
-    } else if ((grandFinalMatch.team2Score || 0) > (grandFinalMatch.team1Score || 0)) {
-      winningTeam = team2;
+  } else if (grandFinalMatch?.completed || grandFinalMatch?.winnerId) {
+    const winnerId =
+      grandFinalMatch.winnerId ||
+      ((grandFinalMatch.scoreA || 0) > (grandFinalMatch.scoreB || 0)
+        ? grandFinalMatch.teamAId
+        : (grandFinalMatch.scoreB || 0) > (grandFinalMatch.scoreA || 0)
+        ? grandFinalMatch.teamBId
+        : null);
+    if (winnerId && teams[winnerId]) {
+      winningTeam = teams[winnerId];
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0C] text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Navigation back */}
-        <div className="flex items-center justify-between">
+    <div className="container" style={{ paddingTop: "1.5rem", paddingBottom: "4rem", display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+      {/* Top Navigation & Title Hero */}
+      <div style={{ textAlign: "center", position: "relative" }}>
+        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "1rem" }}>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-amber-400 transition-colors"
+            className="btn btn-secondary"
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.4rem 0.85rem", fontSize: "0.8rem" }}
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Home</span>
+            <ArrowLeft size={14} /> Back to Home
           </Link>
-
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-400 text-xs font-bold tracking-wider">
-            <Trophy className="w-3.5 h-3.5" />
-            <span>SEASON 2026 FINALS</span>
-          </div>
         </div>
 
-        {/* Grand Final Header / Clash Banner */}
-        <GrandFinalHeader
-          match={grandFinalMatch}
-          team1={team1}
-          team2={team2}
-          winningTeamId={winningTeam?.id}
-        />
+        <span
+          className="hero-badge"
+          style={{
+            backgroundColor: "rgba(245, 176, 65, 0.08)",
+            border: "1px solid var(--border-gold)",
+            color: "var(--primary-gold)",
+            textTransform: "uppercase",
+            fontSize: "0.8rem",
+            fontWeight: "700",
+            padding: "0.3rem 1rem",
+            borderRadius: "20px",
+            display: "inline-block",
+            marginBottom: "1rem",
+          }}
+        >
+          ARAM MAYHEM CHAMPIONSHIP
+        </span>
 
-        {/* Livestream Section */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 text-lg font-bold text-white uppercase tracking-wide">
-            <Tv className="w-5 h-5 text-amber-400" />
-            <h2>GRAND FINAL BROADCAST</h2>
-          </div>
-          <LivestreamPlayer
-            youtubeUrl={gfConfig?.youtubeUrl}
-            isLive={gfConfig?.isLive ?? true}
-            matchTitle={`${team1?.name || "Team 1"} vs ${team2?.name || "Team 2"} - Grand Finals`}
-          />
-        </section>
+        <h1
+          style={{
+            fontSize: "clamp(2rem, 5vw, 3.2rem)",
+            fontWeight: "900",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            marginBottom: "0.5rem",
+            background: "linear-gradient(to bottom, #FFFFFF, var(--primary-gold-bright))",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          Grand Finals Showdown
+        </h1>
 
-        {/* MVP Voting Section */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 text-lg font-bold text-white uppercase tracking-wide">
-            <Award className="w-5 h-5 text-amber-400" />
-            <h2>FINALS MVP FAN VOTE</h2>
-          </div>
-          <MvpVoting
-            winningTeam={winningTeam}
-            isVotingOpen={gfConfig?.isVotingOpen ?? false}
-            isVotingFinished={gfConfig?.isVotingFinished ?? false}
-            votes={mvpVotes}
-          />
-        </section>
+        <p style={{ color: "var(--text-muted)", maxWidth: "600px", margin: "0 auto", fontSize: "0.95rem", lineHeight: "1.6" }}>
+          Watch live coverage of the championship match and cast your vote for the tournament Finals MVP.
+        </p>
       </div>
+
+      {/* Grand Final Scoreboard & Roster Clash Header */}
+      <GrandFinalHeader
+        match={grandFinalMatch}
+        team1={team1}
+        team2={team2}
+        winningTeamId={winningTeam?.id}
+      />
+
+      {/* Livestream Player Section */}
+      <section style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <Tv size={20} style={{ color: "var(--primary-gold)" }} />
+          <h2 style={{ fontSize: "1.3rem", fontWeight: "900", color: "var(--text-primary)", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Grand Final Broadcast
+          </h2>
+        </div>
+        <LivestreamPlayer
+          youtubeUrl={gfConfig?.youtubeUrl}
+          isLive={gfConfig?.isLive ?? true}
+          matchTitle={`${team1?.name || "Team A"} vs ${team2?.name || "Team B"} - Grand Finals`}
+        />
+      </section>
+
+      {/* MVP Fan Voting Section */}
+      <section style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <Award size={20} style={{ color: "var(--primary-gold)" }} />
+          <h2 style={{ fontSize: "1.3rem", fontWeight: "900", color: "var(--text-primary)", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Finals MVP Fan Vote
+          </h2>
+        </div>
+        <MvpVoting
+          winningTeam={winningTeam}
+          isVotingOpen={gfConfig?.isVotingOpen ?? false}
+          isVotingFinished={gfConfig?.isVotingFinished ?? false}
+          votes={mvpVotes}
+        />
+      </section>
     </div>
   );
 }

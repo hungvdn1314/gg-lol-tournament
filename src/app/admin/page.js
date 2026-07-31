@@ -1555,46 +1555,105 @@ export default function Admin() {
               </div>
 
               {/* 2. Grand Final Match & Winning Team Selector */}
-              <div className="card" style={{ marginBottom: "2rem", border: "1px solid var(--border-dark)" }}>
-                <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <Trophy size={18} style={{ color: "var(--primary-gold)" }} /> Select Grand Final Match & Winner
-                </h3>
+              {(() => {
+                const autoGfMatch = gfConfig.grandFinalMatchId && matches[gfConfig.grandFinalMatchId]
+                  ? matches[gfConfig.grandFinalMatchId]
+                  : Object.values(matches).find(
+                      (m) =>
+                        m.stage === "grand_final" ||
+                        m.round === "Grand Finals" ||
+                        m.type === "grand_final" ||
+                        m.title?.toLowerCase().includes("grand final") ||
+                        m.id === "match-playoff-grand-final"
+                    ) || Object.values(matches)[Object.values(matches).length - 1];
 
-                <div className="grid-2" style={{ marginBottom: "1rem" }}>
-                  <div className="form-group">
-                    <label>Grand Final Match</label>
-                    <select
-                      className="form-control"
-                      value={gfConfig.grandFinalMatchId || ""}
-                      onChange={(e) => saveGrandFinalConfig({ grandFinalMatchId: e.target.value })}
-                    >
-                      <option value="">-- Auto-Detect / Select Match --</option>
-                      {Object.values(matches).map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {teams[m.teamAId || m.team1Id]?.name || "TBD"} vs {teams[m.teamBId || m.team2Id]?.name || "TBD"} ({m.stage || m.round || "Match"})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                const tA = autoGfMatch ? teams[autoGfMatch.teamAId || autoGfMatch.team1Id] : null;
+                const tB = autoGfMatch ? teams[autoGfMatch.teamBId || autoGfMatch.team2Id] : null;
+                const realFinalists = [tA, tB].filter(Boolean);
 
-                  <div className="form-group">
-                    <label>Declare Champion (Winning Team)</label>
-                    <select
-                      className="form-control"
-                      value={gfConfig.winningTeamId || ""}
-                      onChange={(e) => saveGrandFinalConfig({ winningTeamId: e.target.value })}
-                      style={{ borderColor: gfConfig.winningTeamId ? "var(--primary-gold)" : "" }}
+                return (
+                  <div className="card" style={{ marginBottom: "2rem", border: "1px solid var(--border-gold)" }}>
+                    <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <Trophy size={18} style={{ color: "var(--primary-gold)" }} /> Grand Final Teams & Winner Declaration
+                    </h3>
+
+                    {/* Auto-Fetched Match Summary Pill */}
+                    <div
+                      style={{
+                        padding: "0.85rem 1.25rem",
+                        borderRadius: "8px",
+                        backgroundColor: "rgba(245, 176, 65, 0.08)",
+                        border: "1px solid var(--border-gold)",
+                        marginBottom: "1.25rem",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "0.75rem",
+                      }}
                     >
-                      <option value="">-- Select Winner for MVP Voting --</option>
-                      {Object.values(teams).map((t) => (
-                        <option key={t.id} value={t.id}>
-                          🏆 {t.name} ({t.tag || "Team"})
+                      <div>
+                        <span style={{ fontSize: "0.75rem", color: "var(--primary-gold)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "0.2rem" }}>
+                          Auto-Detected Grand Final Match
+                        </span>
+                        <strong style={{ fontSize: "1.05rem", color: "#fff", fontFamily: "var(--font-header)" }}>
+                          {tA?.name || "Team A"} vs {tB?.name || "Team B"}
+                        </strong>
+                        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginLeft: "0.5rem" }}>
+                          ({autoGfMatch?.stage || autoGfMatch?.round || "Grand Finals"})
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span className="hero-badge" style={{ margin: 0, fontSize: "0.75rem", padding: "0.25rem 0.75rem" }}>
+                          BO5 SERIES
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Winner Select (Only 2 Real Finalist Teams) */}
+                    <div className="form-group" style={{ marginBottom: "0.5rem" }}>
+                      <label style={{ fontWeight: 700, color: "var(--primary-gold-bright)" }}>
+                        Select Grand Final Champion (Unlocks MVP Voting)
+                      </label>
+                      <select
+                        className="form-control"
+                        value={gfConfig.winningTeamId || ""}
+                        onChange={(e) => saveGrandFinalConfig({ winningTeamId: e.target.value, grandFinalMatchId: autoGfMatch?.id || "" })}
+                        style={{
+                          borderColor: gfConfig.winningTeamId ? "var(--primary-gold)" : "var(--border-dark)",
+                          backgroundColor: gfConfig.winningTeamId ? "rgba(245, 176, 65, 0.12)" : "#16161E",
+                          color: gfConfig.winningTeamId ? "var(--primary-gold-bright)" : "#FFFFFF",
+                          fontSize: "1rem",
+                          fontWeight: 700,
+                          padding: "0.85rem 1rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <option value="" style={{ backgroundColor: "#121216", color: "#94a3b8" }}>
+                          -- Select Winner Between the 2 Finalist Teams --
                         </option>
-                      ))}
-                    </select>
+                        {realFinalists.length > 0 ? (
+                          realFinalists.map((t) => (
+                            <option key={t.id} value={t.id} style={{ backgroundColor: "#121216", color: "#FFFFFF", padding: "10px", fontWeight: 700 }}>
+                              🏆 {t.name} ({t.tag ? `[${t.tag}]` : "Finalist"})
+                            </option>
+                          ))
+                        ) : (
+                          Object.values(teams).map((t) => (
+                            <option key={t.id} value={t.id} style={{ backgroundColor: "#121216", color: "#FFFFFF", padding: "10px", fontWeight: 700 }}>
+                              🏆 {t.name} ({t.tag || "Team"})
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <small style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.4rem", display: "block" }}>
+                        Only the 2 teams playing in the Grand Final are available above.
+                      </small>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* 3. MVP Voting Controls */}
               <div className="card" style={{ marginBottom: "2rem", border: "1px solid var(--border-dark)" }}>
@@ -1671,7 +1730,7 @@ export default function Admin() {
                       const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                       return (
                         <div key={playerId} style={{ backgroundColor: "rgba(255,255,255,0.02)", padding: "0.75rem 1rem", borderRadius: "6px" }}>
-                          <div style={{ display: "flex", justifyBetween: "space-between", marginBottom: "0.35rem", fontSize: "0.9rem" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.35rem", fontSize: "0.9rem" }}>
                             <span style={{ fontWeight: 700, color: "#fff" }}>{playerId}</span>
                             <span style={{ color: "var(--primary-gold)", fontWeight: 700 }}>{count} votes ({pct}%)</span>
                           </div>
