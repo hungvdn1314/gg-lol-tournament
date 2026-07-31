@@ -47,6 +47,7 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
+    { href: "/grand-final", label: "🏆 Grand Final", isGold: true },
     { href: "/teams", label: "Teams" },
     { href: "/schedule", label: "Schedule" },
     { href: "/leaderboard", label: "Leaderboard" },
@@ -76,6 +77,7 @@ export default function Header() {
               key={link.href}
               href={link.href}
               className={`nav-link ${pathname === link.href ? "active" : ""}`}
+              style={link.isGold ? { color: "var(--primary-gold)", fontWeight: 800 } : {}}
               onClick={() => setMobileMenuOpen(false)}
             >
               {link.label}

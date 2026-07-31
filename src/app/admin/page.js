@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Settings, Calendar, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info, Activity 
+  Settings, Calendar, Plus, Trash2, Edit2, Save, RotateCcw, AlertTriangle, Info, Activity, Trophy, Tv, Award
 } from "lucide-react";
 import { HextechCrest, LoLMinion, CrossedSwords } from "@/components/Icons";
 import { isMockMode, auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { 
-  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard, seedFakedTournamentData, getGameWinnerTeamId
+  subscribeToData, saveConfig, saveTeam, deleteTeam, saveMatch, deleteMatch, resetToDefaultData, recalculateLeaderboard, seedFakedTournamentData, getGameWinnerTeamId,
+  subscribeToGrandFinalConfig, saveGrandFinalConfig, subscribeToMvpVotes, resetMvpVotes
 } from "@/lib/db";
 import { getLatestDDragonVersion } from "@/lib/riot";
 import { teamLogoPlaceholder, championPlaceholder } from "@/lib/placeholders";
@@ -81,11 +82,24 @@ export default function Admin() {
   useEffect(() => {
     const unsubMatches = subscribeToData("matches", (data) => setMatches(data || {}));
     const unsubTeams = subscribeToData("teams", (data) => setTeams(data || {}));
+    const unsubGfConfig = subscribeToGrandFinalConfig((data) => {
+      setGfConfig(data || {});
+      if (data?.youtubeUrl) setGfYoutubeInput(data.youtubeUrl);
+    });
+    const unsubMvpVotes = subscribeToMvpVotes((data) => setMvpVotes(data || {}));
     return () => {
       unsubMatches();
       unsubTeams();
+      unsubGfConfig();
+      unsubMvpVotes();
     };
   }, []);
+
+  // Grand Final Control State
+  const [gfConfig, setGfConfig] = useState({});
+  const [mvpVotes, setMvpVotes] = useState({});
+  const [gfYoutubeInput, setGfYoutubeInput] = useState("");
+  const [savingGf, setSavingGf] = useState(false);
 
   useEffect(() => {
     if (activeTab === "sync" && selectedMatchForImport) {
@@ -726,6 +740,13 @@ export default function Admin() {
             className={`admin-nav-item ${activeTab === "riot" ? "active" : ""}`}
           >
             <HextechCrest size={18} /> Riot Tournament API
+          </button>
+          <button 
+            onClick={() => { setActiveTab("grand-final"); setScoreManagingMatch(null); }}
+            className={`admin-nav-item ${activeTab === "grand-final" ? "active" : ""}`}
+            style={{ color: "var(--primary-gold)", borderColor: "var(--border-gold)" }}
+          >
+            <Trophy size={18} /> Grand Final Controls
           </button>
 
         </aside>
@@ -1480,8 +1501,194 @@ export default function Admin() {
               </div>
             </div>
           )}
+
+          {/* TAB 7: GRAND FINAL & MVP VOTING CONTROLS */}
+          {activeTab === "grand-final" && (
+            <div>
+              <h2 style={{ textTransform: "uppercase", fontSize: "1.25rem", borderBottom: "1px solid var(--border-dark)", paddingBottom: "0.75rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary-gold)" }}>
+                <Trophy size={22} /> Grand Final Broadcast & MVP Voting Controls
+              </h2>
+
+              {/* 1. YouTube Stream Settings */}
+              <div className="card" style={{ marginBottom: "2rem", border: "1px solid var(--border-gold)" }}>
+                <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Tv size={18} style={{ color: "var(--primary-gold)" }} /> YouTube Livestream Embed URL
+                </h3>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1rem" }}>
+                  Paste the YouTube video or live stream link (e.g. <code>https://www.youtube.com/watch?v=XXXXX</code> or <code>https://youtu.be/XXXXX</code>) to display on the Grand Final page.
+                </p>
+
+                <div className="form-group" style={{ marginBottom: "1rem" }}>
+                  <label>YouTube Stream URL / Video ID</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={gfYoutubeInput}
+                    onChange={(e) => setGfYoutubeInput(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                  <button
+                    onClick={async () => {
+                      setSavingGf(true);
+                      await saveGrandFinalConfig({ youtubeUrl: gfYoutubeInput });
+                      setSavingGf(false);
+                      alert("Livestream URL saved successfully!");
+                    }}
+                    className="btn btn-primary"
+                    disabled={savingGf}
+                  >
+                    <Save size={16} /> {savingGf ? "Saving..." : "Save Stream URL"}
+                  </button>
+
+                  <a
+                    href="/grand-final"
+                    target="_blank"
+                    className="btn"
+                    style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid var(--border-dark)", color: "#fff" }}
+                  >
+                    View Grand Final Page ↗
+                  </a>
+                </div>
+              </div>
+
+              {/* 2. Grand Final Match & Winning Team Selector */}
+              <div className="card" style={{ marginBottom: "2rem", border: "1px solid var(--border-dark)" }}>
+                <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Trophy size={18} style={{ color: "var(--primary-gold)" }} /> Select Grand Final Match & Winner
+                </h3>
+
+                <div className="grid-2" style={{ marginBottom: "1rem" }}>
+                  <div className="form-group">
+                    <label>Grand Final Match</label>
+                    <select
+                      className="form-control"
+                      value={gfConfig.grandFinalMatchId || ""}
+                      onChange={(e) => saveGrandFinalConfig({ grandFinalMatchId: e.target.value })}
+                    >
+                      <option value="">-- Auto-Detect / Select Match --</option>
+                      {Object.values(matches).map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {teams[m.teamAId || m.team1Id]?.name || "TBD"} vs {teams[m.teamBId || m.team2Id]?.name || "TBD"} ({m.stage || m.round || "Match"})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Declare Champion (Winning Team)</label>
+                    <select
+                      className="form-control"
+                      value={gfConfig.winningTeamId || ""}
+                      onChange={(e) => saveGrandFinalConfig({ winningTeamId: e.target.value })}
+                      style={{ borderColor: gfConfig.winningTeamId ? "var(--primary-gold)" : "" }}
+                    >
+                      <option value="">-- Select Winner for MVP Voting --</option>
+                      {Object.values(teams).map((t) => (
+                        <option key={t.id} value={t.id}>
+                          🏆 {t.name} ({t.tag || "Team"})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. MVP Voting Controls */}
+              <div className="card" style={{ marginBottom: "2rem", border: "1px solid var(--border-dark)" }}>
+                <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Award size={18} style={{ color: "var(--primary-gold)" }} /> MVP Voting Status & Controls
+                </h3>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "1.5rem" }}>
+                  <button
+                    onClick={() => saveGrandFinalConfig({ isVotingOpen: false, isVotingFinished: false })}
+                    className="btn"
+                    style={{
+                      backgroundColor: (!gfConfig.isVotingOpen && !gfConfig.isVotingFinished) ? "var(--primary-gold)" : "rgba(255,255,255,0.05)",
+                      color: (!gfConfig.isVotingOpen && !gfConfig.isVotingFinished) ? "#0a0a0c" : "#fff",
+                      fontWeight: 700
+                    }}
+                  >
+                    🔒 Draft / Locked
+                  </button>
+
+                  <button
+                    onClick={() => saveGrandFinalConfig({ isVotingOpen: true, isVotingFinished: false })}
+                    className="btn"
+                    style={{
+                      backgroundColor: gfConfig.isVotingOpen ? "var(--color-success)" : "rgba(255,255,255,0.05)",
+                      color: gfConfig.isVotingOpen ? "#0a0a0c" : "#fff",
+                      fontWeight: 700
+                    }}
+                  >
+                    🟢 Open Voting Now
+                  </button>
+
+                  <button
+                    onClick={() => saveGrandFinalConfig({ isVotingOpen: false, isVotingFinished: true })}
+                    className="btn"
+                    style={{
+                      backgroundColor: gfConfig.isVotingFinished ? "var(--primary-gold)" : "rgba(255,255,255,0.05)",
+                      color: gfConfig.isVotingFinished ? "#0a0a0c" : "#fff",
+                      fontWeight: 700
+                    }}
+                  >
+                    🏆 Close Voting & Declare MVP Winner
+                  </button>
+                </div>
+
+                <div style={{ borderTop: "1px solid var(--border-dark)", paddingTop: "1rem" }}>
+                  <button
+                    onClick={async () => {
+                      if (confirm("Are you sure you want to reset all MVP votes to 0?")) {
+                        await resetMvpVotes();
+                        alert("MVP votes reset!");
+                      }
+                    }}
+                    className="btn"
+                    style={{ backgroundColor: "rgba(239, 68, 68, 0.15)", color: "#f87171", border: "1px solid rgba(239, 68, 68, 0.3)" }}
+                  >
+                    <RotateCcw size={16} /> Reset All Votes
+                  </button>
+                </div>
+              </div>
+
+              {/* 4. Live MVP Vote Analytics */}
+              <div className="card" style={{ border: "1px solid var(--border-dark)" }}>
+                <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "1rem" }}>
+                  Live MVP Vote Breakdown ({Object.values(mvpVotes).reduce((a, b) => a + (Number(b) || 0), 0)} Total Votes)
+                </h3>
+
+                {Object.keys(mvpVotes).length === 0 ? (
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>No votes submitted yet.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    {Object.entries(mvpVotes).map(([playerId, count]) => {
+                      const total = Object.values(mvpVotes).reduce((a, b) => a + (Number(b) || 0), 0);
+                      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                      return (
+                        <div key={playerId} style={{ backgroundColor: "rgba(255,255,255,0.02)", padding: "0.75rem 1rem", borderRadius: "6px" }}>
+                          <div style={{ display: "flex", justifyBetween: "space-between", marginBottom: "0.35rem", fontSize: "0.9rem" }}>
+                            <span style={{ fontWeight: 700, color: "#fff" }}>{playerId}</span>
+                            <span style={{ color: "var(--primary-gold)", fontWeight: 700 }}>{count} votes ({pct}%)</span>
+                          </div>
+                          <div style={{ height: "6px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "3px", overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${pct}%`, backgroundColor: "var(--primary-gold)", borderRadius: "3px" }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>
   );
 }
+

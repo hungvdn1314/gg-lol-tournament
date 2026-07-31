@@ -3222,3 +3222,91 @@ export function subscribeToNews(callback) {
     });
   }
 }
+
+// ==========================================
+// GRAND FINAL & MVP VOTING
+// ==========================================
+
+export async function saveGrandFinalConfig(configData) {
+  if (isMockMode) {
+    const current = getMockStorage("grandFinalConfig", {});
+    const updated = { ...current, ...configData, updatedAt: new Date().toISOString() };
+    setMockStorage("grandFinalConfig", updated);
+    if (subscribers.grandFinalConfig) {
+      subscribers.grandFinalConfig.forEach(cb => cb(updated));
+    }
+    return updated;
+  } else {
+    const dbRef = ref(database, "grandFinalConfig");
+    const snapshot = await get(dbRef);
+    const current = snapshot.exists() ? snapshot.val() : {};
+    const updated = { ...current, ...configData, updatedAt: new Date().toISOString() };
+    await set(dbRef, updated);
+    return updated;
+  }
+}
+
+export function subscribeToGrandFinalConfig(callback) {
+  if (isMockMode) {
+    callback(getMockStorage("grandFinalConfig", {}));
+    if (!subscribers.grandFinalConfig) subscribers.grandFinalConfig = [];
+    subscribers.grandFinalConfig.push(callback);
+    return () => {
+      subscribers.grandFinalConfig = subscribers.grandFinalConfig.filter(cb => cb !== callback);
+    };
+  } else {
+    const dbRef = ref(database, "grandFinalConfig");
+    return onValue(dbRef, (snapshot) => {
+      callback(snapshot.exists() ? snapshot.val() : {});
+    });
+  }
+}
+
+export async function submitMvpVote(playerId) {
+  if (!playerId) return;
+  if (isMockMode) {
+    const votes = getMockStorage("grandFinalVotes", {});
+    votes[playerId] = (votes[playerId] || 0) + 1;
+    setMockStorage("grandFinalVotes", votes);
+    if (subscribers.grandFinalVotes) {
+      subscribers.grandFinalVotes.forEach(cb => cb(votes));
+    }
+    return votes;
+  } else {
+    const dbRef = ref(database, `grandFinalVotes/${playerId}`);
+    const snapshot = await get(dbRef);
+    const count = snapshot.exists() ? snapshot.val() : 0;
+    await set(dbRef, count + 1);
+  }
+}
+
+export async function resetMvpVotes() {
+  if (isMockMode) {
+    setMockStorage("grandFinalVotes", {});
+    if (subscribers.grandFinalVotes) {
+      subscribers.grandFinalVotes.forEach(cb => cb({}));
+    }
+    return {};
+  } else {
+    const dbRef = ref(database, "grandFinalVotes");
+    await set(dbRef, {});
+    return {};
+  }
+}
+
+export function subscribeToMvpVotes(callback) {
+  if (isMockMode) {
+    callback(getMockStorage("grandFinalVotes", {}));
+    if (!subscribers.grandFinalVotes) subscribers.grandFinalVotes = [];
+    subscribers.grandFinalVotes.push(callback);
+    return () => {
+      subscribers.grandFinalVotes = subscribers.grandFinalVotes.filter(cb => cb !== callback);
+    };
+  } else {
+    const dbRef = ref(database, "grandFinalVotes");
+    return onValue(dbRef, (snapshot) => {
+      callback(snapshot.exists() ? snapshot.val() : {});
+    });
+  }
+}
+

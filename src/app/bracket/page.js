@@ -301,27 +301,44 @@ export default function Bracket() {
               
               {/* Column 1: Lower Quarters and Upper Semis */}
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "620px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>Upper Semis</span>
-                  {renderMatchNode("match-playoff-1", "Match 1", true, false)}
-                  {renderMatchNode("match-playoff-2", "Match 2", true, false)}
+                
+                {/* Upper Semis Group */}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2rem", position: "relative" }}>
+                    <span style={{ position: "absolute", top: "-1.5rem", left: "0", width: "100%", fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>Upper Semis</span>
+                    {renderMatchNode("match-playoff-1", "Match 1", true, false)}
+                    {renderMatchNode("match-playoff-2", "Match 2", true, false)}
+                  </div>
+                  {/* Vertical Connector Line for Match 1 and 2 */}
+                  <div style={{ width: "20px", borderRight: "2px solid var(--border-dark)", borderTop: "2px solid var(--border-dark)", borderBottom: "2px solid var(--border-dark)", height: "calc(100% - 130px)" }} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>LB Quarters</span>
-                  {renderMatchNode("match-playoff-3", "Match 3", true, false)}
-                  {renderMatchNode("match-playoff-4", "Match 4", true, false)}
+
+                {/* LB Quarters Group */}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2rem", position: "relative" }}>
+                    <span style={{ position: "absolute", top: "-1.5rem", left: "0", width: "100%", fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>LB Quarters</span>
+                    {renderMatchNode("match-playoff-3", "Match 3", true, false)}
+                    {renderMatchNode("match-playoff-4", "Match 4", true, false)}
+                  </div>
+                  {/* Vertical Connector Line for Match 3 and 4 */}
+                  <div style={{ width: "20px", borderRight: "2px solid var(--border-dark)", borderTop: "2px solid var(--border-dark)", borderBottom: "2px solid var(--border-dark)", height: "calc(100% - 130px)" }} />
                 </div>
+
               </div>
 
               {/* Column 2: Upper Finals and Lower Semis */}
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-around", height: "620px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>Upper Finals</span>
-                  {renderMatchNode("match-playoff-5", "Match 5", true, true)}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>Upper Finals</span>
+                    {renderMatchNode("match-playoff-5", "Match 5", true, true)}
+                  </div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>LB Semis</span>
-                  {renderMatchNode("match-playoff-6", "Match 6", true, true)}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold", textAlign: "center", letterSpacing: "0.05em" }}>LB Semis</span>
+                    {renderMatchNode("match-playoff-6", "Match 6", true, true)}
+                  </div>
                 </div>
               </div>
 

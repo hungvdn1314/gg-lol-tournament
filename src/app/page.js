@@ -123,7 +123,10 @@ export default function Home() {
         </div>
 
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
-          <Link href="/schedule" className="btn btn-primary">
+          <Link href="/grand-final" className="btn btn-primary" style={{ backgroundColor: "var(--primary-gold)", color: "#0a0a0c", fontWeight: 800, border: "2px solid var(--primary-gold-bright)", boxShadow: "0 0 20px rgba(245, 176, 65, 0.4)" }}>
+            🏆 Grand Final Hub
+          </Link>
+          <Link href="/schedule" className="btn btn-secondary">
             View Schedule
           </Link>
           <Link href="/leaderboard" className="btn btn-secondary">
