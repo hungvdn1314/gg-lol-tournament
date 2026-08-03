@@ -1,5 +1,5 @@
 import { isMockMode, database } from "./firebase";
-import { ref, get, set, update, remove, onValue } from "firebase/database";
+import { ref, get, set, update, remove, onValue, runTransaction } from "firebase/database";
 
 // ==========================================
 // DEFAULT DATA FOR INITIALIZATION
@@ -3279,10 +3279,18 @@ export async function submitMvpVote(playerId) {
     }
     return votes;
   } else {
-    const dbRef = ref(database, `grandFinalVotes/${cleanId}`);
-    const snapshot = await get(dbRef);
-    const count = snapshot.exists() ? snapshot.val() : 0;
-    await set(dbRef, count + 1);
+    try {
+      const dbRef = ref(database, `grandFinalVotes/${cleanId}`);
+      await runTransaction(dbRef, (currentValue) => {
+        return (currentValue || 0) + 1;
+      });
+    } catch (err) {
+      console.error("Firebase runTransaction failed, falling back to set:", err);
+      const dbRef = ref(database, `grandFinalVotes/${cleanId}`);
+      const snapshot = await get(dbRef);
+      const count = snapshot.exists() ? snapshot.val() : 0;
+      await set(dbRef, count + 1);
+    }
   }
 }
 
