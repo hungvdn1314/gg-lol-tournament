@@ -10,16 +10,11 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
   const [votedPlayerId, setVotedPlayerId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [displayVotes, setDisplayVotes] = useState(votes || {});
   
   // Real-time rank position tracking for overtake FX
   const [prevRanks, setPrevRanks] = useState({});
   const [rankChanges, setRankChanges] = useState({});
   const [overtakeMsg, setOvertakeMsg] = useState(null);
-
-  useEffect(() => {
-    setDisplayVotes(votes || {});
-  }, [votes]);
 
   useEffect(() => {
     const saved = localStorage.getItem("gg_lol_mvp_voted_player");
@@ -29,10 +24,10 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
   }, []);
 
   const candidates = getRosterCandidates(winningTeam);
-  const totalVotes = candidates.reduce((sum, c) => sum + getVotesForCandidate(c, displayVotes), 0);
+  const totalVotes = candidates.reduce((sum, c) => sum + getVotesForCandidate(c, votes), 0);
 
   // Sorted candidates by votes descending for live ranking chart
-  const rankedCandidates = [...candidates].sort((a, b) => getVotesForCandidate(b, displayVotes) - getVotesForCandidate(a, displayVotes));
+  const rankedCandidates = [...candidates].sort((a, b) => getVotesForCandidate(b, votes) - getVotesForCandidate(a, votes));
   const leaderCandidate = rankedCandidates[0] || null;
 
   // Rank Overtake & Position Change Effect Trigger
@@ -71,36 +66,24 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
     }
 
     setPrevRanks(currentRankMap);
-  }, [displayVotes]);
+  }, [votes]);
 
   const handleVote = async (playerId) => {
     // Production Guard: 1 vote per device & must be open
     if (!isVotingOpen || votedPlayerId || submitting) return;
     setSubmitting(true);
-
-    // Optimistic UI state update so vote count & bar update instantly
-    const cleanId = sanitizeCandidateId(playerId);
-    setDisplayVotes((prev) => {
-      const copy = { ...prev };
-      copy[cleanId] = (Number(copy[cleanId]) || 0) + 1;
-      if (playerId !== cleanId) {
-        copy[playerId] = (Number(copy[playerId]) || 0) + 1;
-      }
-      return copy;
-    });
-
-    setVotedPlayerId(playerId);
-    setShowConfetti(false);
-    setTimeout(() => setShowConfetti(true), 10);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("gg_lol_mvp_voted_player", playerId);
-    }
-
     try {
       await submitMvpVote(playerId);
+      setVotedPlayerId(playerId);
+      setShowConfetti(false);
+      setTimeout(() => setShowConfetti(true), 10);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("gg_lol_mvp_voted_player", playerId);
+      }
       setTimeout(() => setShowConfetti(false), 2500);
     } catch (e) {
       console.error("Error submitting MVP vote:", e);
+      alert("Vote failed — please try again. Error: " + e.message);
     } finally {
       setSubmitting(false);
     }
@@ -401,7 +384,7 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
           {/* Ranked Progress Bar Rows List */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
             {rankedCandidates.map((candidate, rankIdx) => {
-              const pVotes = getVotesForCandidate(candidate, displayVotes);
+              const pVotes = getVotesForCandidate(candidate, votes);
               const pct = totalVotes > 0 ? Math.round((pVotes / totalVotes) * 100) : 0;
               const is1st = rankIdx === 0 && totalVotes > 0;
               const is2nd = rankIdx === 1;
@@ -546,7 +529,7 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
       {/* Full Roster Voting Cards Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1.25rem", position: "relative", zIndex: 2 }}>
         {candidates.map((candidate) => {
-          const pVotes = getVotesForCandidate(candidate, displayVotes);
+          const pVotes = getVotesForCandidate(candidate, votes);
           const percentage = totalVotes > 0 ? Math.round((pVotes / totalVotes) * 100) : 0;
           const isUserVotedThis = votedPlayerId && (
             votedPlayerId === candidate.id ||
