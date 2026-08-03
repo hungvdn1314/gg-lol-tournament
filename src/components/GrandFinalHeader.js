@@ -2,12 +2,13 @@
 
 import { Trophy, Swords, Zap } from "lucide-react";
 
-export default function GrandFinalHeader({ match, team1, team2, winningTeamId }) {
+export default function GrandFinalHeader({ match, matchDetails, team1, team2, winningTeamId }) {
   const team1Score = match?.scoreA ?? match?.team1Score ?? 0;
   const team2Score = match?.scoreB ?? match?.team2Score ?? 0;
   
-  const isTeam1Winner = winningTeamId === team1?.id || (match?.completed && team1Score > team2Score);
-  const isTeam2Winner = winningTeamId === team2?.id || (match?.completed && team2Score > team1Score);
+  const isCompleted = match?.status === "completed" || match?.completed || Boolean(winningTeamId);
+  const isTeam1Winner = winningTeamId === team1?.id || (isCompleted && team1Score > team2Score);
+  const isTeam2Winner = winningTeamId === team2?.id || (isCompleted && team2Score > team1Score);
 
   const team1Players = getTeamPlayerListStructured(team1);
   const team2Players = getTeamPlayerListStructured(team2);
@@ -15,14 +16,33 @@ export default function GrandFinalHeader({ match, team1, team2, winningTeamId })
   const maxPlayers = Math.max(team1Players.length, team2Players.length, 5);
   const playerIndices = Array.from({ length: maxPlayers }, (_, i) => i);
 
-  // Generate clear game-by-game breakdown sequence for BO5 (e.g. 3-2 series)
-  const seriesGames = [
-    { winner: team1Score >= 1 ? "team1" : team2Score >= 1 ? "team2" : null },
-    { winner: team1Score >= 2 ? "team1" : team2Score >= 2 ? "team2" : null },
-    { winner: team2Score >= 1 && team1Score < 3 ? "team2" : team1Score >= 3 ? "team1" : null },
-    { winner: team2Score >= 2 ? "team2" : null },
-    { winner: team1Score >= 3 && team2Score >= 2 ? "team1" : null },
-  ].slice(0, team1Score + team2Score || 5);
+  // Generate game-by-game breakdown sequence from matchDetails (OCR / score submission)
+  const bestOf = match?.bestOf || 5;
+  const gamesList = Array.isArray(matchDetails) ? matchDetails : [];
+
+  const seriesGames = Array.from({ length: bestOf }, (_, i) => {
+    const game = gamesList[i];
+    if (game) {
+      const winnerTeamId =
+        game.winnerTeamId ||
+        (game.teams?.[100]?.winner ? (game.blueTeamId || match?.teamAId) :
+         game.teams?.[200]?.winner ? (game.redTeamId || match?.teamBId) : null);
+
+      if (winnerTeamId && (winnerTeamId === team1?.id || winnerTeamId === match?.teamAId)) {
+        return { winner: "team1" };
+      } else if (winnerTeamId && (winnerTeamId === team2?.id || winnerTeamId === match?.teamBId)) {
+        return { winner: "team2" };
+      }
+    }
+
+    // Fallback if matchDetails array is partial or loading
+    if (i < team1Score + team2Score) {
+      if (i < team1Score) return { winner: "team1" };
+      return { winner: "team2" };
+    }
+
+    return { winner: null };
+  });
 
   return (
     <div

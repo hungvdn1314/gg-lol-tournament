@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Trophy, Tv, Award, Lock } from "lucide-react";
-import { subscribeToData, subscribeToGrandFinalConfig, subscribeToMvpVotes } from "@/lib/db";
+import { subscribeToData, subscribeToGrandFinalConfig, subscribeToMvpVotes, subscribeToMatchDetails } from "@/lib/db";
 import GrandFinalHeader from "@/components/GrandFinalHeader";
 import LivestreamPlayer from "@/components/LivestreamPlayer";
 import MvpVoting from "@/components/MvpVoting";
@@ -14,6 +14,7 @@ export default function GrandFinalPage() {
   const [teams, setTeams] = useState({});
   const [gfConfig, setGfConfig] = useState({});
   const [mvpVotes, setMvpVotes] = useState({});
+  const [matchDetails, setMatchDetails] = useState(null);
 
   useEffect(() => {
     const unsubConfig = subscribeToData("config", setConfig);
@@ -86,15 +87,29 @@ export default function GrandFinalPage() {
   if (gfConfig?.grandFinalMatchId && matches[gfConfig.grandFinalMatchId]) {
     grandFinalMatch = matches[gfConfig.grandFinalMatchId];
   } else {
-    // Search by stage or type or fallback to last match
+    // Search by stage, id, or type with fallbacks
     grandFinalMatch = matchArray.find(
       (m) =>
+        m.id === "match-playoff-8" ||
+        m.stage === "Grand Final" ||
         m.stage === "grand_final" ||
+        m.stage?.toLowerCase().includes("grand final") ||
         m.round === "Grand Finals" ||
         m.type === "grand_final" ||
         m.title?.toLowerCase().includes("grand final")
     ) || matchArray[matchArray.length - 1];
   }
+
+  // Subscribe to Grand Final match details (game-by-game results)
+  useEffect(() => {
+    if (!grandFinalMatch?.id) return;
+    const unsub = subscribeToMatchDetails(grandFinalMatch.id, (details) => {
+      setMatchDetails(details);
+    });
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [grandFinalMatch?.id]);
 
   // Identify Team A and Team B
   const team1Id = grandFinalMatch?.teamAId || grandFinalMatch?.team1Id;
@@ -103,11 +118,11 @@ export default function GrandFinalPage() {
   const team1 = team1Id ? teams[team1Id] : null;
   const team2 = team2Id ? teams[team2Id] : null;
 
-  // Identify Winning Team
+  // Identify Winning Team (Admin manual override takes Priority 1, System auto-detect from match status / winnerId as Priority 2)
   let winningTeam = null;
   if (gfConfig?.winningTeamId && teams[gfConfig.winningTeamId]) {
     winningTeam = teams[gfConfig.winningTeamId];
-  } else if (grandFinalMatch?.completed || grandFinalMatch?.winnerId) {
+  } else if (grandFinalMatch?.status === "completed" || grandFinalMatch?.winnerId || grandFinalMatch?.completed) {
     const winnerId =
       grandFinalMatch.winnerId ||
       ((grandFinalMatch.scoreA || 0) > (grandFinalMatch.scoreB || 0)
@@ -175,6 +190,7 @@ export default function GrandFinalPage() {
       {/* Grand Final Scoreboard & Roster Clash Header */}
       <GrandFinalHeader
         match={grandFinalMatch}
+        matchDetails={matchDetails}
         team1={team1}
         team2={team2}
         winningTeamId={winningTeam?.id}
