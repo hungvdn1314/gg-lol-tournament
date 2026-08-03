@@ -3269,16 +3269,17 @@ export function subscribeToGrandFinalConfig(callback) {
 
 export async function submitMvpVote(playerId) {
   if (!playerId) return;
+  const cleanId = String(playerId).trim().replace(/[.#$\[\]\/\s]+/g, "_");
   if (isMockMode) {
     const votes = getMockStorage("grandFinalVotes", {});
-    votes[playerId] = (votes[playerId] || 0) + 1;
+    votes[cleanId] = (votes[cleanId] || 0) + 1;
     setMockStorage("grandFinalVotes", votes);
     if (subscribers.grandFinalVotes) {
       subscribers.grandFinalVotes.forEach(cb => cb(votes));
     }
     return votes;
   } else {
-    const dbRef = ref(database, `grandFinalVotes/${playerId}`);
+    const dbRef = ref(database, `grandFinalVotes/${cleanId}`);
     const snapshot = await get(dbRef);
     const count = snapshot.exists() ? snapshot.val() : 0;
     await set(dbRef, count + 1);

@@ -27,7 +27,7 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
   const totalVotes = Object.values(votes).reduce((acc, curr) => acc + (Number(curr) || 0), 0);
 
   // Sorted candidates by votes descending for live ranking chart
-  const rankedCandidates = [...candidates].sort((a, b) => (Number(votes[b.id]) || 0) - (Number(votes[a.id]) || 0));
+  const rankedCandidates = [...candidates].sort((a, b) => getVotesForCandidate(b, votes) - getVotesForCandidate(a, votes));
   const leaderCandidate = rankedCandidates[0] || null;
 
   // Rank Overtake & Position Change Effect Trigger
@@ -383,7 +383,7 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
           {/* Ranked Progress Bar Rows List */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
             {rankedCandidates.map((candidate, rankIdx) => {
-              const pVotes = Number(votes[candidate.id]) || 0;
+              const pVotes = getVotesForCandidate(candidate, votes);
               const pct = totalVotes > 0 ? Math.round((pVotes / totalVotes) * 100) : 0;
               const is1st = rankIdx === 0 && totalVotes > 0;
               const is2nd = rankIdx === 1;
@@ -528,9 +528,9 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
       {/* Full Roster Voting Cards Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1.25rem", position: "relative", zIndex: 2 }}>
         {candidates.map((candidate) => {
-          const pVotes = Number(votes[candidate.id]) || 0;
+          const pVotes = getVotesForCandidate(candidate, votes);
           const percentage = totalVotes > 0 ? Math.round((pVotes / totalVotes) * 100) : 0;
-          const isUserVotedThis = votedPlayerId === candidate.id;
+          const isUserVotedThis = votedPlayerId === candidate.id || sanitizeCandidateId(votedPlayerId) === candidate.id;
           const isCurrentLeader = leaderCandidate?.id === candidate.id && totalVotes > 0;
           const rankChange = rankChanges[candidate.id];
 
@@ -714,6 +714,24 @@ export default function MvpVoting({ winningTeam, isVotingOpen, isVotingFinished,
   );
 }
 
+function sanitizeCandidateId(rawId, teamId, idx) {
+  const base = rawId ? String(rawId).trim() : `${teamId}_p${idx}`;
+  return base.replace(/[.#$\[\]\/\s]+/g, "_");
+}
+
+function getVotesForCandidate(candidate, votes) {
+  if (!votes || !candidate) return 0;
+  const cId = candidate.id;
+  if (votes[cId] !== undefined) return Number(votes[cId]) || 0;
+  for (const [key, val] of Object.entries(votes)) {
+    const cleanKey = String(key).trim().replace(/[.#$\[\]\/\s]+/g, "_");
+    if (cleanKey === cId || key === candidate.realName || key === candidate.ign) {
+      return Number(val) || 0;
+    }
+  }
+  return 0;
+}
+
 function getRosterCandidates(team) {
   if (!team) return [];
   
@@ -730,8 +748,10 @@ function getRosterCandidates(team) {
         riotTag = `#${p.riotId.split("#")[1]}`;
       }
 
+      const rawId = typeof p === "string" ? `${team.id}_${idx}` : p.id || p.name || p.ign || `p_${idx}`;
+
       return {
-        id: typeof p === "string" ? `${team.id}_${idx}` : p.id || p.name || p.ign || `p_${idx}`,
+        id: sanitizeCandidateId(rawId, team.id, idx),
         realName: realName,
         ign: ign,
         riotTag: riotTag,
@@ -751,8 +771,10 @@ function getRosterCandidates(team) {
         riotTag = `#${parts[1]}`;
       }
 
+      const rawId = typeof val === "string" ? `${team.id}_${idx}` : val.id || val.ign || `p_${idx}`;
+
       return {
-        id: typeof val === "string" ? `${team.id}_${idx}` : val.id || val.ign || `p_${idx}`,
+        id: sanitizeCandidateId(rawId, team.id, idx),
         realName: realName,
         ign: ign,
         riotTag: riotTag,
@@ -762,10 +784,10 @@ function getRosterCandidates(team) {
   }
 
   return [
-    { id: `${team.id}_1`, realName: `${team.name} Player 1`, ign: "Player1", riotTag: "#VN1", avatar: null },
-    { id: `${team.id}_2`, realName: `${team.name} Player 2`, ign: "Player2", riotTag: "#VN1", avatar: null },
-    { id: `${team.id}_3`, realName: `${team.name} Player 3`, ign: "Player3", riotTag: "#VN1", avatar: null },
-    { id: `${team.id}_4`, realName: `${team.name} Player 4`, ign: "Player4", riotTag: "#VN1", avatar: null },
-    { id: `${team.id}_5`, realName: `${team.name} Player 5`, ign: "Player5", riotTag: "#VN1", avatar: null },
+    { id: sanitizeCandidateId(`${team.id}_1`, team.id, 1), realName: `${team.name} Player 1`, ign: "Player1", riotTag: "#VN1", avatar: null },
+    { id: sanitizeCandidateId(`${team.id}_2`, team.id, 2), realName: `${team.name} Player 2`, ign: "Player2", riotTag: "#VN1", avatar: null },
+    { id: sanitizeCandidateId(`${team.id}_3`, team.id, 3), realName: `${team.name} Player 3`, ign: "Player3", riotTag: "#VN1", avatar: null },
+    { id: sanitizeCandidateId(`${team.id}_4`, team.id, 4), realName: `${team.name} Player 4`, ign: "Player4", riotTag: "#VN1", avatar: null },
+    { id: sanitizeCandidateId(`${team.id}_5`, team.id, 5), realName: `${team.name} Player 5`, ign: "Player5", riotTag: "#VN1", avatar: null },
   ];
 }
