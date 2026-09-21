@@ -20,8 +20,12 @@
 # production
 /build
 
-# misc
+# misc & OS
 .DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
 *.pem
 
 # debug
@@ -30,7 +34,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (NEVER COMMIT SECRETS)
 .env*
 !.env.local.example
 
@@ -41,5 +45,18 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# scratch directory
+# python byte-compiled & caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# scratch & AI temporary files
 scratch/
+temp/
+tmp/
+*.tmp
+.aiexclude
+.agents/scratch/
+.agents/skills/Front-End-Checklist/
+.agents/skills/taste-skill/
+.gemini/antigravity/brain/
